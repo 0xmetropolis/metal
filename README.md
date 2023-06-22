@@ -8,6 +8,7 @@ Smart contract visualization CLI tool.
 
 <!-- toc -->
 
+- [Metropolis CLI](#metropolis-cli)
 - [Usage](#usage)
 - [Commands](#commands)
 <!-- tocstop -->
@@ -46,6 +47,7 @@ USAGE
 - [`metro plugins:uninstall PLUGIN...`](#metro-pluginsuninstall-plugin-1)
 - [`metro plugins:uninstall PLUGIN...`](#metro-pluginsuninstall-plugin-2)
 - [`metro plugins update`](#metro-plugins-update)
+- [`metro preview`](#metro-preview)
 
 ## `metro hello PERSON`
 
@@ -69,7 +71,8 @@ EXAMPLES
   hello friend from oclif! (./src/commands/hello/index.ts)
 ```
 
-_See code: [dist/commands/hello/index.ts](https://github.com/0xmetropolis/cli/blob/v0.0.0/dist/commands/hello/index.ts)_
+_See code:
+[dist/commands/hello/index.ts](https://github.com/0xmetropolis/cli/blob/v0.0.0/dist/commands/hello/index.ts)_
 
 ## `metro hello world`
 
@@ -105,7 +108,8 @@ DESCRIPTION
   Display help for metro.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.9/src/commands/help.ts)_
+_See code:
+[@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.9/src/commands/help.ts)_
 
 ## `metro plugins`
 
@@ -125,7 +129,8 @@ EXAMPLES
   $ metro plugins
 ```
 
-_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v2.4.7/src/commands/plugins/index.ts)_
+_See code:
+[@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v2.4.7/src/commands/plugins/index.ts)_
 
 ## `metro plugins:install PLUGIN...`
 
@@ -339,5 +344,23 @@ FLAGS
 DESCRIPTION
   Update installed plugins.
 ```
+
+## `metro preview`
+
+Generate preview of transactions.
+
+```
+USAGE
+  $ metro preview
+
+DESCRIPTION
+  Generate preview of transactions.
+
+EXAMPLES
+  $ metro preview
+```
+
+_See code:
+[dist/commands/preview.ts](https://github.com/0xmetropolis/cli/blob/v0.0.0/dist/commands/preview.ts)_
 
 <!-- commandsstop -->
