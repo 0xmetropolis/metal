@@ -1,11 +1,14 @@
 import { Args, Command, Flags } from '@oclif/core';
+import { CommandError } from '@oclif/core/lib/interfaces';
+import { ParserOutput } from '@oclif/core/lib/interfaces/parser';
 import { exec } from 'node:child_process';
+import { log } from 'node:console';
 
 export default class Preview extends Command {
-  static description = 'Generate preview of transactions.';
+  static description = 'Generate preview of transactions from your Forge script';
 
   static examples = [
-    '<%= config.bin %> <%= command.id %> forge script script/Deploy.s.sol --fork-url localhost:8545 --broadcast',
+    '<%= config.bin %> <%= command.id %> forge script script/Deploy.s.sol --broadcast',
   ];
 
   static strict = false; // Allow unknown arguments
@@ -26,28 +29,54 @@ export default class Preview extends Command {
     }),
   };
 
+  private async tryParse(): Promise<
+    ParserOutput<
+      {
+        broadcast: boolean;
+      },
+      {
+        [flag: string]: any;
+      },
+      {
+        path: string;
+      }
+    >
+  > {
+    /**
+     * ParserOutput<
+      {
+        broadcast: boolean;
+      },
+      {
+        [flag: string]: any;
+      },
+      {
+        path: string;
+      }
+    >
+     */
+    let parsed: any = {
+      args: {
+        path: '',
+      },
+      flags: {
+        broadcast: false,
+        json: false,
+      },
+      argv: [],
+    };
+    try {
+      parsed = await this.parse(Preview);
+    } catch (error: any) {
+      const isInvalidFlagError = error.message.includes('Nonexistent flag');
+      log(isInvalidFlagError);
+      log(error.message);
+      if (!isInvalidFlagError) throw error;
+    }
+    return parsed;
+  }
+
   public async run(): Promise<void> {
     // can get args as an object
-    const { args, flags, argv } = await this.parse(Preview);
-    // User input
-    const bashCommand = argv.join(' ');
-    const rpcFlags = ['-f', '--fork-url', '--rpc-url'];
-    // Filter out user flags
-    console.log({ args, flags, argv, processArgv: process.argv });
-
-    exec(`forge script ${bashCommand} --broadcast`, (error, stdout, stderr) => {
-      console.log('bashCommand', bashCommand);
-      if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-      }
-
-      if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-      }
-
-      console.log(`stdout: ${stdout}`);
-    });
   }
 }
