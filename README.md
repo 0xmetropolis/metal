@@ -6,9 +6,9 @@ Smart contract visualization CLI tool.
 
 ```bash
 yarn
-
+yarn install:dev
 yarn watch
 
 # in any repo
-$metro ...args
+metro ...args
 ```
