@@ -1,20 +1,7 @@
 import yargs = require('yargs');
-import { logInfo } from '../utils';
-// import { prompt as ask } from 'inquirer';
-import { argv, type Options, } from 'yargs';
-// import  from 'yargs/helpers';
-
-// async function askName(): Promise<string> {
-//   logInfo(':wave:  Hello stranger!');
-//   const { path } = await ask([
-//     {
-//       type: 'input',
-//       name: 'path',
-//       message: "What's your name?",
-//     },
-//   ]);
-//   return name;
-// }
+import { logError, logInfo } from '../utils';
+import { type Options } from 'yargs';
+import { exec, ExecException } from 'child_process';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -22,11 +9,6 @@ export const description = `Generate preview of transactions from your Forge scr
 export type Params = { path: string; broadcast: boolean };
 
 export const builder: { [key: string]: Options } = {
-  // $0: {
-  //   default: 'preview',
-  //   required: true,
-  //   description: 'Path to Forge script',
-  // },
   broadcast: {
     type: 'boolean',
     required: true,
@@ -35,12 +17,28 @@ export const builder: { [key: string]: Options } = {
 };
 
 export async function handler({ broadcast, _: [, path] }: yargs.Arguments) {
-  console.log('broadcast', broadcast);
-  console.log({ path });
-  logInfo(`Running Forge Script at ${path}`);
+  logInfo(`Running Forge Script at ${path}...`);
+  const foundryArguments = process.argv.slice(3).join(' ');
 
-  console.log({ argv });
+  // TODO: if exists replace --rpc-url, else add it
+  await new Promise((resolve, reject) => {
+    exec(`forge script ${foundryArguments}`, (error, stdout, stderr) => {
+      if (error) {
+        const message = processForgeError(error);
+        logError('\n' + message + '\n');
+        reject();
+        return;
+      }
+      console.log(`stdout: ${stdout}`);
+      console.error(`stderr: ${stderr}`);
+      resolve(stdout);
+    });
+  });
 }
 
-// Example:
-// metro preview forge script script/test/DeployTestFxs.s.sol:DeployTestFxs --fork-url https://rpc.tenderly.co/fork/API_KEY --broadcast
+function processForgeError({ message }: ExecException) {
+  if (message.includes('error trying to connect'))
+    return 'Could not connect to the RPC, check your internet connection';
+  return message;
+  // TODO look into yargs reject?
+}
