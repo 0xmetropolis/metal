@@ -1,82 +1,46 @@
-import { Args, Command, Flags } from '@oclif/core';
-import { CommandError } from '@oclif/core/lib/interfaces';
-import { ParserOutput } from '@oclif/core/lib/interfaces/parser';
-import { exec } from 'node:child_process';
-import { log } from 'node:console';
+import yargs = require('yargs');
+import { logInfo } from '../utils';
+// import { prompt as ask } from 'inquirer';
+import { argv, type Options, } from 'yargs';
+// import  from 'yargs/helpers';
 
-export default class Preview extends Command {
-  static description = 'Generate preview of transactions from your Forge script';
+// async function askName(): Promise<string> {
+//   logInfo(':wave:  Hello stranger!');
+//   const { path } = await ask([
+//     {
+//       type: 'input',
+//       name: 'path',
+//       message: "What's your name?",
+//     },
+//   ]);
+//   return name;
+// }
 
-  static examples = [
-    '<%= config.bin %> <%= command.id %> forge script script/Deploy.s.sol --broadcast',
-  ];
+export const command = 'preview';
+export const description = `Generate preview of transactions from your Forge script`;
 
-  static strict = false; // Allow unknown arguments
+export type Params = { path: string; broadcast: boolean };
 
-  // Example:
-  // metro preview forge script script/test/DeployTestFxs.s.sol:DeployTestFxs --fork-url https://rpc.tenderly.co/fork/API_KEY --broadcast
-  static args = {
-    path: Args.file({
-      required: true,
-      name: '<PATH>',
-      description: 'Path to script file.',
-    }),
-  };
+export const builder: { [key: string]: Options } = {
+  // $0: {
+  //   default: 'preview',
+  //   required: true,
+  //   description: 'Path to Forge script',
+  // },
+  broadcast: {
+    type: 'boolean',
+    required: true,
+    description: 'Send the transaction to the metropolis RPC',
+  },
+};
 
-  static flags = {
-    broadcast: Flags.boolean({
-      required: true,
-    }),
-  };
+export async function handler({ broadcast, _: [, path] }: yargs.Arguments) {
+  console.log('broadcast', broadcast);
+  console.log({ path });
+  logInfo(`Running Forge Script at ${path}`);
 
-  private async tryParse(): Promise<
-    ParserOutput<
-      {
-        broadcast: boolean;
-      },
-      {
-        [flag: string]: any;
-      },
-      {
-        path: string;
-      }
-    >
-  > {
-    /**
-     * ParserOutput<
-      {
-        broadcast: boolean;
-      },
-      {
-        [flag: string]: any;
-      },
-      {
-        path: string;
-      }
-    >
-     */
-    let parsed: any = {
-      args: {
-        path: '',
-      },
-      flags: {
-        broadcast: false,
-        json: false,
-      },
-      argv: [],
-    };
-    try {
-      parsed = await this.parse(Preview);
-    } catch (error: any) {
-      const isInvalidFlagError = error.message.includes('Nonexistent flag');
-      log(isInvalidFlagError);
-      log(error.message);
-      if (!isInvalidFlagError) throw error;
-    }
-    return parsed;
-  }
-
-  public async run(): Promise<void> {
-    // can get args as an object
-  }
+  console.log({ argv });
 }
+
+// Example:
+// metro preview forge script script/test/DeployTestFxs.s.sol:DeployTestFxs --fork-url https://rpc.tenderly.co/fork/API_KEY --broadcast

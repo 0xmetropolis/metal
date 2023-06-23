@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-const oclif = require('@oclif/core')
+const CLI = require(__dirname + '/../dist/index.js').default;
 
-oclif.run().then(require('@oclif/core/flush')).catch(require('@oclif/core/handle'))
+CLI();
