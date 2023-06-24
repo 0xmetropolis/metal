@@ -1,3 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`preview says hello with the right name, without asking it if provided 1`] = `"Running Forge Script at fake/path.sol..."`;
