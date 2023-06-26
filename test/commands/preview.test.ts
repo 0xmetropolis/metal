@@ -83,6 +83,7 @@ describe('preview', () => {
     }));
     const error = new Error('Mock spawn error');
 
+    // start the preview command, but do it async
     const runPromise = preview({
       _: process.argv.slice(2),
       $0: 'preview',
@@ -92,10 +93,10 @@ describe('preview', () => {
     mockEmitter.emit('error', error);
 
     try {
-      // Wait for the promise to resolve or reject.
+      // Wait for the preview command to finish - which resolves with an error
       await runPromise;
     } catch (e) {}
 
-    expect(logError).toHaveBeenCalledWith(expect.stringContaining(error.message)); // You can add more specific checks here.
+    expect(logError).toHaveBeenCalledWith(expect.stringContaining(error.message));
   });
 });
