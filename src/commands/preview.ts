@@ -6,11 +6,9 @@ import { METRO_DEPLOY_URL } from '../constants';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
-
-const FORGE_FORK_ALIASES = ['--fork-url', '--f', '--rpc-url'];
+const FORGE_FORK_ALIASES = ['--fork-url', '-f', '--rpc-url'];
 
 export type Params = { path: string; broadcast: boolean };
-
 export const builder: { [key: string]: Options } = {
   broadcast: {
     type: 'boolean',
@@ -23,7 +21,6 @@ function processForgeError({ message }: ExecException) {
   if (message.includes('error trying to connect'))
     return 'Could not connect to the RPC, check your internet connection';
   return message;
-  // TODO look into yargs reject?
 }
 
 // @dev replaces any forge fork aliases with the METRO_DEPLOY_URL
@@ -47,10 +44,10 @@ function configureForgeInputs() {
 }
 
 // @dev returns the terminal status code of the forge script
-// @throws if the forge script fails to runs
-async function runForgeScript(foundryArgs: string[]) {
+// @throws if the forge script fails
+async function runForgeScript(scriptArgs: string[]) {
   return await new Promise<number>((resolve, reject) => {
-    const forge_script = spawn(`forge script ${foundryArgs.join(' ')}`, { shell: true });
+    const forge_script = spawn(`forge script ${scriptArgs.join(' ')}`, { shell: true });
 
     // log any errors
     forge_script.on('error', err => {
@@ -60,7 +57,7 @@ async function runForgeScript(foundryArgs: string[]) {
     // log any forge output
     forge_script.stdout.on('data', logInfo);
     // on completion, resolve the promise
-    forge_script.on('close', resolve);
+    forge_script.on('close', resolve); // TODO: code => (code === 0 ? resolve(code) : reject())
   });
 }
 
