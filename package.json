@@ -1,72 +1,70 @@
 {
   "name": "metro",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Smart contract visualization tool.",
   "author": "Metropolis (@0xmetropolis)",
   "bin": {
-    "metro": "./bin/run"
+    "metro": "./dist/run"
   },
   "homepage": "https://github.com/0xmetropolis/cli",
   "license": "ISC",
   "main": "dist/index.js",
   "repository": "0xmetropolis/cli",
-  "files": [
-    "/bin",
-    "/dist",
-    "/npm-shrinkwrap.json",
-    "/oclif.manifest.json"
-  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "watch": "tsc -w",
+    "dev": "yarn build && yarn install:dev && metro -h",
+    "install:dev": "yarn global add file:$PWD",
+    "postinstall": "yarn install:dev"
+  },
   "dependencies": {
-    "@oclif/core": "^2",
-    "@oclif/plugin-help": "^5",
-    "@oclif/plugin-plugins": "^2.4.7"
+    "chalk": "^2.0.1",
+    "husky": "^0.14.3",
+    "inquirer": "^3.2.0",
+    "node-emoji": "^1.7.0",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "@oclif/test": "^2.3.23",
-    "@types/chai": "^4",
-    "@types/mocha": "^9.0.0",
-    "@types/node": "^16.18.36",
-    "chai": "^4",
-    "eslint": "^7.32.0",
-    "eslint-config-oclif": "^4",
-    "eslint-config-oclif-typescript": "^1.0.3",
-    "mocha": "^9",
-    "oclif": "^3",
-    "shx": "^0.3.4",
+    "@types/cors": "^2.8.13",
+    "@types/dotenv-flow": "^3.2.0",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.11",
+    "@types/supertest": "^2.0.12",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
+    "eslint": "^8.36.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "jest": "^29.5.0",
+    "prettier": "^2.8.8",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1",
-    "tslib": "^2.5.3",
-    "typescript": "^4.9.5"
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.0.2",
+    "@types/chalk": "^0.4.31",
+    "@types/inquirer": "^0.0.35",
+    "@types/node-emoji": "^1.4.0",
+    "@types/yargs": "^8.0.1",
+    "babel-eslint": "^7.2.3",
+    "bdd-stdin": "^0.2.0",
+    "eslint-config-buildo": "^0.2.2",
+    "lint-staged": "^4.0.2",
+    "test": "^0.6.0",
+    "typescript-eslint-parser": "^4.0.0"
   },
-  "oclif": {
-    "bin": "metro",
-    "dirname": "metro",
-    "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-help",
-      "@oclif/plugin-plugins"
-    ],
-    "topicSeparator": " ",
-    "topics": {
-      "hello": {
-        "description": "Say hello to the world and others"
-      }
-    }
-  },
-  "scripts": {
-    "build": "shx rm -rf dist && tsc -b",
-    "lint": "eslint . --ext .ts --config .eslintrc",
-    "postpack": "shx rm -f oclif.manifest.json",
-    "posttest": "yarn lint",
-    "prepack": "yarn build && oclif manifest && oclif readme",
-    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
-    "version": "oclif readme && git add README.md"
-  },
-  "engines": {
-    "node": ">=12.0.0"
-  },
-  "bugs": "https://github.com/0xmetropolis/cli/issues",
-  "keywords": [
-    "oclif"
-  ],
-  "types": "dist/index.d.ts"
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(tsx?|jsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json",
+      "jsx"
+    ]
+  }
 }
