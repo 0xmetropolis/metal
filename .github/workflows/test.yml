@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: Test ✅
+    name: Integration 🌁 <> Bulla V2
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -17,5 +17,30 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18
-      - run: yarn
-      - run: yarn test
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: |
+          yarn
+          yarn build
+          yarn install:dev
+
+      - name: Clone Bulla Contracts V2
+        run: |
+          git clone https://github.com/bulla-network/bulla-contracts-v2.git
+          cd bulla-contracts-v2
+          git checkout 895d67f0cf4d32d63624d04ddeb03fcac4743236
+          yarn
+          forge install
+          source .env.development
+
+      - name: Run Metro CLI
+        env:
+          PK: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+        run: |
+          anvil &
+          metro preview script/Deployment.s.sol --broadcast --private-key $PK
