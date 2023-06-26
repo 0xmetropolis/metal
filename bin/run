@@ -1,5 +1,3 @@
 #!/usr/bin/env node
 
-const CLI = require(__dirname + '/../dist/index.js').default;
-
-CLI();
+require(__dirname + '/../dist/index.js').default;
