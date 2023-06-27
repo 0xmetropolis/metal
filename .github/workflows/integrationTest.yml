@@ -8,7 +8,43 @@ on:
   release:
 
 jobs:
-  test:
+  forge-simple:
+    name: Forge Simple
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Metro CLI
+        run: |
+          yarn
+          yarn build
+
+      - name: Clone Forge Simple
+        run: |
+          git clone https://github.com/0xMetropolis/forge-simple.git
+          cd forge-simple
+          yarn
+          forge install
+
+      - name: Run Metro CLI
+        working-directory: forge-simple
+        env:
+          RPC_URL: http://127.0.0.1:8545
+          PK: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+        run: |
+          anvil &
+          ../bin/run preview script/Deploy.s.sol --broadcast --private-key $PK --rpc-url $RPC_URL
+
+  bulla-contracts-v2:
     name: Bulla Contracts V2
     runs-on: ubuntu-latest
     steps:
