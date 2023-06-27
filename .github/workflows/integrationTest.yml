@@ -1,4 +1,4 @@
-name: Integration 🌁
+name: Integration Tests 🌁
 
 on:
   pull_request:
@@ -25,7 +25,6 @@ jobs:
 
       - name: Install Metro CLI
         run: |
-          npm i -g .
           yarn
           yarn build
 
