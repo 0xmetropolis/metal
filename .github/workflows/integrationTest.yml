@@ -1,4 +1,4 @@
-name: integration tests 🧪
+name: Integration 🌁
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   test:
-    name: Integration 🌁 <> Bulla V2
+    name: Bulla V2
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -23,11 +23,9 @@ jobs:
         with:
           version: nightly
 
-      - name: Install dependencies
+      - name: Install Metro CLI
         run: |
-          yarn
-          yarn build
-          yarn install:dev
+          npm i -g .
 
       - name: Clone Bulla Contracts V2
         run: |
@@ -36,7 +34,6 @@ jobs:
           git checkout 895d67f0cf4d32d63624d04ddeb03fcac4743236
           yarn
           forge install
-          source .env.development
 
       - name: Run Metro CLI
         working-directory: bulla-contracts-v2
@@ -47,4 +44,4 @@ jobs:
           PK: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
         run: |
           anvil &
-          sleep 1 && ../bin/run preview script/Deployment.s.sol --broadcast --private-key $PK
+          metro preview script/Deployment.s.sol --broadcast --private-key $PK
