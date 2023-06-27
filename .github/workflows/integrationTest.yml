@@ -1,0 +1,48 @@
+name: Integration Tests 🌁
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  release:
+
+jobs:
+  test:
+    name: Bulla Contracts V2
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Metro CLI
+        run: |
+          yarn
+          yarn build
+
+      - name: Clone Bulla Contracts V2
+        run: |
+          git clone https://github.com/bulla-network/bulla-contracts-v2.git
+          cd bulla-contracts-v2
+          git checkout 895d67f0cf4d32d63624d04ddeb03fcac4743236
+          yarn
+          forge install
+
+      - name: Run Metro CLI
+        working-directory: bulla-contracts-v2
+        env:
+          FEE_RECEIVER: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+          LOCK_STATE: 0
+          RPC_URL: http://127.0.0.1:8545
+          PK: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+        run: |
+          anvil &
+          ../bin/run preview script/Deployment.s.sol --broadcast --private-key $PK
