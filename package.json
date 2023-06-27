@@ -4,7 +4,7 @@
   "description": "Smart contract visualization tool.",
   "author": "Metropolis (@0xmetropolis)",
   "bin": {
-    "metro": "./dist/run"
+    "metro": "./bin/run"
   },
   "engines": {
     "node": ">=18.0.0"
