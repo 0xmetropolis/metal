@@ -8,6 +8,25 @@ export const logWarn = (...s: string[]) =>
   console.warn(emojify(chalk.bold.yellow('⚠️ ' + s.join('\n') + ' ⚠️')));
 export const logDetail = (s: string) => console.log(emojify(chalk.dim(s)));
 
+export const getChainId = async (rpcUrl: string) => {
+  try {
+    const request = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_chainId', params: [], id: 0 }),
+    });
+
+    const response: { jsonrpc: '2.0'; id: 0; result: string } = await request.json();
+
+    return Number(response.result); // convert hex to number
+  } catch (e: any) {
+    logError('Error fetching chainId from RPC endpoint');
+    process.exit(1);
+  }
+};
+
 // @dev returns kv pairs of solidity file path and source code
 export const loadSolidityFiles = (pathToSolc: string[]): { [pathToSolc: string]: string } => {
   const sourceCode = pathToSolc.reduce<{ [contractFilePath: string]: string }>(

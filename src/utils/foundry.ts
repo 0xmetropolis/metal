@@ -1,7 +1,8 @@
 import { ExecException, spawn } from 'child_process';
 import { readFileSync } from 'node:fs';
-import { logError, logInfo, logWarn } from '.';
+import { getChainId, logError, logInfo, logWarn } from '.';
 import * as toml from 'toml';
+import { METRO_DEPLOY_URL } from '../constants';
 
 export type FoundryConfig = {
   profile: {
@@ -55,6 +56,68 @@ export type SolidityFilesCache_Partial = {
   };
 };
 
+type LogReceipt = {
+  address: string;
+  topics: string[];
+  data: string | '0x';
+  blockHash: string;
+  blockNumber: string; // hex;
+  transactionHash: string;
+  transactionIndex: string; // hex;
+  logIndex: string; // hex;
+  transactionLogIndex: string; // hex;
+  removed: boolean;
+};
+
+type BroadcastReceipts = {
+  transactionHash: string;
+  transactionIndex: string; // hex
+  blockHash: string;
+  blockNumber: string; // hex
+  from: string;
+  to: string | null;
+  cumulativeGasUsed: string; // hex
+  gasUsed: string; // hex
+  contractAddress: string | null;
+  logs: LogReceipt[];
+  status: '0x1' | '0x0';
+  logsBloom: string;
+  type: '0x2' | '0x1';
+  effectiveGasPrice: string; // hex
+};
+
+type BroadcastTransaction = {
+  hash: string;
+  transactionType: 'CREATE' | 'CALL';
+  contractName: string;
+  contractAddress: string;
+  function: string | null;
+  arguments: (string | '[]')[];
+  transaction: {
+    type: '0x02' | '0x1';
+    from: string;
+    gas: string; // hex;
+    value: string; // hex;
+    data: string; // hex;
+    nonce: string; // hex;
+    accessList: [];
+  };
+  additionalContracts: [];
+  isFixedGasLimit: false;
+};
+
+export type BroadcastArtifacts_Partial = {
+  transactions: BroadcastTransaction[];
+  receipts: BroadcastReceipts[];
+  libraries: string[];
+  pending: []; // TODO?
+  returns: {}; // TODO?
+  timestamp: number;
+  chain: number;
+  multi: boolean;
+  commit: string;
+};
+
 export const processForgeError = ({ message }: ExecException) => {
   if (message.includes('error trying to connect'))
     return 'Could not connect to the RPC, check your internet connection';
@@ -96,6 +159,41 @@ export const getBroadcastPath = (foundryConfig: FoundryConfig): string => {
   return broadcastFolder;
 };
 
+// @dev loads the run-latest.json from the latest broadcast at METRO_DEPLOY_URL
+export const getBroadcastArtifacts = async (
+  foundryConfig: FoundryConfig,
+  forgeScriptPath: string,
+): Promise<BroadcastArtifacts_Partial> => {
+  const scriptName = forgeScriptPath.split('/').at(-1);
+  const broadcastPath = getBroadcastPath(foundryConfig);
+  const chainId = await getChainId(METRO_DEPLOY_URL);
+
+  let runLatest_raw: string;
+  try {
+    runLatest_raw = readFileSync(`${broadcastPath}/${scriptName}/${chainId}/run-latest.json`, {
+      encoding: 'utf-8',
+    });
+  } catch (e: any) {
+    logError('Could not load run-latest.json');
+    process.exit(1);
+  }
+
+  let broadcastArtifacts: BroadcastArtifacts_Partial;
+  try {
+    broadcastArtifacts = JSON.parse(runLatest_raw);
+  } catch (e: any) {
+    logError('run-latest.json is corrupt / invalid JSON');
+    process.exit(1);
+  }
+
+  if (broadcastArtifacts.transactions.length === 0) {
+    logError(`Cannot preview ${scriptName} as it generated 0 transactions`);
+    process.exit(1);
+  }
+
+  return broadcastArtifacts;
+};
+
 // @dev given the foundry config and the current env vars, returns the path to the cache/ dir
 export const getCachePath = ({ profile }: FoundryConfig): string => {
   const profileENV: string | undefined = process.env.FOUNDRY_PROFILE;
@@ -116,9 +214,17 @@ export const loadSolidityFilesCache = (
   foundryConfig: FoundryConfig,
 ): SolidityFilesCache_Partial => {
   const cachePath = getCachePath(foundryConfig);
-  const filesCache_raw = readFileSync(`${cachePath}/solidity-files-cache.json`, {
-    encoding: 'utf-8',
-  });
+
+  let filesCache_raw: string;
+  try {
+    filesCache_raw = readFileSync(`${cachePath}/solidity-files-cache.json`, {
+      encoding: 'utf-8',
+    });
+  } catch (e: any) {
+    logError('Could not find solidity-files-cache.json');
+    logError(e.message);
+    process.exit(1);
+  }
 
   let filesCache: SolidityFilesCache_Partial;
   try {

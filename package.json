@@ -7,7 +7,7 @@
     "metro": "./bin/run"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.13.0"
   },
   "homepage": "https://github.com/0xmetropolis/cli",
   "license": "ISC",
