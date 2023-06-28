@@ -1,7 +1,13 @@
 import { type Arguments, type Options } from 'yargs';
 import { METRO_DEPLOY_URL } from '../constants';
 import { loadSolidityFiles, logInfo, logWarn } from '../utils';
-import { getScriptDependencies, loadFoundryConfig, runForgeScript } from '../utils/foundry';
+import {
+  getScriptDependencies,
+  getBroadcastArtifacts,
+  loadFoundryConfig,
+  runForgeScript,
+} from '../utils/foundry';
+import assert = require('node:assert');
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -53,5 +59,10 @@ export const handler = async ({ _: [, forgeScriptPath] }: Arguments) => {
   const solidityFiles = [forgeScriptPath, ...dependencyList];
   const sourceCode = loadSolidityFiles(solidityFiles);
 
-  console.log(Object.keys(sourceCode));
+  logInfo(`Getting transactions...`);
+  const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, forgeScriptPath);
+
+  assert(Object.values(sourceCode).length > 0);
+  assert(broadcastArtifacts.transactions.length > 0);
+  logInfo(`DEV: checks pass ✅`);
 };
