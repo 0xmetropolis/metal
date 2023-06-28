@@ -221,7 +221,7 @@ export const loadSolidityFilesCache = (
       encoding: 'utf-8',
     });
   } catch (e: any) {
-    logError('Could lot find solidity-files-cache.json');
+    logError('Could not find solidity-files-cache.json');
     logError(e.message);
     process.exit(1);
   }
