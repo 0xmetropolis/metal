@@ -27,12 +27,12 @@ jobs:
         run: |
           yarn
           yarn build
+          yarn install:global
 
       - name: Clone Forge Simple
         run: |
           git clone https://github.com/0xMetropolis/forge-simple.git
           cd forge-simple
-          yarn
           forge install
 
       - name: Run Metro CLI
@@ -63,6 +63,7 @@ jobs:
         run: |
           yarn
           yarn build
+          yarn install:global
 
       - name: Clone Bulla Contracts V2
         run: |
@@ -82,3 +83,40 @@ jobs:
         run: |
           anvil &
           ../bin/run preview script/Deployment.s.sol --broadcast --private-key $PK
+
+  frax-governance:
+    name: Frax Governance 👩‍⚖️
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.13.0
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Metro CLI
+        run: |
+          yarn
+          yarn build
+          yarn install:global
+
+      - name: Clone Frax Governance
+        run: |
+          git clone https://github.com/FraxFinance/frax-governance.git
+          cd frax-governance
+          git checkout 776e70d4e48c3f6a84b353518a1b3af9b931237a
+          yarn
+          forge install
+
+      - name: Run Metro CLI
+        working-directory: frax-governance
+        env:
+          PK: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+        run: |
+          anvil --code-size-limit 5000000 &
+          echo 'y' | ../bin/run preview script/Deployment.s.sol --broadcast --private-key $PK 
