@@ -110,8 +110,7 @@ jobs:
           git clone https://github.com/FraxFinance/frax-governance.git
           cd frax-governance
           git checkout 776e70d4e48c3f6a84b353518a1b3af9b931237a
-          yarn
-          forge install
+          npm i
 
       - name: Run Metro CLI
         working-directory: frax-governance
