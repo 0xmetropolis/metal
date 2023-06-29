@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+
+require(__dirname.replace('/bin/dev', '') + '/dist/index.js').default;

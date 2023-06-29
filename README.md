@@ -7,8 +7,21 @@ Smart contract visualization CLI tool.
 ```bash
 yarn
 yarn install:dev
+source ~/.zshrc # or ~/.bashrc
+
 yarn watch
 
-# in any repo
-metro ...args
+mdev
 ```
+This will register the `mdev` command in your $PATH - which points to [run](./bin/run). `yarn watch` will look for changes in src and recompile with `tsc` command. Any runs of `mdev` will run the `/dist/index.js` entry point.
+
+## Register as a global package
+
+```bash
+yarn build
+yarn install:global
+
+metro
+```
+
+This will register the current build of `dist/index.js` as a global command `metro`. This is useful for testing the CLI tool without having to publish to npm.
