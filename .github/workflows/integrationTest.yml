@@ -118,4 +118,4 @@ jobs:
           PK: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
         run: |
           anvil --code-size-limit 5000000 &
-          echo 'y' | ../bin/run preview script/Deployment.s.sol --broadcast --private-key $PK 
+          echo 'y' | ../bin/run preview script/test/DeployTestnet.s.sol --broadcast --private-key $PK 
