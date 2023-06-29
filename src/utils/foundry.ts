@@ -1,6 +1,6 @@
 import { ExecException, spawn } from 'child_process';
 import { readFileSync } from 'node:fs';
-import { getChainId, logError, logInfo, logWarn } from '.';
+import { getChainId, logError, logWarn } from '.';
 import * as toml from 'toml';
 import { METRO_DEPLOY_URL } from '../constants';
 
@@ -119,7 +119,7 @@ export type BroadcastArtifacts_Partial = {
 };
 
 export const processForgeError = ({ message }: ExecException) => {
-  if (message.includes('error trying to connect'))
+  if (message.includes('connect error'))
     return 'Could not connect to the RPC, check your internet connection';
   return message;
 };
@@ -257,16 +257,19 @@ export const getScriptDependencies = (foundryConfig: FoundryConfig, forgeScriptP
 // @throws if the forge script fails
 export const runForgeScript = async (scriptArgs: string[]) => {
   return await new Promise<number>((resolve, reject) => {
-    const forge_script = spawn(`forge script ${scriptArgs.join(' ')}`, { shell: true });
+    const clonedEnv = { ...process.env };
+
+    const forge_script = spawn(`forge script ${scriptArgs.join(' ')}`, {
+      shell: true,
+      stdio: 'inherit',
+      env: clonedEnv,
+    });
 
     // log any errors
     forge_script.on('error', err => {
       logError('\n' + processForgeError(err) + '\n');
       reject();
     });
-    forge_script.stderr.on('data', logError);
-    // log any forge output
-    forge_script.stdout.on('data', logInfo);
 
     // on completion, resolve or reject the promise
     forge_script.on('close', (code, signal) => {
