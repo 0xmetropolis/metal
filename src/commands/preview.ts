@@ -1,9 +1,10 @@
+import { PreviewRequestParams } from 'index';
 import { type Arguments, type Options } from 'yargs';
 import { METRO_DEPLOY_URL } from '../constants';
-import { loadSolidityFiles, logInfo, logWarn } from '../utils';
+import { loadSolidityFiles, logError, logInfo, logWarn } from '../utils';
 import {
-  getScriptDependencies,
   getBroadcastArtifacts,
+  getScriptDependencies,
   loadFoundryConfig,
   runForgeScript,
 } from '../utils/foundry';
@@ -42,6 +43,39 @@ export const configureForgeScriptInputs = (): string[] => {
   return formattedArgs;
 };
 
+function devModeSanityChecks({ sourceCode, broadcastArtifacts }: PreviewRequestParams) {
+  assert(Object.values(sourceCode).length > 0 && Object.values(sourceCode).every(Boolean));
+  assert(broadcastArtifacts.transactions.length > 0);
+  logInfo(`DEV: checks pass ✅`);
+}
+
+export const sendDataToPreviewService = async (payload: PreviewRequestParams): Promise<string> => {
+  try {
+    const response = await fetch(`${METRO_DEPLOY_URL}/preview`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (response.status !== 200) {
+      logError('Error received from preview service:');
+      logError('Status Code: ' + response.status);
+      logError('Status Text: ' + response.statusText);
+      process.exit(1);
+    }
+
+    const { previewURL }: { previewURL: string } = await response.json();
+
+    return previewURL;
+  } catch (e: any) {
+    logError('Error connecting to preview service');
+    logError(e.message);
+    process.exit(1);
+  }
+};
+
 // @dev entry point for the preview command
 export const handler = async ({ _: [, forgeScriptPath] }: Arguments) => {
   logInfo(`Loading foundry.toml...`);
@@ -62,7 +96,30 @@ export const handler = async ({ _: [, forgeScriptPath] }: Arguments) => {
   logInfo(`Getting transactions...`);
   const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, forgeScriptPath);
 
-  assert(Object.values(sourceCode).every(Boolean));
-  assert(broadcastArtifacts.transactions.length > 0);
-  logInfo(`DEV: checks pass ✅`);
+  const payload = {
+    broadcastArtifacts,
+    sourceCode,
+  };
+  devModeSanityChecks(payload);
+
+  const previewURL = await sendDataToPreviewService(payload);
+
+  logInfo(`Preview simulation successful! 🎉\n\n`);
+  logInfo(`View preview: ${previewURL}`);
+  logInfo(`
+                             ^
+                _______     ^^^
+               |xxxxxxx|  _^^^^^_
+               |xxxxxxx| | [][]  |
+            ______xxxxx| |[][][] |
+           |++++++|xxxx| | [][][]|      METROPOLIS
+           |++++++|xxxx| |[][][] |
+           |++++++|_________ [][]|
+           |++++++|=|=|=|=|=| [] |
+           |++++++|=|=|=|=|=|[][]|
+___________|++HH++|  _HHHH__|   _________   _________  _________
+
+${previewURL}
+__________________  ___________    __________________    ____________
+  `);
 };

@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { HexString, SourceCodeDict } from 'index';
 import { emojify } from 'node-emoji';
 import { readFileSync } from 'node:fs';
 
@@ -18,7 +19,7 @@ export const getChainId = async (rpcUrl: string) => {
       body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_chainId', params: [], id: 0 }),
     });
 
-    const response: { jsonrpc: '2.0'; id: 0; result: string } = await request.json();
+    const response: { jsonrpc: '2.0'; id: 0; result: HexString } = await request.json();
 
     return Number(response.result); // convert hex to number
   } catch (e: any) {
@@ -28,7 +29,7 @@ export const getChainId = async (rpcUrl: string) => {
 };
 
 // @dev returns kv pairs of solidity file path and source code
-export const loadSolidityFiles = (pathToSolc: string[]): { [pathToSolc: string]: string } => {
+export const loadSolidityFiles = (pathToSolc: string[]): SourceCodeDict => {
   const sourceCode = pathToSolc.reduce<{ [contractFilePath: string]: string }>(
     (sourceCodeAcc, path) => {
       try {
