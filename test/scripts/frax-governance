@@ -1,0 +1,7 @@
+#!/usr/bin/expect -f
+
+cd ../../frax-governance
+spawn ../bin/run preview script/test/DeployTestnet.s.sol --broadcast --private-key $PK
+expect "Do you wish to continue?"
+send "y"
+interact
