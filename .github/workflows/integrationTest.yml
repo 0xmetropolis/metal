@@ -105,6 +105,10 @@ jobs:
           yarn build
           yarn install:global
 
+      - name: Install expect
+        run: |
+          apt-get install expect -y
+
       - name: Clone Frax Governance
         run: |
           git clone https://github.com/FraxFinance/frax-governance.git
@@ -118,4 +122,4 @@ jobs:
         run: |
           chmod a+x test/scripts/frax-governance
           anvil --code-size-limit 5000000 &
-          test/scripts/frax-governance 
+          test/scripts/frax-governance
