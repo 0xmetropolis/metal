@@ -62,7 +62,7 @@ export const handler = async ({ _: [, forgeScriptPath] }: Arguments) => {
   logInfo(`Getting transactions...`);
   const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, forgeScriptPath);
 
-  assert(Object.values(sourceCode).length > 0);
+  assert(Object.values(sourceCode).every(Boolean));
   assert(broadcastArtifacts.transactions.length > 0);
   logInfo(`DEV: checks pass ✅`);
 };

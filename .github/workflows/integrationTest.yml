@@ -121,3 +121,42 @@ jobs:
           chmod a+x test/scripts/frax-governance
           anvil --code-size-limit 5000000 &
           test/scripts/frax-governance
+
+  llama:
+    name: Llama 🦙
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.13.0
+
+      - name: Install expect
+        run: |
+          sudo apt-get install expect -y
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Metro CLI
+        run: |
+          yarn
+          yarn build
+          yarn install:global
+
+      - name: Clone Llama
+        run: |
+          git clone https://github.com/code-423n4/2023-06-llama.git
+          cd 2023-06-llama
+          git checkout 9d422c264b57657098c2784aa951852cad32e01c
+          forge install
+          forge build
+
+      - name: Run Metro CLI
+        run: |
+          chmod a+x test/scripts/llama
+          anvil --code-size-limit 5000000 &
+          test/scripts/llama
