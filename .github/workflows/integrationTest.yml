@@ -107,7 +107,7 @@ jobs:
 
       - name: Install expect
         run: |
-          apt-get install expect -y
+          sudo apt-get install expect -y
 
       - name: Clone Frax Governance
         run: |
