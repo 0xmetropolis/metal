@@ -9,6 +9,11 @@ export const logWarn = (...s: string[]) =>
   console.warn(emojify(chalk.bold.yellow('⚠️ ' + s.join('\n') + ' ⚠️')));
 export const logDetail = (s: string) => console.log(emojify(chalk.dim(s)));
 
+export const exit = (...message: string[]) => {
+  logError.call(this, message);
+  process.exit(1);
+};
+
 export const getChainId = async (rpcUrl: string) => {
   try {
     const request = await fetch(rpcUrl, {
@@ -23,9 +28,23 @@ export const getChainId = async (rpcUrl: string) => {
 
     return Number(response.result); // convert hex to number
   } catch (e: any) {
-    logError('Error fetching chainId from RPC endpoint');
-    process.exit(1);
+    exit('Error fetching chainId from RPC endpoint');
   }
+};
+
+export const replaceFlagValues = ({
+  args,
+  flags,
+  replaceWith: replaceWith,
+}: {
+  args: string[];
+  flags: string[];
+  replaceWith: string;
+}) => {
+  const flagIndex = args.findIndex(arg => flags.some(alias => alias === arg));
+
+  if (flagIndex === -1) return args;
+  else return args.map((arg, index) => (index === flagIndex + 1 ? replaceWith : arg));
 };
 
 // @dev returns kv pairs of solidity file path and source code
@@ -36,8 +55,7 @@ export const loadSolidityFiles = (pathToSolc: string[]): SourceCodeDict => {
         const code = readFileSync(path, { encoding: 'utf-8' });
         return { ...sourceCodeAcc, [path]: code };
       } catch (e: any) {
-        logError(`Could not find Solidity source file: ${path}`);
-        process.exit(1);
+        exit(`Could not find Solidity source file: ${path}`);
       }
     },
     {},
