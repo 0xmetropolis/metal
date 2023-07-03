@@ -102,7 +102,7 @@ export const handler = async ({ _: [, forgeScriptPath] }: Arguments) => {
   };
   devModeSanityChecks(payload);
 
-  const previewURL = await sendDataToPreviewService(payload);
+  const previewURL = 'https://metropolis.sh/my-preview'; // await sendDataToPreviewService(payload); (not ready)
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
   logInfo(`View preview: ${previewURL}`);
