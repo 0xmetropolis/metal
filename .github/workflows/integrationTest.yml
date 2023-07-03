@@ -27,12 +27,12 @@ jobs:
         run: |
           yarn
           yarn build
+          yarn install:global
 
       - name: Clone Forge Simple
         run: |
           git clone https://github.com/0xMetropolis/forge-simple.git
           cd forge-simple
-          yarn
           forge install
 
       - name: Run Metro CLI
@@ -63,6 +63,7 @@ jobs:
         run: |
           yarn
           yarn build
+          yarn install:global
 
       - name: Clone Bulla Contracts V2
         run: |
@@ -82,3 +83,80 @@ jobs:
         run: |
           anvil &
           ../bin/run preview script/Deployment.s.sol --broadcast --private-key $PK
+
+  frax-governance:
+    name: Frax Governance 👩‍⚖️
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.13.0
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Metro CLI
+        run: |
+          yarn
+          yarn build
+          yarn install:global
+
+      - name: Install expect
+        run: |
+          sudo apt-get install expect -y
+
+      - name: Clone Frax Governance
+        run: |
+          git clone https://github.com/FraxFinance/frax-governance.git
+          cd frax-governance
+          git checkout 776e70d4e48c3f6a84b353518a1b3af9b931237a
+          npm i
+
+      - name: Run Metro CLI
+        run: |
+          chmod a+x test/scripts/frax-governance
+          anvil --code-size-limit 5000000 &
+          test/scripts/frax-governance
+
+  llama:
+    name: Llama 🦙
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.13.0
+
+      - name: Install expect
+        run: |
+          sudo apt-get install expect -y
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install Metro CLI
+        run: |
+          yarn
+          yarn build
+          yarn install:global
+
+      - name: Clone Llama
+        run: |
+          git clone https://github.com/code-423n4/2023-06-llama.git
+          cd 2023-06-llama
+          git checkout 9d422c264b57657098c2784aa951852cad32e01c
+          forge install
+          forge build
+
+      - name: Run Metro CLI
+        run: |
+          chmod a+x test/scripts/llama
+          anvil --code-size-limit 5000000 &
+          test/scripts/llama

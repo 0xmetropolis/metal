@@ -18,7 +18,8 @@
     "test": "jest",
     "watch": "tsc -w",
     "dev": "yarn build && yarn install:dev && metro -h",
-    "install:dev": "yarn global add file:$PWD"
+    "install:dev": "sh ./bin/setup-dev.sh",
+    "install:global": "yarn global add file:$PWD"
   },
   "dependencies": {
     "chalk": "^2.0.1",
