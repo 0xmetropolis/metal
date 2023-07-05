@@ -1,7 +1,7 @@
 import { PreviewRequestParams } from 'index';
 import { type Arguments, type Options } from 'yargs';
-import { METRO_DEPLOY_URL } from '../constants';
-import { loadSolidityFiles, logError, logInfo, logWarn } from '../utils';
+import { CHAIN_ID_OVERRIDE, METRO_DEPLOY_URL, SUPPORTED_CHAINS } from '../constants';
+import { exit, loadSolidityFiles, logInfo, logWarn, replaceFlagValues } from '../utils';
 import {
   getBroadcastArtifacts,
   getScriptDependencies,
@@ -14,14 +14,21 @@ export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
 const FORGE_FORK_ALIASES = ['--fork-url', '-f', '--rpc-url'];
 
-export type Params = { path: string; broadcast: boolean };
-export const builder: { [key: string]: Options } = {
-  broadcast: {
-    type: 'boolean',
-    required: true,
-    description: 'Send the transaction to the metropolis RPC',
-  },
-};
+function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: Arguments) {
+  const cliInput = process.argv.slice(3);
+  const rpcIndex = cliInput.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
+
+  if (rpcIndex !== -1)
+    logWarn(
+      'You have specified a custom RPC',
+      'This will be ignored and transactions will be sent to the Metropolis RPC',
+    );
+
+  if (!scriptPath || !scriptPath.includes('.sol'))
+    exit('You must specify a solidity script to preview');
+
+  if (!SUPPORTED_CHAINS.includes(chainId)) exit(`Chain Id ${chainId} is not supported`);
+}
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the METRO_DEPLOY_URL
 export const configureForgeScriptInputs = (): string[] => {
@@ -30,17 +37,21 @@ export const configureForgeScriptInputs = (): string[] => {
   const rpcIndex = initialArgs.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
   const userHasSpecifiedRPC = rpcIndex !== -1;
 
-  if (userHasSpecifiedRPC)
-    logWarn(
-      'You have specified a custom RPC',
-      'This will be ignored and transactions will be sent to the Metropolis RPC',
-    );
-
-  const formattedArgs = userHasSpecifiedRPC
-    ? initialArgs.map((arg, index) => (index === rpcIndex + 1 ? METRO_DEPLOY_URL : arg))
+  const argsWithRPCUrl = userHasSpecifiedRPC
+    ? replaceFlagValues({
+        args: initialArgs,
+        flags: FORGE_FORK_ALIASES,
+        replaceWith: METRO_DEPLOY_URL,
+      })
     : [...initialArgs, '--rpc-url', METRO_DEPLOY_URL];
 
-  return formattedArgs;
+  const argsWithChainId = replaceFlagValues({
+    args: argsWithRPCUrl,
+    flags: ['--chain-id'],
+    replaceWith: CHAIN_ID_OVERRIDE.toString(),
+  });
+
+  return argsWithChainId;
 };
 
 function devModeSanityChecks({ sourceCode, broadcastArtifacts }: PreviewRequestParams) {
@@ -59,25 +70,45 @@ export const sendDataToPreviewService = async (payload: PreviewRequestParams): P
       body: JSON.stringify(payload),
     });
 
-    if (response.status !== 200) {
-      logError('Error received from preview service:');
-      logError('Status Code: ' + response.status);
-      logError('Status Text: ' + response.statusText);
-      process.exit(1);
-    }
+    if (response.status !== 200)
+      exit(
+        'Error received from preview service:',
+        'Status Code: ' + response.status,
+        'Status Text: ' + response.statusText,
+      );
 
     const { previewURL }: { previewURL: string } = await response.json();
 
     return previewURL;
   } catch (e: any) {
-    logError('Error connecting to preview service');
-    logError(e.message);
-    process.exit(1);
+    exit('Error connecting to preview service', e.message);
   }
 };
 
+export type Params = { path: string; broadcast: boolean; 'chain-id': number };
+export const builder: { [key: string]: Options } = {
+  broadcast: {
+    type: 'boolean',
+    required: true,
+    description: 'Send the transaction to the metropolis RPC',
+  },
+  'chain-id': {
+    type: 'number',
+    required: true,
+    description: 'The chain id of the network you wish to preview',
+  },
+};
+
 // @dev entry point for the preview command
-export const handler = async ({ _: [, forgeScriptPath] }: Arguments) => {
+export const handler = async (yargs: Arguments) => {
+  validateInputs(yargs);
+
+  // @dev arg 0 is the command name: e.g: `preview`
+  const {
+    _: [, forgeScriptPath],
+    'chain-id': chainId,
+  } = yargs;
+
   logInfo(`Loading foundry.toml...`);
   const foundryConfig = loadFoundryConfig();
 
@@ -99,6 +130,7 @@ export const handler = async ({ _: [, forgeScriptPath] }: Arguments) => {
   const payload = {
     broadcastArtifacts,
     sourceCode,
+    chainId,
   };
   devModeSanityChecks(payload);
 

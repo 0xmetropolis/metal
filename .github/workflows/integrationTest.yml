@@ -42,7 +42,7 @@ jobs:
           PK: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
         run: |
           anvil &
-          ../bin/run preview script/Deploy.s.sol --broadcast --private-key $PK --rpc-url $RPC_URL
+          ../bin/run preview script/Deploy.s.sol --broadcast --private-key $PK --rpc-url $RPC_URL --chain-id 1
 
   bulla-contracts-v2:
     name: Bulla Contracts V2
@@ -82,7 +82,7 @@ jobs:
           PK: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
         run: |
           anvil &
-          ../bin/run preview script/Deployment.s.sol --broadcast --private-key $PK
+          ../bin/run preview script/Deployment.s.sol --broadcast --private-key $PK --chain-id 1
 
   frax-governance:
     name: Frax Governance 👩‍⚖️

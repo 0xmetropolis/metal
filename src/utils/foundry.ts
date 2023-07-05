@@ -2,7 +2,7 @@ import { ExecException, spawn } from 'child_process';
 import { BroadcastArtifacts_Partial, FoundryConfig, SolidityFilesCache_Partial } from 'index';
 import { readFileSync } from 'node:fs';
 import * as toml from 'toml';
-import { getChainId, logError, logWarn } from '.';
+import { exit, getChainId, logWarn, logError } from '.';
 import { METRO_DEPLOY_URL } from '../constants';
 
 export const processForgeError = ({ message }: ExecException) => {
@@ -16,8 +16,7 @@ export const loadFoundryConfig = () => {
   try {
     foundryToml_raw = readFileSync('foundry.toml', { encoding: 'utf-8' });
   } catch (e: any) {
-    logError('Could not find foundry.toml, ensure you in the root directory of a Foundry project');
-    process.exit(1);
+    exit('Could not find foundry.toml, ensure you in the root directory of a Foundry project');
   }
 
   let foundryConfig: FoundryConfig;
@@ -25,11 +24,10 @@ export const loadFoundryConfig = () => {
   try {
     foundryConfig = toml.parse(foundryToml_raw);
   } catch (e: any) {
-    logError(
+    exit(
       'Could not parse foundry.toml, ensure it is valid TOML',
       'see https://github.com/foundry-rs/foundry/tree/master/config for more information.',
     );
-    process.exit(1);
   }
 
   return foundryConfig;
@@ -61,22 +59,18 @@ export const getBroadcastArtifacts = async (
       encoding: 'utf-8',
     });
   } catch (e: any) {
-    logError('Could not load run-latest.json');
-    process.exit(1);
+    exit('Could not load run-latest.json');
   }
 
   let broadcastArtifacts: BroadcastArtifacts_Partial;
   try {
     broadcastArtifacts = JSON.parse(runLatest_raw);
   } catch (e: any) {
-    logError('run-latest.json is corrupt / invalid JSON');
-    process.exit(1);
+    exit('run-latest.json is corrupt / invalid JSON');
   }
 
-  if (broadcastArtifacts.transactions.length === 0) {
-    logError(`Cannot preview ${scriptName} as it generated 0 transactions`);
-    process.exit(1);
-  }
+  if (broadcastArtifacts.transactions.length === 0)
+    exit(`Cannot preview ${scriptName} as it generated 0 transactions`);
 
   return broadcastArtifacts;
 };
@@ -88,10 +82,7 @@ export const getCachePath = ({ profile }: FoundryConfig): string => {
   const isCacheDisabled =
     profile[profileName]?.cache === false || profile['default']?.cache === false;
 
-  if (isCacheDisabled) {
-    logError('Caching is disabled, please set `cache = true` in your foundry.toml');
-    process.exit(1);
-  }
+  if (isCacheDisabled) exit('Caching is disabled, please set `cache = true` in your foundry.toml');
 
   const cachePath = profile[profileName]?.cache_path ?? profile['default'].cache_path ?? 'cache';
   return cachePath;
@@ -108,17 +99,14 @@ export const loadSolidityFilesCache = (
       encoding: 'utf-8',
     });
   } catch (e: any) {
-    logError('Could not find solidity-files-cache.json');
-    logError(e.message);
-    process.exit(1);
+    exit('Could not find solidity-files-cache.json', e.message);
   }
 
   let filesCache: SolidityFilesCache_Partial;
   try {
     filesCache = JSON.parse(filesCache_raw);
   } catch (e: any) {
-    logError('Could not parse solidity-files-cache.json, ensure it is valid JSON');
-    process.exit(1);
+    exit('Could not parse solidity-files-cache.json, ensure it is valid JSON');
   }
 
   return filesCache;
@@ -129,10 +117,9 @@ export const getScriptDependencies = (foundryConfig: FoundryConfig, forgeScriptP
   const filesCache = loadSolidityFilesCache(foundryConfig);
 
   if (filesCache.files[forgeScriptPath] === undefined) {
-    logError(
+    exit(
       `Could not find ${forgeScriptPath} in solidity-files-cache.json, ensure it is a valid forge script`,
     );
-    process.exit(1);
   }
   if (filesCache._format !== 'ethers-rs-sol-cache-3')
     logWarn('Unexpected solidity-files-cache format, failure may occur');
