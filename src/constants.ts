@@ -1,4 +1,4 @@
-import { Network } from '@tenderly/sdk';
+import { Network } from "./types";
 
 // @dev we use a dummy chain id to nullify an accounts signature.
 //  This prevents the signed transactions from ever getting into the wrong hands
