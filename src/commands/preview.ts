@@ -45,13 +45,13 @@ export const configureForgeScriptInputs = (): string[] => {
       })
     : [...initialArgs, '--rpc-url', METRO_DEPLOY_URL];
 
-  const argsWithChainId = replaceFlagValues({
-    args: argsWithRPCUrl,
-    flags: ['--chain-id'],
-    replaceWith: CHAIN_ID_OVERRIDE.toString(),
-  });
+  // const argsWithChainId = replaceFlagValues({
+  //   args: argsWithRPCUrl,
+  //   flags: ['--chain-id'],
+  //   replaceWith: CHAIN_ID_OVERRIDE.toString(),
+  // });
 
-  return argsWithChainId;
+  return argsWithRPCUrl; // argsWithChainId;
 };
 
 function devModeSanityChecks({ sourceCode, broadcastArtifacts }: PreviewRequestParams) {
