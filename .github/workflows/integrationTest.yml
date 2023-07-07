@@ -153,6 +153,7 @@ jobs:
         working-directory: 2023-06-llama
         env:
           PK: '0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6'
+          ETHERSCAN_API_KEY: 'XFGE58C46F89RWGDW6EZ8SYFNGH22J70J6' # not real
         run: |
           anvil --code-size-limit 5000000 &
           ../bin/run preview script/DeployLlama.s.sol --private-key $PK --code-size-limit 5000000 --broadcast --chain-id 1
