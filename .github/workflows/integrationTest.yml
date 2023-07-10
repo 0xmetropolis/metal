@@ -105,10 +105,6 @@ jobs:
           yarn build
           yarn install:global
 
-      - name: Install expect
-        run: |
-          sudo apt-get install expect -y
-
       - name: Clone Frax Governance
         run: |
           git clone https://github.com/FraxFinance/frax-governance.git
@@ -117,10 +113,12 @@ jobs:
           npm i
 
       - name: Run Metro CLI
+        working-directory: frax-governance
+        env:
+          PK: '0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6'
         run: |
-          chmod a+x test/scripts/frax-governance
           anvil --code-size-limit 5000000 &
-          test/scripts/frax-governance
+          ../bin/run preview script/test/DeployTestnet.s.sol --private-key $PK --code-size-limit 5000000 --broadcast --chain-id 1
 
   llama:
     name: Llama 🦙
@@ -131,10 +129,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18.13.0
-
-      - name: Install expect
-        run: |
-          sudo apt-get install expect -y
 
       - name: Install Foundry
         uses: onbjerg/foundry-toolchain@v1
@@ -156,7 +150,12 @@ jobs:
           forge build
 
       - name: Run Metro CLI
+        working-directory: 2023-06-llama
+        env:
+          PK: '0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6'
+          ETHERSCAN_API_KEY: 'XFGE58C46F89RWGDW6EZ8SYFNGH22J70J6' # not real
         run: |
-          chmod a+x test/scripts/llama
           anvil --code-size-limit 5000000 &
-          test/scripts/llama
+          ../bin/run preview script/DeployLlama.s.sol --private-key $PK --code-size-limit 5000000 --broadcast --chain-id 1
+          
+
