@@ -142,7 +142,7 @@ export const handler = async (yargs: Arguments) => {
                              ^
                 _______     ^^^
                |xxxxxxx|  _^^^^^_
-               |xxxxxxx| | [][]  |
+               |xxxxxxx| | [][][]|
             ______xxxxx| |[][][] |
            |++++++|xxxx| | [][][]|      METROPOLIS
            |++++++|xxxx| |[][][] |
