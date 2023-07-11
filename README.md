@@ -8,12 +8,12 @@ Smart contract visualization CLI tool.
 
 ```bash
 yarn
-yarn install:dev
+yarn install:dev # should only need to do this once
 source ~/.zshrc # or ~/.bashrc
 
 yarn watch
 
-mdev
+mdev # in a new terminal
 ```
 
 This will register the `mdev` command in your $PATH - which points to [run](./bin/run). `yarn watch`
