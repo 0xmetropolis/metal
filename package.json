@@ -1,6 +1,6 @@
 {
   "name": "metro",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Smart contract visualization tool.",
   "author": "Metropolis (@0xmetropolis)",
   "bin": {
