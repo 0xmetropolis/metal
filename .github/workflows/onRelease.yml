@@ -10,10 +10,16 @@ on:
         description: tag that needs to publish
         type: string
         required: true
+
 jobs:
-  npm:
-    uses: oclif/github-workflows/.github/workflows/npmPublish.yml@main
-    with:
-      tag: latest
-      githubTag: ${{ github.event.release.tag_name || inputs.tag }}
-    secrets: inherit
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm test
+      - uses: JS-DevTools/npm-publish@v2
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
