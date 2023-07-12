@@ -1,5 +1,7 @@
 # Metropolis CLI
 
+TESTING
+
 [![Integration Tests 🌁](https://github.com/0xmetropolis/cli/actions/workflows/integrationTest.yml/badge.svg)](https://github.com/0xmetropolis/cli/actions/workflows/integrationTest.yml)
 
 Smart contract visualization CLI tool.
