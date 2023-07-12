@@ -1,5 +1,5 @@
 {
-  "name": "metro",
+  "name": "@0xmetropolis/cli",
   "version": "0.0.1",
   "description": "Smart contract visualization tool.",
   "author": "Metropolis (@0xmetropolis)",
