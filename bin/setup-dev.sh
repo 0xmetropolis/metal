@@ -18,11 +18,11 @@ if [ -d "$MDEV_DIR" ]; then
         # Add mdev directory to the PATH permanently for the appropriate shell
         if [ "$CURRENT_SHELL" = "bash" ]; then
             PROFILE="$HOME/.bashrc"
-            echo "export PATH=\"$MDEV_DIR:\$PATH\"" >> $PROFILE
+            echo "export PATH=\"\$PATH:$MDEV_DIR\"" >> $PROFILE
 
         elif [ "$CURRENT_SHELL" = "zsh" ]; then
             PROFILE="$HOME/.zshrc"
-            echo "export PATH=\"$MDEV_DIR:\$PATH\"" >> $PROFILE
+            echo "export PATH=\"\$PATH:$MDEV_DIR\"" >> $PROFILE
 
         else
             echo "Unsupported shell. Please add the directory to your shell's configuration file manually."
