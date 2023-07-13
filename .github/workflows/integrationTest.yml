@@ -33,6 +33,7 @@ jobs:
         run: |
           git clone https://github.com/0xMetropolis/forge-simple.git
           cd forge-simple
+          git checkout d38ea9337144c05d5abbdb36fc5badd76d38324c
           forge install
 
       - name: Run Metro CLI
