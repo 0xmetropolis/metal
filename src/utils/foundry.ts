@@ -1,9 +1,13 @@
 import { ExecException, spawn } from 'child_process';
-import { BroadcastArtifacts_Partial, FoundryConfig, SolidityFilesCache_Partial } from 'index';
+import {
+  BroadcastArtifacts_Partial,
+  FoundryConfig,
+  Network,
+  SolidityFilesCache_Partial,
+} from 'index';
 import { readFileSync } from 'node:fs';
 import * as toml from 'toml';
 import { exit, getChainId, logWarn, logError } from '.';
-import { METRO_DEPLOY_URL } from '../constants';
 
 export const processForgeError = ({ message }: ExecException) => {
   if (message.includes('connect error'))
@@ -47,11 +51,11 @@ export const getBroadcastPath = (foundryConfig: FoundryConfig): string => {
 // @dev loads the run-latest.json from the latest broadcast at METRO_DEPLOY_URL
 export const getBroadcastArtifacts = async (
   foundryConfig: FoundryConfig,
+  chainId: Network,
   forgeScriptPath: string,
 ): Promise<BroadcastArtifacts_Partial> => {
   const scriptName = forgeScriptPath.split('/').at(-1);
   const broadcastPath = getBroadcastPath(foundryConfig);
-  const chainId = await getChainId(METRO_DEPLOY_URL);
 
   let runLatest_raw: string;
   try {
