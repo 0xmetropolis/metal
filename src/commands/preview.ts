@@ -1,6 +1,6 @@
 import { PreviewRequestParams } from 'index';
 import { type Arguments, type Options } from 'yargs';
-import { CHAIN_ID_OVERRIDE, METRO_DEPLOY_URL, SUPPORTED_CHAINS } from '../constants';
+import { METRO_DEPLOY_URL, SUPPORTED_CHAINS } from '../constants';
 import { exit, loadSolidityFiles, logInfo, logWarn, replaceFlagValues } from '../utils';
 import {
   getBroadcastArtifacts,
@@ -8,13 +8,36 @@ import {
   loadFoundryConfig,
   runForgeScript,
 } from '../utils/foundry';
+import { createMetropolisFork } from '../utils/preview-service';
 import assert = require('node:assert');
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
 const FORGE_FORK_ALIASES = ['--fork-url', '-f', '--rpc-url'];
+const RPC_OVERRIDE_FLAG = '--UNSAFE-RPC-OVERRIDE';
 
-function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: Arguments) {
+export type Params = { broadcast: boolean; 'chain-id': number; 'UNSAFE-RPC-OVERRIDE'?: string };
+export type HandlerInput = Arguments & Params;
+
+export const builder: { [key: string]: Options } = {
+  broadcast: {
+    type: 'boolean',
+    required: true,
+    description: 'Send the transaction to the metropolis RPC',
+  },
+  'chain-id': {
+    type: 'number',
+    required: true,
+    description: 'The chain id of the network you wish to preview',
+  },
+  'UNSAFE-RPC-OVERRIDE': {
+    type: 'string',
+    required: false,
+    description: 'DEV-ONLY!: Specify an RPC override for the `forge script` command',
+  },
+};
+
+function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput) {
   const cliInput = process.argv.slice(3);
   const rpcIndex = cliInput.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
 
@@ -30,20 +53,35 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: Arguments) {
   if (!SUPPORTED_CHAINS.includes(chainId)) exit(`Chain Id ${chainId} is not supported`);
 }
 
-// @dev pulls any args from process.argv and replaces any fork-url aliases with the METRO_DEPLOY_URL
-export const configureForgeScriptInputs = (): string[] => {
+// @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
+export const configureForgeScriptInputs = (
+  rpcUrl: string,
+  { 'UNSAFE-RPC-OVERRIDE': unsafeRPCoverride }: HandlerInput,
+): string[] => {
   // pull anything after `metro preview <path>` as forge arguments
   const initialArgs = process.argv.slice(3);
+  const rpcToUse = unsafeRPCoverride ?? rpcUrl;
+
+  // if they have specified an rpc override, we need to remove that flag and not pass it to forge
+  const userHasSpecifiedOverrideRPC = !!unsafeRPCoverride;
+  const rpcOverrideIndex = initialArgs.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
+
+  const argsWithoutOverride = userHasSpecifiedOverrideRPC
+    ? initialArgs.filter(
+        (_, argIndex) => argIndex !== rpcOverrideIndex && argIndex !== rpcOverrideIndex + 1,
+      )
+    : initialArgs;
+
   const rpcIndex = initialArgs.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
   const userHasSpecifiedRPC = rpcIndex !== -1;
 
   const argsWithRPCUrl = userHasSpecifiedRPC
     ? replaceFlagValues({
-        args: initialArgs,
+        args: argsWithoutOverride,
         flags: FORGE_FORK_ALIASES,
-        replaceWith: METRO_DEPLOY_URL,
+        replaceWith: rpcToUse,
       })
-    : [...initialArgs, '--rpc-url', METRO_DEPLOY_URL];
+    : [...argsWithoutOverride, '--rpc-url', rpcToUse];
 
   // const argsWithChainId = replaceFlagValues({
   //   args: argsWithRPCUrl,
@@ -54,6 +92,7 @@ export const configureForgeScriptInputs = (): string[] => {
   return argsWithRPCUrl; // argsWithChainId;
 };
 
+/// @dev sanity checks while we scaffold the app
 function devModeSanityChecks({ sourceCode, broadcastArtifacts }: PreviewRequestParams) {
   assert(Object.values(sourceCode).length > 0 && Object.values(sourceCode).every(Boolean));
   assert(broadcastArtifacts.transactions.length > 0);
@@ -85,36 +124,26 @@ export const sendDataToPreviewService = async (payload: PreviewRequestParams): P
   }
 };
 
-export type Params = { path: string; broadcast: boolean; 'chain-id': number };
-export const builder: { [key: string]: Options } = {
-  broadcast: {
-    type: 'boolean',
-    required: true,
-    description: 'Send the transaction to the metropolis RPC',
-  },
-  'chain-id': {
-    type: 'number',
-    required: true,
-    description: 'The chain id of the network you wish to preview',
-  },
-};
-
 // @dev entry point for the preview command
-export const handler = async (yargs: Arguments) => {
+export const handler = async (yargs: HandlerInput) => {
   validateInputs(yargs);
 
   // @dev arg 0 is the command name: e.g: `preview`
   const {
     _: [, forgeScriptPath],
     'chain-id': chainId,
+    'UNSAFE-RPC-OVERRIDE': rpcOverride,
   } = yargs;
+
+  const rpcEndpoint = rpcOverride ? rpcOverride : (await createMetropolisFork(chainId)).rpcUrl;
 
   logInfo(`Loading foundry.toml...`);
   const foundryConfig = loadFoundryConfig();
 
   logInfo(`Running Forge Script at ${forgeScriptPath}...`);
 
-  const foundryArguments = configureForgeScriptInputs();
+  const foundryArguments = configureForgeScriptInputs(rpcEndpoint, yargs);
+
   await runForgeScript(foundryArguments);
 
   logInfo(`Forge deployment script ran successfully!`);
@@ -125,7 +154,7 @@ export const handler = async (yargs: Arguments) => {
   const sourceCode = loadSolidityFiles(solidityFiles);
 
   logInfo(`Getting transactions...`);
-  const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, forgeScriptPath);
+  const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, chainId, forgeScriptPath);
 
   const payload = {
     broadcastArtifacts,
