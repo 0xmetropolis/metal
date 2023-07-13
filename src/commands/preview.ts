@@ -14,9 +14,9 @@ import assert = require('node:assert');
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
 const FORGE_FORK_ALIASES = ['--fork-url', '-f', '--rpc-url'];
-const RPC_OVERRIDE_FLAG = '--RPC-OVERRIDE';
+const RPC_OVERRIDE_FLAG = '--UNSAFE-RPC-OVERRIDE';
 
-export type Params = { broadcast: boolean; 'chain-id': number; 'RPC-OVERRIDE'?: string };
+export type Params = { broadcast: boolean; 'chain-id': number; 'UNSAFE-RPC-OVERRIDE'?: string };
 export type HandlerInput = Arguments & Params;
 
 export const builder: { [key: string]: Options } = {
@@ -30,7 +30,7 @@ export const builder: { [key: string]: Options } = {
     required: true,
     description: 'The chain id of the network you wish to preview',
   },
-  'RPC-OVERRIDE': {
+  'UNSAFE-RPC-OVERRIDE': {
     type: 'string',
     required: false,
     description: 'DEV-ONLY!: Specify an RPC override for the `forge script` command',
@@ -55,34 +55,41 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
 export const configureForgeScriptInputs = (
-  { 'RPC-OVERRIDE': rpcOverride }: HandlerInput,
   rpcUrl: string,
+  { 'UNSAFE-RPC-OVERRIDE': unsafeRPCoverride }: HandlerInput,
 ): string[] => {
   // pull anything after `metro preview <path>` as forge arguments
   const initialArgs = process.argv.slice(3);
+  const rpcToUse = unsafeRPCoverride ?? rpcUrl;
+
+  // if they have specified an rpc override, we need to remove that flag and not pass it to forge
+  const userHasSpecifiedOverrideRPC = !!unsafeRPCoverride;
+  const rpcOverrideIndex = initialArgs.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
+
+  const argsWithoutOverride = userHasSpecifiedOverrideRPC
+    ? initialArgs.filter(
+        (_, argIndex) => argIndex !== rpcOverrideIndex && argIndex !== rpcOverrideIndex + 1,
+      )
+    : initialArgs;
+
   const rpcIndex = initialArgs.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
   const userHasSpecifiedRPC = rpcIndex !== -1;
 
   const argsWithRPCUrl = userHasSpecifiedRPC
     ? replaceFlagValues({
-        args: initialArgs,
+        args: argsWithoutOverride,
         flags: FORGE_FORK_ALIASES,
-        replaceWith: rpcUrl,
+        replaceWith: rpcToUse,
       })
-    : [...initialArgs, '--rpc-url', rpcUrl];
+    : [...argsWithoutOverride, '--rpc-url', rpcToUse];
 
-  const argsWithRPCOverride = replaceFlagValues({
-    args: argsWithRPCUrl,
-    flags: [RPC_OVERRIDE_FLAG],
-    replaceWith: rpcOverride,
-  });
   // const argsWithChainId = replaceFlagValues({
-  //   args: argsWithRPCOverride,
+  //   args: argsWithRPCUrl,
   //   flags: ['--chain-id'],
   //   replaceWith: CHAIN_ID_OVERRIDE.toString(),
   // });
 
-  return argsWithRPCOverride; // argsWithChainId;
+  return argsWithRPCUrl; // argsWithChainId;
 };
 
 /// @dev sanity checks while we scaffold the app
@@ -125,7 +132,7 @@ export const handler = async (yargs: HandlerInput) => {
   const {
     _: [, forgeScriptPath],
     'chain-id': chainId,
-    'RPC-OVERRIDE': rpcOverride,
+    'UNSAFE-RPC-OVERRIDE': rpcOverride,
   } = yargs;
 
   const rpcEndpoint = rpcOverride ? rpcOverride : (await createMetropolisFork(chainId)).rpcUrl;
@@ -135,7 +142,7 @@ export const handler = async (yargs: HandlerInput) => {
 
   logInfo(`Running Forge Script at ${forgeScriptPath}...`);
 
-  const foundryArguments = configureForgeScriptInputs(yargs, rpcEndpoint);
+  const foundryArguments = configureForgeScriptInputs(rpcEndpoint, yargs);
 
   await runForgeScript(foundryArguments);
 
