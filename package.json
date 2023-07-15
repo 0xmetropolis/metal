@@ -44,7 +44,7 @@
     "@typescript-eslint/parser": "^5.60.1",
     "babel-eslint": "^7.2.3",
     "bdd-stdin": "^0.2.0",
-    "eslint": "^8.44.0",
+    "eslint": "^8.45.0",
     "eslint-config-buildo": "^0.2.2",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
