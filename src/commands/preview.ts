@@ -10,6 +10,7 @@ import {
 } from '../utils/foundry';
 import { createMetropolisFork } from '../utils/preview-service';
 import assert = require('node:assert');
+import { UUID } from 'node:crypto';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -99,9 +100,12 @@ function devModeSanityChecks({ sourceCode, broadcastArtifacts }: PreviewRequestP
   logInfo(`DEV: checks pass ✅`);
 }
 
-export const sendDataToPreviewService = async (payload: PreviewRequestParams): Promise<string> => {
+export const sendDataToPreviewService = async (
+  payload: PreviewRequestParams,
+  forkId: UUID,
+): Promise<string> => {
   try {
-    const response = await fetch(`${PREVIEW_SERVICE_URL}/preview`, {
+    const response = await fetch(`${PREVIEW_SERVICE_URL}/preview/${forkId}`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -135,14 +139,16 @@ export const handler = async (yargs: HandlerInput) => {
     'UNSAFE-RPC-OVERRIDE': rpcOverride,
   } = yargs;
 
-  const rpcEndpoint = rpcOverride ? rpcOverride : (await createMetropolisFork(chainId)).rpcUrl;
+  const { rpcUrl, id: forkId } = rpcOverride
+    ? { rpcUrl: rpcOverride, id: rpcOverride.split('/').at(-1) as UUID } // TODO: cleanup
+    : await createMetropolisFork(chainId);
 
   logInfo(`Loading foundry.toml...`);
   const foundryConfig = loadFoundryConfig();
 
   logInfo(`Running Forge Script at ${forgeScriptPath}...`);
 
-  const foundryArguments = configureForgeScriptInputs(rpcEndpoint, yargs);
+  const foundryArguments = configureForgeScriptInputs(rpcUrl, yargs);
 
   await runForgeScript(foundryArguments);
 
@@ -163,11 +169,10 @@ export const handler = async (yargs: HandlerInput) => {
   };
   devModeSanityChecks(payload);
 
-  const forkId =
-    process.env.NODE_ENV === 'development' ? await sendDataToPreviewService(payload) : 'TODO';
+  await sendDataToPreviewService(payload, forkId);
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
-  logInfo(`View preview: ${forkId}`);
+  logInfo(`RPC URL preview: ${rpcUrl}`);
   logInfo(`
                              ^
                 _______     ^^^
@@ -181,7 +186,7 @@ export const handler = async (yargs: HandlerInput) => {
            |++++++|=|=|=|=|=|[][]|
 ___________|++HH++|  _HHHH__|   _________   _________  _________
 
-${forkId}
+${rpcUrl}
 __________________  ___________    __________________    ____________
   `);
 };
