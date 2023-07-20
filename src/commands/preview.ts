@@ -1,6 +1,6 @@
 import { PreviewRequestParams } from 'index';
 import { type Arguments, type Options } from 'yargs';
-import { METRO_DEPLOY_URL, SUPPORTED_CHAINS } from '../constants';
+import { PREVIEW_SERVICE_URL, SUPPORTED_CHAINS } from '../constants';
 import { exit, loadSolidityFiles, logInfo, logWarn, replaceFlagValues } from '../utils';
 import {
   getBroadcastArtifacts,
@@ -101,7 +101,7 @@ function devModeSanityChecks({ sourceCode, broadcastArtifacts }: PreviewRequestP
 
 export const sendDataToPreviewService = async (payload: PreviewRequestParams): Promise<string> => {
   try {
-    const response = await fetch(`${METRO_DEPLOY_URL}/preview`, {
+    const response = await fetch(`${PREVIEW_SERVICE_URL}/preview`, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -116,9 +116,9 @@ export const sendDataToPreviewService = async (payload: PreviewRequestParams): P
         'Status Text: ' + response.statusText,
       );
 
-    const { previewURL }: { previewURL: string } = await response.json();
-
-    return previewURL;
+    const res: { id: string } = await response.json();
+    console.log({ res });
+    return res.id;
   } catch (e: any) {
     exit('Error connecting to preview service', e.message);
   }
@@ -163,10 +163,11 @@ export const handler = async (yargs: HandlerInput) => {
   };
   devModeSanityChecks(payload);
 
-  const previewURL = 'https://metropolis.sh/my-preview'; // await sendDataToPreviewService(payload); (not ready)
+  const forkId =
+    process.env.NODE_ENV === 'development' ? await sendDataToPreviewService(payload) : 'TODO';
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
-  logInfo(`View preview: ${previewURL}`);
+  logInfo(`View preview: ${forkId}`);
   logInfo(`
                              ^
                 _______     ^^^
@@ -180,7 +181,7 @@ export const handler = async (yargs: HandlerInput) => {
            |++++++|=|=|=|=|=|[][]|
 ___________|++HH++|  _HHHH__|   _________   _________  _________
 
-${previewURL}
+${forkId}
 __________________  ___________    __________________    ____________
   `);
 };
