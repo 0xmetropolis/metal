@@ -1,6 +1,6 @@
 import { PreviewRequestParams } from 'index';
 import { type Arguments, type Options } from 'yargs';
-import { PREVIEW_SERVICE_URL, SUPPORTED_CHAINS } from '../constants';
+import { PREVIEW_SERVICE_URL, PREVIEW_WEB_URL, SUPPORTED_CHAINS } from '../constants';
 import { exit, loadSolidityFiles, logInfo, logWarn, replaceFlagValues } from '../utils';
 import {
   getBroadcastArtifacts,
@@ -121,7 +121,6 @@ export const sendDataToPreviewService = async (
       );
 
     const res: { id: string } = await response.json();
-    console.log({ res });
     return res.id;
   } catch (e: any) {
     exit('Error connecting to preview service', e.message);
@@ -171,8 +170,10 @@ export const handler = async (yargs: HandlerInput) => {
 
   await sendDataToPreviewService(payload, forkId);
 
+  const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${forkId}`;
+
   logInfo(`Preview simulation successful! 🎉\n\n`);
-  logInfo(`RPC URL preview: ${rpcUrl}`);
+  logInfo(`Review at: ${previewServiceUrl}`);
   logInfo(`
                              ^
                 _______     ^^^
@@ -186,7 +187,7 @@ export const handler = async (yargs: HandlerInput) => {
            |++++++|=|=|=|=|=|[][]|
 ___________|++HH++|  _HHHH__|   _________   _________  _________
 
-${rpcUrl}
+${previewServiceUrl}
 __________________  ___________    __________________    ____________
   `);
 };

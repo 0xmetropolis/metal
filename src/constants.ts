@@ -7,4 +7,5 @@ export const SUPPORTED_CHAINS = Object.values(Network) as Network[];
 
 // TODO: figure out how to make these dynamic
 export const METRO_DEPLOY_URL = 'http://127.0.0.1:8545';
-export const PREVIEW_SERVICE_URL = 'http://localhost:3000';
+export const PREVIEW_SERVICE_URL = 'http://localhost:9999';
+export const PREVIEW_WEB_URL = 'http://localhost:3000';

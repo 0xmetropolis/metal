@@ -12,8 +12,9 @@ export type ForkConfig = {
 };
 
 export const createMetropolisFork = async (chainId: Network) => {
+  const createUrl = `${PREVIEW_SERVICE_URL}/create`;
   try {
-    const response = await fetch(`${PREVIEW_SERVICE_URL}/create`, {
+    const response = await fetch(createUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -29,6 +30,7 @@ export const createMetropolisFork = async (chainId: Network) => {
     logError(`
     Error creating fork with chainId ${chainId}
     ==BEGIN ERROR==
+    ${createUrl}
     ${e.message}
     `);
     exit();
