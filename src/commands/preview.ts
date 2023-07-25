@@ -1,7 +1,12 @@
 import { PreviewRequestParams } from 'index';
 import { UUID } from 'node:crypto';
 import { type Arguments, type Options } from 'yargs';
-import { PREVIEW_SERVICE_URL, PREVIEW_WEB_URL, SUPPORTED_CHAINS, inCI } from '../constants';
+import {
+  PREVIEW_SERVICE_URL,
+  PREVIEW_WEB_URL,
+  SUPPORTED_CHAINS,
+  doNotCommunicateWithPreviewService,
+} from '../constants';
 import {
   exit,
   getConfigFromTenderlyRpc,
@@ -142,10 +147,10 @@ export const handler = async (yargs: HandlerInput) => {
     'UNSAFE-RPC-OVERRIDE': rpcOverride,
   } = yargs;
 
-  const { rpcUrl, id: forkId } = !!rpcOverride
-    ? getConfigFromTenderlyRpc(rpcOverride)
-    : inCI
+  const { rpcUrl, id: forkId } = doNotCommunicateWithPreviewService
     ? { id: undefined, rpcUrl: undefined }
+    : !!rpcOverride
+    ? getConfigFromTenderlyRpc(rpcOverride)
     : await createMetropolisFork(chainId);
 
   logInfo(`Loading foundry.toml...`);
@@ -173,7 +178,7 @@ export const handler = async (yargs: HandlerInput) => {
   };
   devModeSanityChecks(payload);
 
-  if (!inCI) await sendDataToPreviewService(payload, forkId);
+  if (!doNotCommunicateWithPreviewService) await sendDataToPreviewService(payload, forkId);
   const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${forkId}`;
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
