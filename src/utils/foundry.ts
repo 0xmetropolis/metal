@@ -7,12 +7,28 @@ import {
 } from 'index';
 import { readFileSync } from 'node:fs';
 import * as toml from 'toml';
-import { exit, getChainId, logWarn, logError } from '.';
+import { exit, logError, logWarn } from '.';
 
 export const processForgeError = ({ message }: ExecException) => {
   if (message.includes('connect error'))
     return 'Could not connect to the RPC, check your internet connection';
   return message;
+};
+
+const convertFullyQualifiedPathToRelativePath = (forgeScriptPath: string) => {
+  const path = forgeScriptPath.split(':')[0];
+  if (!path) throw new Error('Tried converting non-fully qualified path to relative path');
+
+  return path;
+};
+
+// @dev checks for the use of "fully qualified" src/script/MyScript.s.sol:CONTRACT_NAME syntax and formats input
+export const normalizeForgeScriptPath = (forgeScriptPath: string) => {
+  const isUsingFullyQualifiedPath = forgeScriptPath.includes(':');
+
+  return isUsingFullyQualifiedPath
+    ? convertFullyQualifiedPathToRelativePath(forgeScriptPath)
+    : forgeScriptPath;
 };
 
 export const loadFoundryConfig = () => {
@@ -37,16 +53,30 @@ export const loadFoundryConfig = () => {
   return foundryConfig;
 };
 
-// @dev given the foundry config and the env vars, returns the path to the broadcast/ dir
-export const getBroadcastPath = (foundryConfig: FoundryConfig): string => {
+export const getFoundryConfigValue = <T extends keyof FoundryConfig['profile'][string]>(
+  foundryConfig: FoundryConfig,
+  setting: T,
+): FoundryConfig['profile'][string][T] | undefined => {
   const profileENV: string | undefined = process.env.FOUNDRY_PROFILE;
   const profileName = profileENV || 'default';
-  const broadcastFolder =
-    foundryConfig.profile[profileName]?.broadcast ??
-    foundryConfig.profile['default'].broadcast ??
-    'broadcast';
-  return broadcastFolder;
+  const settingValue =
+    foundryConfig.profile[profileName]?.[setting] ??
+    foundryConfig.profile['default'][setting] ??
+    undefined;
+
+  return settingValue;
 };
+
+// @dev given the foundry config and the env vars, returns the path to the broadcast/ dir
+export const getBroadcastPath = (foundryConfig: FoundryConfig): string =>
+  getFoundryConfigValue(foundryConfig, 'broadcast') ?? 'broadcast';
+
+// @dev given the foundry config and the env vars, returns the path to the out/ dir
+export const getOutPath = (foundryConfig: FoundryConfig): string =>
+  getFoundryConfigValue(foundryConfig, 'out') ?? 'out';
+
+export const isSparseModeEnabled = (foundryConfig: FoundryConfig): boolean =>
+  getFoundryConfigValue(foundryConfig, 'sparse_mode') ?? false;
 
 // @dev loads the run-latest.json from the latest broadcast at METRO_DEPLOY_URL
 export const getBroadcastArtifacts = async (
