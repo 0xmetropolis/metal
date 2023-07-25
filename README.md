@@ -40,9 +40,9 @@ for testing the CLI tool without having to publish to npm.
 1. Open PR, review, merge to main.
 1. Draft a [new release](https://github.com/0xmetropolis/cli/releases/new).
 
-- Choose tag: `v0.0.5`.
-- Release title: `v0.0.5`.
-- Description: Copy/paste new additions in CHANGELOG.md
-- Publish release.
+    - Choose tag: `v0.0.5`.
+    - Release title: `v0.0.5`.
+    - Description: Copy/paste new additions in CHANGELOG.md
+    - Publish release.
 
 1. Confirm [new release](https://www.npmjs.com/package/@0xmetropolis/cli).
