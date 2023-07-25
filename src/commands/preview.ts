@@ -1,16 +1,29 @@
 import { PreviewRequestParams } from 'index';
+import { UUID } from 'node:crypto';
 import { type Arguments, type Options } from 'yargs';
-import { PREVIEW_SERVICE_URL, PREVIEW_WEB_URL, SUPPORTED_CHAINS } from '../constants';
-import { exit, loadSolidityFiles, logInfo, logWarn, replaceFlagValues } from '../utils';
+import {
+  PREVIEW_SERVICE_URL,
+  PREVIEW_WEB_URL,
+  SUPPORTED_CHAINS,
+  doNotCommunicateWithPreviewService,
+} from '../constants';
+import {
+  exit,
+  getConfigFromTenderlyRpc,
+  loadSolidityABIs,
+  logInfo,
+  logWarn,
+  replaceFlagValues,
+} from '../utils';
 import {
   getBroadcastArtifacts,
   getScriptDependencies,
   loadFoundryConfig,
+  normalizeForgeScriptPath,
   runForgeScript,
 } from '../utils/foundry';
 import { createMetropolisFork } from '../utils/preview-service';
 import assert = require('node:assert');
-import { UUID } from 'node:crypto';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -55,17 +68,13 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
 }
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
-export const configureForgeScriptInputs = (
-  rpcUrl: string,
-  { 'UNSAFE-RPC-OVERRIDE': unsafeRPCoverride }: HandlerInput,
-): string[] => {
+export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): string[] => {
   // pull anything after `metro preview <path>` as forge arguments
   const initialArgs = process.argv.slice(3);
-  const rpcToUse = unsafeRPCoverride ?? rpcUrl;
 
-  // if they have specified an rpc override, we need to remove that flag and not pass it to forge
-  const userHasSpecifiedOverrideRPC = !!unsafeRPCoverride;
   const rpcOverrideIndex = initialArgs.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
+  // if they have specified an rpc override, we need to remove that flag and not pass it to forge
+  const userHasSpecifiedOverrideRPC = rpcOverrideIndex !== -1;
 
   const argsWithoutOverride = userHasSpecifiedOverrideRPC
     ? initialArgs.filter(
@@ -80,9 +89,9 @@ export const configureForgeScriptInputs = (
     ? replaceFlagValues({
         args: argsWithoutOverride,
         flags: FORGE_FORK_ALIASES,
-        replaceWith: rpcToUse,
+        replaceWith: rpcUrl,
       })
-    : [...argsWithoutOverride, '--rpc-url', rpcToUse];
+    : [...argsWithoutOverride, '--rpc-url', rpcUrl];
 
   // const argsWithChainId = replaceFlagValues({
   //   args: argsWithRPCUrl,
@@ -94,8 +103,8 @@ export const configureForgeScriptInputs = (
 };
 
 /// @dev sanity checks while we scaffold the app
-function devModeSanityChecks({ sourceCode, broadcastArtifacts }: PreviewRequestParams) {
-  assert(Object.values(sourceCode).length > 0 && Object.values(sourceCode).every(Boolean));
+function devModeSanityChecks({ abis, broadcastArtifacts }: PreviewRequestParams) {
+  assert(Object.values(abis).length > 0 && Object.values(abis).every(Boolean));
   assert(broadcastArtifacts.transactions.length > 0);
   logInfo(`DEV: checks pass ✅`);
 }
@@ -138,38 +147,38 @@ export const handler = async (yargs: HandlerInput) => {
     'UNSAFE-RPC-OVERRIDE': rpcOverride,
   } = yargs;
 
-  const { rpcUrl, id: forkId } = rpcOverride
-    ? { rpcUrl: rpcOverride, id: rpcOverride.split('/').at(-1) as UUID } // TODO: cleanup
+  const { rpcUrl, id: forkId } = doNotCommunicateWithPreviewService
+    ? { id: undefined, rpcUrl: undefined }
+    : !!rpcOverride
+    ? getConfigFromTenderlyRpc(rpcOverride)
     : await createMetropolisFork(chainId);
 
   logInfo(`Loading foundry.toml...`);
   const foundryConfig = loadFoundryConfig();
 
   logInfo(`Running Forge Script at ${forgeScriptPath}...`);
-
-  const foundryArguments = configureForgeScriptInputs(rpcUrl, yargs);
-
+  const foundryArguments = configureForgeScriptInputs({
+    rpcUrl: yargs['UNSAFE-RPC-OVERRIDE'] ?? rpcUrl,
+  });
   await runForgeScript(foundryArguments);
-
   logInfo(`Forge deployment script ran successfully!`);
 
   logInfo(`Retreiving Solidity source code...`);
-  const dependencyList = getScriptDependencies(foundryConfig, forgeScriptPath);
-  const solidityFiles = [forgeScriptPath, ...dependencyList];
-  const sourceCode = loadSolidityFiles(solidityFiles);
-
+  const scriptPath = normalizeForgeScriptPath(forgeScriptPath);
+  const dependencyList = getScriptDependencies(foundryConfig, scriptPath);
+  const solidityFiles = [scriptPath, ...dependencyList];
+  const abis = loadSolidityABIs(foundryConfig, solidityFiles);
   logInfo(`Getting transactions...`);
-  const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, chainId, forgeScriptPath);
+  const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, chainId, scriptPath);
 
   const payload = {
     broadcastArtifacts,
-    sourceCode,
+    abis,
     chainId,
   };
   devModeSanityChecks(payload);
 
-  await sendDataToPreviewService(payload, forkId);
-
+  if (!doNotCommunicateWithPreviewService) await sendDataToPreviewService(payload, forkId);
   const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${forkId}`;
 
   logInfo(`Preview simulation successful! 🎉\n\n`);

@@ -32,7 +32,7 @@ export enum Network {
   BOBA_BINANCE = 56288,
   POLYGON_MUMBAI = 80001,
   ARBITRUM_GOERLI = 421613,
-  SEPOLIA = 11155111
+  SEPOLIA = 11155111,
 }
 
 export type EthAddress = `0x${string}`;
@@ -48,12 +48,16 @@ export type FoundryConfig = {
       cache_path: string;
       test?: string;
       broadcast?: string;
+      sparse_mode?: boolean;
     };
   };
 };
 
-export type SourceCodeDict = {
-  [pathToSolc: string]: string;
+export type Abi = any;
+
+export type Abis = {
+  // mapping from fully qualified contract name to abi
+  [fullyQualifiedPath: string]: Abi;
 };
 
 export type SolidityFilesCache_Partial = {
@@ -158,6 +162,6 @@ export type BroadcastArtifacts_Partial = {
 
 export type PreviewRequestParams = {
   broadcastArtifacts: BroadcastArtifacts_Partial;
-  sourceCode: SourceCodeDict;
+  abis: Abis;
   chainId: Network;
 };
