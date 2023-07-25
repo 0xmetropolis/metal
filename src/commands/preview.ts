@@ -91,7 +91,7 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
         flags: FORGE_FORK_ALIASES,
         replaceWith: rpcUrl,
       })
-    : [...argsWithoutOverride, '--rpc-url', rpcUrl];
+    : [...argsWithoutOverride, '--rpc-url', rpcUrl, '--slow'];
 
   // const argsWithChainId = replaceFlagValues({
   //   args: argsWithRPCUrl,
