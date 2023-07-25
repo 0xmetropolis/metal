@@ -1,7 +1,15 @@
 import { PreviewRequestParams } from 'index';
+import { UUID } from 'node:crypto';
 import { type Arguments, type Options } from 'yargs';
-import { PREVIEW_SERVICE_URL, PREVIEW_WEB_URL, SUPPORTED_CHAINS } from '../constants';
-import { exit, loadSolidityABIs, logInfo, logWarn, replaceFlagValues } from '../utils';
+import { PREVIEW_SERVICE_URL, PREVIEW_WEB_URL, SUPPORTED_CHAINS, inCI } from '../constants';
+import {
+  exit,
+  getConfigFromTenderlyRpc,
+  loadSolidityABIs,
+  logInfo,
+  logWarn,
+  replaceFlagValues,
+} from '../utils';
 import {
   getBroadcastArtifacts,
   getScriptDependencies,
@@ -11,7 +19,6 @@ import {
 } from '../utils/foundry';
 import { createMetropolisFork } from '../utils/preview-service';
 import assert = require('node:assert');
-import { UUID } from 'node:crypto';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -56,17 +63,13 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
 }
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
-export const configureForgeScriptInputs = (
-  rpcUrl: string,
-  { 'UNSAFE-RPC-OVERRIDE': unsafeRPCoverride }: HandlerInput,
-): string[] => {
+export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): string[] => {
   // pull anything after `metro preview <path>` as forge arguments
   const initialArgs = process.argv.slice(3);
-  const rpcToUse = unsafeRPCoverride ?? rpcUrl;
 
-  // if they have specified an rpc override, we need to remove that flag and not pass it to forge
-  const userHasSpecifiedOverrideRPC = !!unsafeRPCoverride;
   const rpcOverrideIndex = initialArgs.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
+  // if they have specified an rpc override, we need to remove that flag and not pass it to forge
+  const userHasSpecifiedOverrideRPC = rpcOverrideIndex !== -1;
 
   const argsWithoutOverride = userHasSpecifiedOverrideRPC
     ? initialArgs.filter(
@@ -81,9 +84,9 @@ export const configureForgeScriptInputs = (
     ? replaceFlagValues({
         args: argsWithoutOverride,
         flags: FORGE_FORK_ALIASES,
-        replaceWith: rpcToUse,
+        replaceWith: rpcUrl,
       })
-    : [...argsWithoutOverride, '--rpc-url', rpcToUse];
+    : [...argsWithoutOverride, '--rpc-url', rpcUrl];
 
   // const argsWithChainId = replaceFlagValues({
   //   args: argsWithRPCUrl,
@@ -139,15 +142,19 @@ export const handler = async (yargs: HandlerInput) => {
     'UNSAFE-RPC-OVERRIDE': rpcOverride,
   } = yargs;
 
-  const { rpcUrl, id: forkId } = rpcOverride
-    ? { rpcUrl: rpcOverride, id: rpcOverride.split('/').at(-1) as UUID } // TODO: cleanup
+  const { rpcUrl, id: forkId } = !!rpcOverride
+    ? getConfigFromTenderlyRpc(rpcOverride)
+    : inCI
+    ? { id: undefined, rpcUrl: undefined }
     : await createMetropolisFork(chainId);
 
   logInfo(`Loading foundry.toml...`);
   const foundryConfig = loadFoundryConfig();
 
   logInfo(`Running Forge Script at ${forgeScriptPath}...`);
-  const foundryArguments = configureForgeScriptInputs(rpcUrl, yargs);
+  const foundryArguments = configureForgeScriptInputs({
+    rpcUrl: yargs['UNSAFE-RPC-OVERRIDE'] ?? rpcUrl,
+  });
   await runForgeScript(foundryArguments);
   logInfo(`Forge deployment script ran successfully!`);
 
@@ -156,7 +163,6 @@ export const handler = async (yargs: HandlerInput) => {
   const dependencyList = getScriptDependencies(foundryConfig, scriptPath);
   const solidityFiles = [scriptPath, ...dependencyList];
   const abis = loadSolidityABIs(foundryConfig, solidityFiles);
-
   logInfo(`Getting transactions...`);
   const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, chainId, scriptPath);
 
@@ -167,7 +173,7 @@ export const handler = async (yargs: HandlerInput) => {
   };
   devModeSanityChecks(payload);
 
-  await sendDataToPreviewService(payload, forkId);
+  if (!inCI) await sendDataToPreviewService(payload, forkId);
   const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${forkId}`;
 
   logInfo(`Preview simulation successful! 🎉\n\n`);

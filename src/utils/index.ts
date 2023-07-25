@@ -1,6 +1,7 @@
 import chalk from 'chalk';
-import { Abi, Abis, FoundryConfig, HexString } from 'index';
+import { Abi, FoundryConfig, HexString } from 'index';
 import { emojify } from 'node-emoji';
+import { UUID } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { getOutPath, isSparseModeEnabled } from './foundry';
 
@@ -32,6 +33,11 @@ export const getChainId = async (rpcUrl: string) => {
     exit('Error fetching chainId from RPC endpoint');
   }
 };
+
+export const getConfigFromTenderlyRpc = (rpcOverride: string): { rpcUrl: string; id: UUID } => ({
+  rpcUrl: rpcOverride,
+  id: rpcOverride.split('/').at(-1) as UUID,
+});
 
 export const replaceFlagValues = ({
   args,
