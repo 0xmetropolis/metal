@@ -2,6 +2,12 @@
 
 All notable changes to the Metropolis CLI will be listed in this file.
 
+## [0.1.3] - 2023-07-26
+
+### Fixed
+
+- ci: 🔖 update dist files by @kevinweaver in #42
+
 ## [0.1.2] - 2023-07-26
 
 ### Added
