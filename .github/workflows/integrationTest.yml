@@ -40,11 +40,10 @@ jobs:
         working-directory: forge-simple
         env:
           RPC_URL: http://127.0.0.1:8545
-          PK: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-          NO_PREVIEW_SERVICE: true
+           NO_PREVIEW_SERVICE: true
         run: |
           anvil --chain-id 1 &
-          ../bin/run preview script/Deploy.s.sol --broadcast --private-key $PK --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
+          ../bin/run preview script/Deploy.s.sol --broadcast --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
 
   bulla-contracts-v2:
     name: Bulla Contracts V2
