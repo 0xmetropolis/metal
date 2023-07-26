@@ -17,6 +17,7 @@ import {
   loadSolidityABIs,
   logInfo,
   logWarn,
+  openInBrowser,
   replaceFlagValues,
 } from '../utils';
 import {
@@ -190,7 +191,6 @@ export const handler = async (yargs: HandlerInput) => {
   const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${forkId}`;
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
-  logInfo(`Review at: ${previewServiceUrl}`);
   logInfo(`
                              ^
                 _______     ^^^
@@ -207,4 +207,6 @@ ___________|++HH++|  _HHHH__|   _________   _________  _________
 ${previewServiceUrl}
 __________________  ___________    __________________    ____________
   `);
+
+  openInBrowser(previewServiceUrl);
 };

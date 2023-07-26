@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { Abi, FoundryConfig, HexString } from 'index';
 import { emojify } from 'node-emoji';
+import { exec } from 'node:child_process';
 import { UUID } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { getOutPath, isSparseModeEnabled } from './foundry';
@@ -14,6 +15,12 @@ export const logDetail = (s: string) => console.log(emojify(chalk.dim(s)));
 export const exit = (...message: string[]) => {
   logError.call(this, message);
   process.exit(1);
+};
+
+export const openInBrowser = (url: string) => {
+  const startScript =
+    process.platform == 'darwin' ? 'open' : process.platform == 'win32' ? 'start' : 'xdg-open';
+  exec(`${startScript} "${url}"`);
 };
 
 export const getChainId = async (rpcUrl: string) => {
