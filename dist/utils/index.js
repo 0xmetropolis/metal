@@ -9,16 +9,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loadSolidityABIs = exports.loadSolidityFiles = exports.replaceFlagValues = exports.getConfigFromTenderlyRpc = exports.getChainId = exports.exit = exports.logDetail = exports.logWarn = exports.logInfo = exports.logError = void 0;
+exports.loadSolidityABIs = exports.loadSolidityFiles = exports.replaceFlagValues = exports.getConfigFromTenderlyRpc = exports.getChainId = exports.openInBrowser = exports.exit = exports.logDetail = exports.logWarn = exports.logInfo = exports.logError = void 0;
 const chalk_1 = require("chalk");
 const node_emoji_1 = require("node-emoji");
+const node_child_process_1 = require("node:child_process");
 const node_fs_1 = require("node:fs");
 const foundry_1 = require("./foundry");
 const logError = (...s) => console.log((0, node_emoji_1.emojify)(chalk_1.default.bold.red(s.join('\n'))));
 exports.logError = logError;
 const logInfo = (s) => console.log((0, node_emoji_1.emojify)(chalk_1.default.bold(s)));
 exports.logInfo = logInfo;
-const logWarn = (...s) => console.warn((0, node_emoji_1.emojify)(chalk_1.default.bold.yellow('⚠️ ' + s.join('\n') + ' ⚠️')));
+const logWarn = (...s) => console.warn((0, node_emoji_1.emojify)(chalk_1.default.bold.yellow(s.map(str => '⚠️ ' + str + ' ⚠️').join('\n'))));
 exports.logWarn = logWarn;
 const logDetail = (s) => console.log((0, node_emoji_1.emojify)(chalk_1.default.dim(s)));
 exports.logDetail = logDetail;
@@ -27,6 +28,11 @@ const exit = (...message) => {
     process.exit(1);
 };
 exports.exit = exit;
+const openInBrowser = (url) => {
+    const startScript = process.platform == 'darwin' ? 'open' : process.platform == 'win32' ? 'start' : 'xdg-open';
+    (0, node_child_process_1.exec)(`${startScript} "${url}"`);
+};
+exports.openInBrowser = openInBrowser;
 const getChainId = (rpcUrl) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const request = yield fetch(rpcUrl, {

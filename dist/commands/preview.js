@@ -17,8 +17,6 @@ const preview_service_1 = require("../utils/preview-service");
 const assert = require("node:assert");
 exports.command = 'preview';
 exports.description = `Generate preview of transactions from your Forge script`;
-const FORGE_FORK_ALIASES = ['--fork-url', '-f', '--rpc-url'];
-const RPC_OVERRIDE_FLAG = '--UNSAFE-RPC-OVERRIDE';
 exports.builder = {
     broadcast: {
         type: 'boolean',
@@ -38,7 +36,7 @@ exports.builder = {
 };
 function validateInputs({ _: [, scriptPath], 'chain-id': chainId }) {
     const cliInput = process.argv.slice(3);
-    const rpcIndex = cliInput.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
+    const rpcIndex = cliInput.findIndex(arg => constants_1.FORGE_FORK_ALIASES.some(alias => alias === arg));
     if (rpcIndex !== -1)
         (0, utils_1.logWarn)('You have specified a custom RPC', 'This will be ignored and transactions will be sent to the Metropolis RPC');
     if (!scriptPath || !scriptPath.includes('.sol'))
@@ -49,35 +47,42 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }) {
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
 const configureForgeScriptInputs = ({ rpcUrl }) => {
     // pull anything after `metro preview <path>` as forge arguments
-    const initialArgs = process.argv.slice(3);
-    const rpcOverrideIndex = initialArgs.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
-    // if they have specified an rpc override, we need to remove that flag and not pass it to forge
-    const userHasSpecifiedOverrideRPC = rpcOverrideIndex !== -1;
-    const argsWithoutOverride = userHasSpecifiedOverrideRPC
-        ? initialArgs.filter((_, argIndex) => argIndex !== rpcOverrideIndex && argIndex !== rpcOverrideIndex + 1)
-        : initialArgs;
-    const rpcIndex = initialArgs.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
+    let forgeArguments = process.argv.slice(3);
+    const UNSAFERpcOverrideIndex = forgeArguments.findIndex(arg => arg === constants_1.RPC_OVERRIDE_FLAG);
+    // if the developer has specified an rpc override, we need to remove that flag and not pass it to forge
+    const userHasSpecifiedUNSAFEOverrideRPC = UNSAFERpcOverrideIndex !== -1;
+    if (userHasSpecifiedUNSAFEOverrideRPC)
+        forgeArguments = forgeArguments.filter((_, argIndex) => argIndex !== UNSAFERpcOverrideIndex && argIndex !== UNSAFERpcOverrideIndex + 1);
+    const rpcIndex = forgeArguments.findIndex(arg => constants_1.FORGE_FORK_ALIASES.some(alias => alias === arg));
     const userHasSpecifiedRPC = rpcIndex !== -1;
-    const argsWithRPCUrl = userHasSpecifiedRPC
-        ? (0, utils_1.replaceFlagValues)({
-            args: argsWithoutOverride,
-            flags: FORGE_FORK_ALIASES,
+    if (userHasSpecifiedRPC)
+        forgeArguments = (0, utils_1.replaceFlagValues)({
+            args: forgeArguments,
+            flags: constants_1.FORGE_FORK_ALIASES,
             replaceWith: rpcUrl,
-        })
-        : [...argsWithoutOverride, '--rpc-url', rpcUrl, '--slow'];
+        });
+    else
+        forgeArguments = [...forgeArguments, '--rpc-url', rpcUrl];
+    // if a user setup the script to use a private key / wallet store
+    const userHasSpecifiedWalletOpts = forgeArguments.some(arg => constants_1.FORGE_WALLET_OPTIONS.includes(arg));
+    // put the default account in there so they can visualize
+    if (!userHasSpecifiedWalletOpts) {
+        (0, utils_1.logWarn)('No private key specified.', 'Simulating default account 0');
+        forgeArguments = [...forgeArguments, '--private-key', constants_1.DEFAULT_PRIVATE_KEY];
+    }
     // const argsWithChainId = replaceFlagValues({
     //   args: argsWithRPCUrl,
     //   flags: ['--chain-id'],
     //   replaceWith: CHAIN_ID_OVERRIDE.toString(),
     // });
-    return argsWithRPCUrl; // argsWithChainId;
+    forgeArguments = [...forgeArguments, '--slow'];
+    return forgeArguments;
 };
 exports.configureForgeScriptInputs = configureForgeScriptInputs;
 /// @dev sanity checks while we scaffold the app
 function devModeSanityChecks({ abis, broadcastArtifacts }) {
     assert(Object.values(abis).length > 0 && Object.values(abis).every(Boolean));
     assert(broadcastArtifacts.transactions.length > 0);
-    (0, utils_1.logInfo)(`DEV: checks pass ✅`);
 }
 const sendDataToPreviewService = (payload, forkId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -134,7 +139,6 @@ const handler = (yargs) => __awaiter(void 0, void 0, void 0, function* () {
         yield (0, exports.sendDataToPreviewService)(payload, forkId);
     const previewServiceUrl = `${constants_1.PREVIEW_WEB_URL}/preview/${forkId}`;
     (0, utils_1.logInfo)(`Preview simulation successful! 🎉\n\n`);
-    (0, utils_1.logInfo)(`Review at: ${previewServiceUrl}`);
     (0, utils_1.logInfo)(`
                              ^
                 _______     ^^^
@@ -151,6 +155,7 @@ ___________|++HH++|  _HHHH__|   _________   _________  _________
 ${previewServiceUrl}
 __________________  ___________    __________________    ____________
   `);
+    (0, utils_1.openInBrowser)(previewServiceUrl);
 });
 exports.handler = handler;
 //# sourceMappingURL=preview.js.map
