@@ -20,7 +20,7 @@ export const exit = (...message: string[]) => {
 export const openInBrowser = (url: string) => {
   const startScript =
     process.platform == 'darwin' ? 'open' : process.platform == 'win32' ? 'start' : 'xdg-open';
-  exec(`${startScript} ${url}`);
+  exec(`${startScript} "${url}"`);
 };
 
 export const getChainId = async (rpcUrl: string) => {
