@@ -40,7 +40,7 @@ jobs:
         working-directory: forge-simple
         env:
           RPC_URL: http://127.0.0.1:8545
-           NO_PREVIEW_SERVICE: true
+          NO_PREVIEW_SERVICE: true
         run: |
           anvil --chain-id 1 &
           ../bin/run preview script/Deploy.s.sol --broadcast --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
