@@ -2,6 +2,7 @@ import { PreviewRequestParams } from 'index';
 import { UUID } from 'node:crypto';
 import { type Arguments, type Options } from 'yargs';
 import {
+  DEFAULT_PRIVATE_KEY,
   PREVIEW_SERVICE_URL,
   PREVIEW_WEB_URL,
   SUPPORTED_CHAINS,
@@ -28,6 +29,26 @@ import assert = require('node:assert');
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
 const FORGE_FORK_ALIASES = ['--fork-url', '-f', '--rpc-url'];
+const FORGE_WALLET_OPTIONS = [
+  '-a',
+  '--froms',
+  '-i',
+  '--interactives',
+  '--private-keys',
+  '--private-key',
+  '--mnemonics',
+  '--mnemonic-passphrases',
+  '--mnemonic-derivation-paths',
+  '--mnemonic-indexes',
+  '--keystore',
+  '--password',
+  '--password-file',
+  '-l',
+  '--ledger',
+  '-t',
+  '--trezor',
+  '--aws',
+];
 const RPC_OVERRIDE_FLAG = '--UNSAFE-RPC-OVERRIDE';
 
 export type Params = { broadcast: boolean; 'chain-id': number; 'UNSAFE-RPC-OVERRIDE'?: string };
@@ -70,28 +91,35 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
 export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): string[] => {
   // pull anything after `metro preview <path>` as forge arguments
-  const initialArgs = process.argv.slice(3);
+  let forgeArguments = process.argv.slice(3);
 
-  const rpcOverrideIndex = initialArgs.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
+  const rpcOverrideIndex = forgeArguments.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
   // if they have specified an rpc override, we need to remove that flag and not pass it to forge
   const userHasSpecifiedOverrideRPC = rpcOverrideIndex !== -1;
 
-  const argsWithoutOverride = userHasSpecifiedOverrideRPC
-    ? initialArgs.filter(
-        (_, argIndex) => argIndex !== rpcOverrideIndex && argIndex !== rpcOverrideIndex + 1,
-      )
-    : initialArgs;
+  if (userHasSpecifiedOverrideRPC)
+    forgeArguments = forgeArguments.filter(
+      (_, argIndex) => argIndex !== rpcOverrideIndex && argIndex !== rpcOverrideIndex + 1,
+    );
 
-  const rpcIndex = initialArgs.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
+  // if a user setup the script to use a private key / wallet store
+  const userHasSpecifiedWalletOpts = forgeArguments.some(arg => FORGE_WALLET_OPTIONS.includes(arg));
+  // put the default account in there so they can visualize
+  if (!userHasSpecifiedWalletOpts) {
+    logWarn('No private key specified.', 'Simulating default account 0');
+    forgeArguments = [...forgeArguments, '--private-key', DEFAULT_PRIVATE_KEY];
+  }
+
+  const rpcIndex = forgeArguments.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
   const userHasSpecifiedRPC = rpcIndex !== -1;
 
-  const argsWithRPCUrl = userHasSpecifiedRPC
-    ? replaceFlagValues({
-        args: argsWithoutOverride,
-        flags: FORGE_FORK_ALIASES,
-        replaceWith: rpcUrl,
-      })
-    : [...argsWithoutOverride, '--rpc-url', rpcUrl, '--slow'];
+  if (userHasSpecifiedRPC)
+    forgeArguments = replaceFlagValues({
+      args: forgeArguments,
+      flags: FORGE_FORK_ALIASES,
+      replaceWith: rpcUrl,
+    });
+  else forgeArguments = [...forgeArguments, '--rpc-url', rpcUrl];
 
   // const argsWithChainId = replaceFlagValues({
   //   args: argsWithRPCUrl,
@@ -99,14 +127,14 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
   //   replaceWith: CHAIN_ID_OVERRIDE.toString(),
   // });
 
-  return argsWithRPCUrl; // argsWithChainId;
+  forgeArguments = [...forgeArguments, '--slow'];
+  return forgeArguments;
 };
 
 /// @dev sanity checks while we scaffold the app
 function devModeSanityChecks({ abis, broadcastArtifacts }: PreviewRequestParams) {
   assert(Object.values(abis).length > 0 && Object.values(abis).every(Boolean));
   assert(broadcastArtifacts.transactions.length > 0);
-  logInfo(`DEV: checks pass ✅`);
 }
 
 export const sendDataToPreviewService = async (
