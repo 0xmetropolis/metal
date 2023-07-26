@@ -14,8 +14,7 @@
   "main": "dist/index.js",
   "repository": "0xmetropolis/cli",
   "scripts": {
-    "build": "tsc",
-    "postinstall": "tsc",
+    "build": "npx tsc",
     "test": "jest",
     "watch": "tsc -w",
     "dev": "yarn build && yarn install:dev && metro -h",
@@ -26,10 +25,10 @@
     "chalk": "^2.0.1",
     "node-emoji": "^1.7.0",
     "toml": "^3.0.0",
-    "typescript": "^5.1.6",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "typescript": "^5.1.6",
     "husky": "^0.14.3",
     "inquirer": "^3.2.0",
     "@types/chalk": "^0.4.31",
