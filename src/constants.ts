@@ -7,3 +7,26 @@ export const DEFAULT_PRIVATE_KEY =
 export const PREVIEW_SERVICE_URL = process.env.PREVIEW_SERVICE_URL ?? 'http://localhost:1234';
 export const PREVIEW_WEB_URL = process.env.PREVIEW_WEB_URL ?? 'http://localhost:3000';
 export const doNotCommunicateWithPreviewService = !!process.env.NO_PREVIEW_SERVICE;
+
+export const FORGE_FORK_ALIASES = ['--fork-url', '-f', '--rpc-url'];
+export const FORGE_WALLET_OPTIONS = [
+  '-a',
+  '--froms',
+  '-i',
+  '--interactives',
+  '--private-keys',
+  '--private-key',
+  '--mnemonics',
+  '--mnemonic-passphrases',
+  '--mnemonic-derivation-paths',
+  '--mnemonic-indexes',
+  '--keystore',
+  '--password',
+  '--password-file',
+  '-l',
+  '--ledger',
+  '-t',
+  '--trezor',
+  '--aws',
+];
+export const RPC_OVERRIDE_FLAG = '--UNSAFE-RPC-OVERRIDE';
