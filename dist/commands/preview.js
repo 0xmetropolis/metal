@@ -81,9 +81,14 @@ const configureForgeScriptInputs = ({ rpcUrl }) => {
 };
 exports.configureForgeScriptInputs = configureForgeScriptInputs;
 /// @dev sanity checks while we scaffold the app
-function devModeSanityChecks({ abis, broadcastArtifacts }) {
+function devModeSanityChecks({ abis, broadcastArtifacts, repoMetadata }) {
     assert(Object.values(abis).length > 0 && Object.values(abis).every(Boolean));
     assert(broadcastArtifacts.transactions.length > 0);
+    console.log(repoMetadata);
+    assert(repoMetadata.__type === 'detailed' &&
+        repoMetadata.remoteUrl &&
+        repoMetadata.repoCommitSHA &&
+        repoMetadata.repositoryName);
 }
 const sendDataToPreviewService = (payload, forkId) => __awaiter(void 0, void 0, void 0, function* () {
     try {

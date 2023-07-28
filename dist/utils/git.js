@@ -82,6 +82,7 @@ const getRepoMetadata = (solidityFiles) => {
     const repositoryName = (0, exports.getRepoName)();
     if (!(0, exports.isGitInstalled)() || !(0, exports.isGitRepo)())
         return {
+            __type: 'simple',
             repositoryName,
         };
     const remoteUrl = (0, exports.getGitRemote)();
@@ -90,6 +91,7 @@ const getRepoMetadata = (solidityFiles) => {
     const repoCommitSHA = (0, exports.getLatestCommitSHA_repo)();
     const solidityFilesHaveChanges = solidityFileStatuses.some(({ commitSha, hasChanges }) => commitSha && hasChanges);
     return {
+        __type: 'detailed',
         repositoryName,
         remoteUrl,
         repoCommitSHA,

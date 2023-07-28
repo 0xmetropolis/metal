@@ -88,6 +88,7 @@ export const getRepoMetadata = (solidityFiles: string[]): RepoMetadata => {
   const repositoryName = getRepoName();
   if (!isGitInstalled() || !isGitRepo())
     return {
+      __type: 'simple',
       repositoryName,
     };
 
@@ -100,6 +101,7 @@ export const getRepoMetadata = (solidityFiles: string[]): RepoMetadata => {
   );
 
   return {
+    __type: 'detailed',
     repositoryName,
     remoteUrl,
     repoCommitSHA,

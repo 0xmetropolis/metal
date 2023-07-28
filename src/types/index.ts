@@ -46,8 +46,9 @@ export type GitMetadata = {
 };
 
 export type RepoMetadata =
-  | { repositoryName: string }
+  | { __type: 'simple'; repositoryName: string }
   | {
+      __type: 'detailed';
       repositoryName: string;
       remoteUrl: string;
       repoCommitSHA: HexString;
