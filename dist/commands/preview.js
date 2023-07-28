@@ -84,7 +84,6 @@ exports.configureForgeScriptInputs = configureForgeScriptInputs;
 function devModeSanityChecks({ abis, broadcastArtifacts, repoMetadata }) {
     assert(Object.values(abis).length > 0 && Object.values(abis).every(Boolean));
     assert(broadcastArtifacts.transactions.length > 0);
-    console.log(repoMetadata);
     assert(repoMetadata.__type === 'detailed' &&
         repoMetadata.remoteUrl &&
         repoMetadata.repoCommitSHA &&
