@@ -22,6 +22,7 @@ import {
   normalizeForgeScriptPath,
   runForgeScript,
 } from '../utils/foundry';
+import { getRepoMetadata } from '../utils/git';
 import { createMetropolisFork } from '../utils/preview-service';
 import assert = require('node:assert');
 
@@ -168,12 +169,17 @@ export const handler = async (yargs: HandlerInput) => {
   const dependencyList = getScriptDependencies(foundryConfig, scriptPath);
   const solidityFiles = [scriptPath, ...dependencyList];
   const abis = loadSolidityABIs(foundryConfig, solidityFiles);
+
+  logInfo(`Getting repo metadata...`);
+  const repoMetadata = getRepoMetadata(solidityFiles);
+
   logInfo(`Getting transactions...`);
   const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, chainId, scriptPath);
 
   const payload = {
     broadcastArtifacts,
     abis,
+    repoMetadata,
     chainId,
   };
   devModeSanityChecks(payload);

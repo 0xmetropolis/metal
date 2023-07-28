@@ -1,21 +1,38 @@
+import { GitMetadata, HexString, RepoMetadata } from 'index';
 import { execSync } from 'node:child_process';
 
-// @dev returns the .git repo name or the folder name if not a git repo
-export const getRepoName = () => {
-  let name: string;
+export const isGitInstalled = () => {
   try {
-    name = execSync('basename `git rev-parse --show-toplevel`').toString().trim();
+    execSync('git -v', { stdio: 'ignore' });
+    return true;
   } catch (e: any) {
-    // is not a git repo, instead return repo name
-    name = execSync('basename `pwd`').toString().trim();
+    return false;
   }
+};
 
-  return name;
+export const isGitRepo = () => {
+  try {
+    execSync('git status', { stdio: 'ignore' });
+    return true;
+  } catch (e: any) {
+    return false;
+  }
+};
+
+export const getRepoName = () => {
+  if (isGitRepo()) execSync('basename `git rev-parse --show-toplevel`').toString().trim();
+
+  // if not a git repo, return folder name
+  const printFolderNameCommand =
+    process.platform === 'win32' ? 'for %I in (.) do echo %~nxI' : 'basename `pwd`';
+
+  return execSync(printFolderNameCommand).toString().trim();
 };
 
 // @dev gets the url of the repo
 export const getGitRemote = () => {
   const remote = execSync('git config --get remote.origin.url').toString().trim();
+
   return remote;
 };
 
@@ -29,35 +46,65 @@ export const getGitStatus = () => {
 // @dev returns true if the working directory is clean
 export const isCleanWorkingDir = () => getGitStatus().length === 0;
 
-// @dev returns a 'dirty or 'clean' status for the branch
-export const getFileStatus = (filePath: string): 'clean' | 'dirty' => {
+export const doesFileHaveChanges = (filePath: string) => {
   const status = execSync(`git status -s ${filePath}`).toString().trim();
 
-  return status.length === 0 ? 'clean' : 'dirty';
+  return status.length > 0;
 };
 
-// @dev returns the sha of the file
-export const getMostRecentCommitSHA = (path: string) => {
-  const sha = execSync(`git log -n 1 --pretty=format:%H -- ${path}`).toString().trim();
+const latestCommitHashCommand = `git log -n 1 --pretty=format:%H`;
 
-  return sha;
+// @dev returns the sha of the repo
+export const getLatestCommitSHA_repo = (): HexString => {
+  const sha = execSync(latestCommitHashCommand).toString().trim();
+
+  return sha as HexString;
 };
 
-// @dev returns the full commit sha and post-fixed with the  '-dirty' label if dirty
-export const getGitMetadata = (filePath: string) => {
-  const sha = getMostRecentCommitSHA(filePath);
-  const status = getFileStatus(filePath);
-  const postfix = status === 'clean' ? '' : `-${status}`;
+// @dev returns the sha of the file or undefined if uncomitted
+export const getLatestCommitSHA_file = (path: string): HexString | undefined => {
+  const sha = execSync(`${latestCommitHashCommand} -- ${path}`).toString().trim() as HexString;
 
-  if (!sha) return 'uncomitted';
-  return `${sha}${postfix}`;
+  return sha.length > 0 ? sha : undefined;
+};
+
+export const getGitMetadata = (filePath: string): GitMetadata => {
+  const commitSha = getLatestCommitSHA_file(filePath);
+  const hasChanges = doesFileHaveChanges(filePath);
+  const statusLabel = !commitSha ? 'uncomitted' : `${commitSha}${hasChanges ? '-dirty' : ''}`;
+
+  return {
+    filePath,
+    hasChanges,
+    commitSha,
+    statusLabel,
+  };
 };
 
 // @dev returns a tuple of file path and commit sha
-export const getFilesGitStatus = (paths: string[]) => {
-  const statuses = paths.map(path => [path, getGitMetadata(path)]);
+export const getFilesMetadata = (paths: string[]) => paths.map(getGitMetadata);
 
-  return statuses;
+export const getRepoMetadata = (solidityFiles: string[]): RepoMetadata => {
+  const repositoryName = getRepoName();
+  if (!isGitInstalled() || !isGitRepo())
+    return {
+      repositoryName,
+    };
+
+  const remoteUrl = getGitRemote();
+  const repoHasChanges = !isCleanWorkingDir();
+  const solidityFileStatuses = getFilesMetadata(solidityFiles);
+  const repoCommitSHA = getLatestCommitSHA_repo();
+  const solidityFilesHaveChanges = solidityFileStatuses.some(
+    ({ commitSha, hasChanges }) => commitSha && hasChanges,
+  );
+
+  return {
+    repositoryName,
+    remoteUrl,
+    repoCommitSHA,
+    repoHasChanges,
+    solidityFileStatuses,
+    solidityFilesHaveChanges,
+  };
 };
-
-// console.log(getFilesGitStatus(process.argv.slice(2)));
