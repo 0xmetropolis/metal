@@ -2,6 +2,21 @@
 
 All notable changes to the Metropolis CLI will be listed in this file.
 
+## [0.1.3] - 2023-07-26
+
+### Fixed
+
+- ci: 🔖 update dist files by @kevinweaver in #46
+
+## [0.1.2] - 2023-07-26
+
+### Added
+
+- ci: 🔖 include dist with bundle by @colinnielsen in #41
+- feat: 🔐 mock PK by default by @colinnielsen in #40
+- build: 🔖 v0.1.2 🎉 by @colinnielsen in #42
+- feat: 🔔s + 😙s by @colinnielsen in #44
+
 ## [0.1.1] - 2023-07-25
 
 ### Added

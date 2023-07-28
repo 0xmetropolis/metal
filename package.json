@@ -1,6 +1,6 @@
 {
   "name": "@0xmetropolis/cli",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "Smart contract visualization tool.",
   "author": "Metropolis (@0xmetropolis)",
   "bin": {
@@ -14,8 +14,7 @@
   "main": "dist/index.js",
   "repository": "0xmetropolis/cli",
   "scripts": {
-    "build": "tsc",
-    "postinstall": "tsc",
+    "build": "npx tsc",
     "test": "jest",
     "watch": "tsc -w",
     "dev": "yarn build && yarn install:dev && metro -h",
@@ -26,15 +25,14 @@
     "chalk": "^2.0.1",
     "node-emoji": "^1.7.0",
     "toml": "^3.0.0",
-    "typescript": "^5.1.6",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "typescript": "^5.1.6",
     "husky": "^0.14.3",
     "inquirer": "^3.2.0",
     "@types/chalk": "^0.4.31",
     "@types/cors": "^2.8.13",
-    "@types/dotenv-flow": "^3.2.0",
     "@types/inquirer": "^0.0.35",
     "@types/jest": "^29.5.3",
     "@types/node": "^18.16.19",
