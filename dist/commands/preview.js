@@ -13,6 +13,7 @@ exports.handler = exports.sendDataToPreviewService = exports.configureForgeScrip
 const constants_1 = require("../constants");
 const utils_1 = require("../utils");
 const foundry_1 = require("../utils/foundry");
+const git_1 = require("../utils/git");
 const preview_service_1 = require("../utils/preview-service");
 const assert = require("node:assert");
 exports.command = 'preview';
@@ -80,9 +81,13 @@ const configureForgeScriptInputs = ({ rpcUrl }) => {
 };
 exports.configureForgeScriptInputs = configureForgeScriptInputs;
 /// @dev sanity checks while we scaffold the app
-function devModeSanityChecks({ abis, broadcastArtifacts }) {
+function devModeSanityChecks({ abis, broadcastArtifacts, repoMetadata }) {
     assert(Object.values(abis).length > 0 && Object.values(abis).every(Boolean));
     assert(broadcastArtifacts.transactions.length > 0);
+    assert(repoMetadata.__type === 'detailed' &&
+        repoMetadata.remoteUrl &&
+        repoMetadata.repoCommitSHA &&
+        repoMetadata.repositoryName);
 }
 const sendDataToPreviewService = (payload, forkId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -127,11 +132,14 @@ const handler = (yargs) => __awaiter(void 0, void 0, void 0, function* () {
     const dependencyList = (0, foundry_1.getScriptDependencies)(foundryConfig, scriptPath);
     const solidityFiles = [scriptPath, ...dependencyList];
     const abis = (0, utils_1.loadSolidityABIs)(foundryConfig, solidityFiles);
+    (0, utils_1.logInfo)(`Getting repo metadata...`);
+    const repoMetadata = (0, git_1.getRepoMetadata)(solidityFiles);
     (0, utils_1.logInfo)(`Getting transactions...`);
     const broadcastArtifacts = yield (0, foundry_1.getBroadcastArtifacts)(foundryConfig, chainId, scriptPath);
     const payload = {
         broadcastArtifacts,
         abis,
+        repoMetadata,
         chainId,
     };
     devModeSanityChecks(payload);

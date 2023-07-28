@@ -38,6 +38,25 @@ export enum Network {
 export type EthAddress = `0x${string}`;
 export type HexString = `0x${string}`;
 
+export type GitMetadata = {
+  filePath: string;
+  hasChanges: boolean;
+  commitSha?: HexString;
+  statusLabel: string;
+};
+
+export type RepoMetadata =
+  | { __type: 'simple'; repositoryName: string }
+  | {
+      __type: 'detailed';
+      repositoryName: string;
+      remoteUrl: string;
+      repoCommitSHA: HexString;
+      repoHasChanges: boolean;
+      solidityFileStatuses: GitMetadata[];
+      solidityFilesHaveChanges: boolean;
+    };
+
 export type FoundryConfig = {
   profile: {
     [profileName: string]: {
@@ -164,4 +183,5 @@ export type PreviewRequestParams = {
   broadcastArtifacts: BroadcastArtifacts_Partial;
   abis: Abis;
   chainId: Network;
+  repoMetadata: RepoMetadata;
 };

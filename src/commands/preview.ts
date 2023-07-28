@@ -27,6 +27,7 @@ import {
   normalizeForgeScriptPath,
   runForgeScript,
 } from '../utils/foundry';
+import { getRepoMetadata } from '../utils/git';
 import { createMetropolisFork } from '../utils/preview-service';
 import assert = require('node:assert');
 
@@ -81,7 +82,8 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
 
   if (userHasSpecifiedUNSAFEOverrideRPC)
     forgeArguments = forgeArguments.filter(
-      (_, argIndex) => argIndex !== UNSAFERpcOverrideIndex && argIndex !== UNSAFERpcOverrideIndex + 1,
+      (_, argIndex) =>
+        argIndex !== UNSAFERpcOverrideIndex && argIndex !== UNSAFERpcOverrideIndex + 1,
     );
 
   const rpcIndex = forgeArguments.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
@@ -113,9 +115,15 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
 };
 
 /// @dev sanity checks while we scaffold the app
-function devModeSanityChecks({ abis, broadcastArtifacts }: PreviewRequestParams) {
+function devModeSanityChecks({ abis, broadcastArtifacts, repoMetadata }: PreviewRequestParams) {
   assert(Object.values(abis).length > 0 && Object.values(abis).every(Boolean));
   assert(broadcastArtifacts.transactions.length > 0);
+  assert(
+    repoMetadata.__type === 'detailed' &&
+      repoMetadata.remoteUrl &&
+      repoMetadata.repoCommitSHA &&
+      repoMetadata.repositoryName,
+  );
 }
 
 export const sendDataToPreviewService = async (
@@ -177,12 +185,17 @@ export const handler = async (yargs: HandlerInput) => {
   const dependencyList = getScriptDependencies(foundryConfig, scriptPath);
   const solidityFiles = [scriptPath, ...dependencyList];
   const abis = loadSolidityABIs(foundryConfig, solidityFiles);
+
+  logInfo(`Getting repo metadata...`);
+  const repoMetadata = getRepoMetadata(solidityFiles);
+
   logInfo(`Getting transactions...`);
   const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, chainId, scriptPath);
 
   const payload = {
     broadcastArtifacts,
     abis,
+    repoMetadata,
     chainId,
   };
   devModeSanityChecks(payload);
