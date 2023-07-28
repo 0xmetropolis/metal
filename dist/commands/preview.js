@@ -13,6 +13,7 @@ exports.handler = exports.sendDataToPreviewService = exports.configureForgeScrip
 const constants_1 = require("../constants");
 const utils_1 = require("../utils");
 const foundry_1 = require("../utils/foundry");
+const git_1 = require("../utils/git");
 const preview_service_1 = require("../utils/preview-service");
 const assert = require("node:assert");
 exports.command = 'preview';
@@ -127,11 +128,14 @@ const handler = (yargs) => __awaiter(void 0, void 0, void 0, function* () {
     const dependencyList = (0, foundry_1.getScriptDependencies)(foundryConfig, scriptPath);
     const solidityFiles = [scriptPath, ...dependencyList];
     const abis = (0, utils_1.loadSolidityABIs)(foundryConfig, solidityFiles);
+    (0, utils_1.logInfo)(`Getting repo metadata...`);
+    const repoMetadata = (0, git_1.getRepoMetadata)(solidityFiles);
     (0, utils_1.logInfo)(`Getting transactions...`);
     const broadcastArtifacts = yield (0, foundry_1.getBroadcastArtifacts)(foundryConfig, chainId, scriptPath);
     const payload = {
         broadcastArtifacts,
         abis,
+        repoMetadata,
         chainId,
     };
     devModeSanityChecks(payload);
