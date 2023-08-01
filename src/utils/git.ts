@@ -3,7 +3,7 @@ import { execSync } from 'node:child_process';
 
 export const isGitInstalled = () => {
   try {
-    execSync('git -v', { stdio: 'ignore' });
+    execSync('git --version', { stdio: 'ignore' });
     return true;
   } catch (e: any) {
     return false;
