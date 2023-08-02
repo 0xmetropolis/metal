@@ -4,7 +4,7 @@ exports.getRepoMetadata = exports.getFilesMetadata = exports.getGitMetadata = ex
 const node_child_process_1 = require("node:child_process");
 const isGitInstalled = () => {
     try {
-        (0, node_child_process_1.execSync)('git -v', { stdio: 'ignore' });
+        (0, node_child_process_1.execSync)('git --version', { stdio: 'ignore' });
         return true;
     }
     catch (e) {
