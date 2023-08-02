@@ -6,8 +6,7 @@ All notable changes to the Metropolis CLI will be listed in this file.
 
 ### Fixed
 
-- bugfix: Use git --version instead of git -v by @kevinweaver in
-  https://github.com/0xmetropolis/cli/pull/52
+- bugfix: Use git --version instead of git -v by @kevinweaver in #52
 
 ## [0.1.4] - 2023-07-31
 
