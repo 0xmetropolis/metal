@@ -2,6 +2,29 @@
 
 All notable changes to the Metropolis CLI will be listed in this file.
 
+## [0.1.5] - 2023-08-02
+
+### Fixed
+
+- bugfix: Use git --version instead of git -v by @kevinweaver in
+  https://github.com/0xmetropolis/cli/pull/52
+
+## [0.1.4] - 2023-07-31
+
+### Added
+
+- Surface git repo information to the preview
+- feat: ✨ Parse git repo by @colinnielsen in #43
+- chore(dev-deps): bump eslint-config-prettier from 8.8.0 to 8.9.0 by @dependabot in #48
+- chore(dev-deps): bump @types/node from 18.16.19 to 18.17.1 by @dependabot in #49
+- chore(dev-deps): bump eslint from 8.45.0 to 8.46.0 by @dependabot in #50
+- chore(dev-deps): bump jest from 29.6.1 to 29.6.2 by @dependabot in #51
+- feat!: 0.1.4 Release by @colinnielsen in #47
+
+### Fixed
+
+- ci: 🔖 update dist files by @kevinweaver in #46
+
 ## [0.1.3] - 2023-07-26
 
 ### Fixed
