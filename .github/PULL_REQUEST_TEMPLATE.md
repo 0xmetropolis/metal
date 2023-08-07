@@ -1,17 +1,10 @@
-# Problem
+## Background
 
-<!-- explain the problem this PR solves -->
+test
 
-# Solution
-
-<!-- explain how this PR solves the problem -->
-
-### Checklist
-
-<!-- `x` completed boxes,  wrap tildes ~if unnecessary~ -->
+## Checklist◊
 
 - [ ] Documentation updated
 - [ ] Tested code changes
-- [ ] Dependencies merged and published
 
 [ticket]()
