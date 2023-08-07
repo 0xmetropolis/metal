@@ -2,7 +2,7 @@
 
 test
 
-## Checklist◊
+## Checklist
 
 - [ ] Documentation updated
 - [ ] Tested code changes
