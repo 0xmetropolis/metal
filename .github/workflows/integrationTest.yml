@@ -70,7 +70,7 @@ jobs:
         run: |
           git clone https://github.com/bulla-network/bulla-contracts-v2.git
           cd bulla-contracts-v2
-          git checkout 895d67f0cf4d32d63624d04ddeb03fcac4743236
+          git checkout edfeb6a356fe48b3806da5d8fb1a7ab4d9a9258b
           yarn
           forge install
 
