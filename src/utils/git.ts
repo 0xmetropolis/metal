@@ -1,5 +1,6 @@
 import { GitMetadata, HexString, RepoMetadata } from 'index';
 import { execSync } from 'node:child_process';
+import { exit } from '.';
 
 export const isGitInstalled = () => {
   try {
@@ -87,10 +88,7 @@ export const getFilesMetadata = (paths: string[]) => paths.map(getGitMetadata);
 export const getRepoMetadata = (solidityFiles: string[]): RepoMetadata => {
   const repositoryName = getRepoName();
   if (!isGitInstalled() || !isGitRepo())
-    return {
-      __type: 'simple',
-      repositoryName,
-    };
+    exit('metro commands must be run in a git repo', 'please run `git init` and try again');
 
   const remoteUrl = getGitRemote();
   const repoHasChanges = !isCleanWorkingDir();
@@ -101,7 +99,6 @@ export const getRepoMetadata = (solidityFiles: string[]): RepoMetadata => {
   );
 
   return {
-    __type: 'detailed',
     repositoryName,
     remoteUrl,
     repoCommitSHA,

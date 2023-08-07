@@ -118,12 +118,7 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
 function devModeSanityChecks({ abis, broadcastArtifacts, repoMetadata }: PreviewRequestParams) {
   assert(Object.values(abis).length > 0 && Object.values(abis).every(Boolean));
   assert(broadcastArtifacts.transactions.length > 0);
-  assert(
-    repoMetadata.__type === 'detailed' &&
-      repoMetadata.remoteUrl &&
-      repoMetadata.repoCommitSHA &&
-      repoMetadata.repositoryName,
-  );
+  assert(repoMetadata.remoteUrl && repoMetadata.repoCommitSHA && repoMetadata.repositoryName);
 }
 
 export const sendDataToPreviewService = async (

@@ -45,17 +45,14 @@ export type GitMetadata = {
   statusLabel: string;
 };
 
-export type RepoMetadata =
-  | { __type: 'simple'; repositoryName: string }
-  | {
-      __type: 'detailed';
-      repositoryName: string;
-      remoteUrl: string;
-      repoCommitSHA: HexString;
-      repoHasChanges: boolean;
-      solidityFileStatuses: GitMetadata[];
-      solidityFilesHaveChanges: boolean;
-    };
+export type RepoMetadata = {
+  repositoryName: string;
+  remoteUrl: string;
+  repoCommitSHA: HexString;
+  repoHasChanges: boolean;
+  solidityFileStatuses: GitMetadata[];
+  solidityFilesHaveChanges: boolean;
+};
 
 export type FoundryConfig = {
   profile: {
