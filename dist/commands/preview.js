@@ -16,6 +16,7 @@ const foundry_1 = require("../utils/foundry");
 const git_1 = require("../utils/git");
 const preview_service_1 = require("../utils/preview-service");
 const assert = require("node:assert");
+const version_1 = require("../utils/version");
 exports.command = 'preview';
 exports.description = `Generate preview of transactions from your Forge script`;
 exports.builder = {
@@ -134,6 +135,7 @@ const handler = (yargs) => __awaiter(void 0, void 0, void 0, function* () {
     const abis = (0, utils_1.loadSolidityABIs)(foundryConfig, solidityFiles);
     (0, utils_1.logInfo)(`Getting repo metadata...`);
     const repoMetadata = (0, git_1.getRepoMetadata)(solidityFiles);
+    const cliVersion = (0, version_1.getCLIVersion)();
     (0, utils_1.logInfo)(`Getting transactions...`);
     const broadcastArtifacts = yield (0, foundry_1.getBroadcastArtifacts)(foundryConfig, chainId, scriptPath);
     const payload = {
@@ -141,6 +143,7 @@ const handler = (yargs) => __awaiter(void 0, void 0, void 0, function* () {
         abis,
         repoMetadata,
         chainId,
+        cliVersion,
     };
     devModeSanityChecks(payload);
     if (!constants_1.doNotCommunicateWithPreviewService)
