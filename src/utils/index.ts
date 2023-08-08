@@ -17,6 +17,12 @@ export const exit = (...message: string[]) => {
   process.exit(1);
 };
 
+export const getFlagValueFromArgv = (flag: string): string | undefined => {
+  const flagIndex = process.argv.findIndex(arg => arg === flag);
+  if (flagIndex === -1) return undefined;
+  else return process.argv[flagIndex + 1];
+};
+
 export const openInBrowser = (url: string) => {
   const startScript =
     process.platform == 'darwin' ? 'open' : process.platform == 'win32' ? 'start' : 'xdg-open';

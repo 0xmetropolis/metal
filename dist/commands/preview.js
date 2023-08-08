@@ -81,13 +81,16 @@ const configureForgeScriptInputs = ({ rpcUrl }) => {
 };
 exports.configureForgeScriptInputs = configureForgeScriptInputs;
 /// @dev sanity checks while we scaffold the app
-function devModeSanityChecks({ abis, broadcastArtifacts, repoMetadata }) {
-    assert(Object.values(abis).length > 0 && Object.values(abis).every(Boolean));
-    assert(broadcastArtifacts.transactions.length > 0);
-    assert(repoMetadata.__type === 'detailed' &&
-        repoMetadata.remoteUrl &&
-        repoMetadata.repoCommitSHA &&
-        repoMetadata.repositoryName);
+function devModeSanityChecks({ scriptMetadata, chainId, contractMetadata, repoMetadata, }) {
+    contractMetadata.forEach(({ abi, name, filePath, fullyQualifiedName }) => {
+        assert(!!abi);
+        assert(!!name);
+        assert(!!filePath);
+        assert(!!fullyQualifiedName);
+    });
+    assert(typeof chainId === 'number');
+    assert(repoMetadata.remoteUrl && repoMetadata.repoCommitSHA && repoMetadata.repositoryName);
+    assert(scriptMetadata.filePath && scriptMetadata.broadcastArtifacts && scriptMetadata.functionName);
 }
 const sendDataToPreviewService = (payload, forkId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -127,20 +130,22 @@ const handler = (yargs) => __awaiter(void 0, void 0, void 0, function* () {
     });
     yield (0, foundry_1.runForgeScript)(foundryArguments);
     (0, utils_1.logInfo)(`Forge deployment script ran successfully!`);
-    (0, utils_1.logInfo)(`Retreiving Solidity source code...`);
-    const scriptPath = (0, foundry_1.normalizeForgeScriptPath)(forgeScriptPath);
-    const dependencyList = (0, foundry_1.getScriptDependencies)(foundryConfig, scriptPath);
-    const solidityFiles = [scriptPath, ...dependencyList];
-    const abis = (0, utils_1.loadSolidityABIs)(foundryConfig, solidityFiles);
+    (0, utils_1.logInfo)(`Getting contract metadata...`);
+    const normalizedScriptPath = (0, foundry_1.normalizeForgeScriptPath)(forgeScriptPath);
+    const solidityFilePaths = [
+        normalizedScriptPath,
+        ...(0, foundry_1.getScriptDependencies)(foundryConfig, normalizedScriptPath),
+    ];
+    const contractMetadata = (0, foundry_1.getContractMetadata)(foundryConfig, solidityFilePaths);
     (0, utils_1.logInfo)(`Getting repo metadata...`);
-    const repoMetadata = (0, git_1.getRepoMetadata)(solidityFiles);
-    (0, utils_1.logInfo)(`Getting transactions...`);
-    const broadcastArtifacts = yield (0, foundry_1.getBroadcastArtifacts)(foundryConfig, chainId, scriptPath);
+    const repoMetadata = (0, git_1.getRepoMetadata)(solidityFilePaths);
+    (0, utils_1.logInfo)(`Getting transaction data...`);
+    const scriptMetadata = yield (0, foundry_1.getScriptMetadata)(foundryConfig, chainId, forgeScriptPath);
     const payload = {
-        broadcastArtifacts,
-        abis,
-        repoMetadata,
         chainId,
+        repoMetadata,
+        scriptMetadata,
+        contractMetadata,
     };
     devModeSanityChecks(payload);
     if (!constants_1.doNotCommunicateWithPreviewService)

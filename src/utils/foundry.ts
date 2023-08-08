@@ -1,13 +1,16 @@
 import { ExecException, spawn } from 'child_process';
 import {
   BroadcastArtifacts_Partial,
+  ContractMetadata,
   FoundryConfig,
   Network,
+  ScriptMetadata,
   SolidityFilesCache_Partial,
 } from 'index';
 import { readFileSync } from 'node:fs';
 import * as toml from 'toml';
-import { exit, logError, logWarn } from '.';
+import { exit, getFlagValueFromArgv, loadSolidityABIs, logError, logWarn } from '.';
+import { getGitMetadata } from './git';
 
 export const processForgeError = ({ message }: ExecException) => {
   if (message.includes('connect error'))
@@ -188,4 +191,56 @@ export const runForgeScript = async (scriptArgs: string[]) => {
       }
     });
   });
+};
+
+export const getContractMetadata = (
+  foundryConfig: FoundryConfig,
+  solidityFilePaths: string[],
+): ContractMetadata[] => {
+  const abis = loadSolidityABIs(foundryConfig, solidityFilePaths);
+
+  const contractMetadata = Object.entries(abis).reduce<ContractMetadata[]>(
+    (acc, [fullyQualifiedName, abi]) => {
+      const [filePath, name] = fullyQualifiedName.split(':');
+      const metadata: ContractMetadata = { name, filePath, fullyQualifiedName, abi };
+
+      return [...acc, metadata];
+    },
+    [],
+  );
+
+  return contractMetadata;
+};
+
+const resolveTargetContract = (forgeScriptPath: string): string => {
+  const [scriptPath, maybeContractName] = forgeScriptPath.split(':');
+
+  if (maybeContractName) return maybeContractName;
+
+  if (process.argv.includes('--tc') || process.argv.includes('--target-contract'))
+    return getFlagValueFromArgv('--tc') || getFlagValueFromArgv('--target-contract');
+
+  // Use the file name as the script name, as that's probably correct
+  return scriptPath.split('/').at(-1).split('.')[0];
+};
+
+export const getScriptMetadata = async (
+  foundryConfig: FoundryConfig,
+  chainId: number,
+  forgeScriptPath: string,
+): Promise<ScriptMetadata> => {
+  const [scriptPath] = forgeScriptPath.split(':');
+  const targetContract = resolveTargetContract(forgeScriptPath);
+  const functionName = getFlagValueFromArgv('-s') || getFlagValueFromArgv('--sig') || 'run()';
+  const scriptGitMetadata = getGitMetadata(scriptPath);
+
+  const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, chainId, scriptPath);
+
+  return {
+    scriptName: targetContract,
+    functionName,
+    filePath: forgeScriptPath,
+    broadcastArtifacts,
+    ...scriptGitMetadata,
+  };
 };

@@ -9,11 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.runForgeScript = exports.getScriptDependencies = exports.loadSolidityFilesCache = exports.getCachePath = exports.getBroadcastArtifacts = exports.isSparseModeEnabled = exports.getOutPath = exports.getBroadcastPath = exports.getFoundryConfigValue = exports.loadFoundryConfig = exports.normalizeForgeScriptPath = exports.processForgeError = void 0;
+exports.getScriptMetadata = exports.getContractMetadata = exports.runForgeScript = exports.getScriptDependencies = exports.loadSolidityFilesCache = exports.getCachePath = exports.getBroadcastArtifacts = exports.isSparseModeEnabled = exports.getOutPath = exports.getBroadcastPath = exports.getFoundryConfigValue = exports.loadFoundryConfig = exports.normalizeForgeScriptPath = exports.processForgeError = void 0;
 const child_process_1 = require("child_process");
 const node_fs_1 = require("node:fs");
 const toml = require("toml");
 const _1 = require(".");
+const git_1 = require("./git");
 const processForgeError = ({ message }) => {
     if (message.includes('connect error'))
         return 'Could not connect to the RPC, check your internet connection';
@@ -164,4 +165,32 @@ const runForgeScript = (scriptArgs) => __awaiter(void 0, void 0, void 0, functio
     });
 });
 exports.runForgeScript = runForgeScript;
+const getContractMetadata = (foundryConfig, solidityFilePaths) => {
+    const abis = (0, _1.loadSolidityABIs)(foundryConfig, solidityFilePaths);
+    const contractMetadata = Object.entries(abis).reduce((acc, [fullyQualifiedName, abi]) => {
+        const [filePath, name] = fullyQualifiedName.split(':');
+        const metadata = { name, filePath, fullyQualifiedName, abi };
+        return [...acc, metadata];
+    }, []);
+    return contractMetadata;
+};
+exports.getContractMetadata = getContractMetadata;
+const resolveTargetContract = (forgeScriptPath) => {
+    const [scriptPath, maybeContractName] = forgeScriptPath.split(':');
+    if (maybeContractName)
+        return maybeContractName;
+    if (process.argv.includes('--tc') || process.argv.includes('--target-contract'))
+        return (0, _1.getFlagValueFromArgv)('--tc') || (0, _1.getFlagValueFromArgv)('--target-contract');
+    // Use the file name as the script name, as that's probably correct
+    return scriptPath.split('/').at(-1).split('.')[0];
+};
+const getScriptMetadata = (foundryConfig, chainId, forgeScriptPath) => __awaiter(void 0, void 0, void 0, function* () {
+    const [scriptPath] = forgeScriptPath.split(':');
+    const targetContract = resolveTargetContract(forgeScriptPath);
+    const functionName = (0, _1.getFlagValueFromArgv)('-s') || (0, _1.getFlagValueFromArgv)('--sig') || 'run()';
+    const scriptGitMetadata = (0, git_1.getGitMetadata)(scriptPath);
+    const broadcastArtifacts = yield (0, exports.getBroadcastArtifacts)(foundryConfig, chainId, scriptPath);
+    return Object.assign({ scriptName: targetContract, functionName, filePath: forgeScriptPath, broadcastArtifacts }, scriptGitMetadata);
+});
+exports.getScriptMetadata = getScriptMetadata;
 //# sourceMappingURL=foundry.js.map

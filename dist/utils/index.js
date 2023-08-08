@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loadSolidityABIs = exports.loadSolidityFiles = exports.replaceFlagValues = exports.getConfigFromTenderlyRpc = exports.getChainId = exports.openInBrowser = exports.exit = exports.logDetail = exports.logWarn = exports.logInfo = exports.logError = void 0;
+exports.loadSolidityABIs = exports.loadSolidityFiles = exports.replaceFlagValues = exports.getConfigFromTenderlyRpc = exports.getChainId = exports.openInBrowser = exports.getFlagValueFromArgv = exports.exit = exports.logDetail = exports.logWarn = exports.logInfo = exports.logError = void 0;
 const chalk_1 = require("chalk");
 const node_emoji_1 = require("node-emoji");
 const node_child_process_1 = require("node:child_process");
@@ -28,6 +28,14 @@ const exit = (...message) => {
     process.exit(1);
 };
 exports.exit = exit;
+const getFlagValueFromArgv = (flag) => {
+    const flagIndex = process.argv.findIndex(arg => arg === flag);
+    if (flagIndex === -1)
+        return undefined;
+    else
+        return process.argv[flagIndex + 1];
+};
+exports.getFlagValueFromArgv = getFlagValueFromArgv;
 const openInBrowser = (url) => {
     const startScript = process.platform == 'darwin' ? 'open' : process.platform == 'win32' ? 'start' : 'xdg-open';
     (0, node_child_process_1.exec)(`${startScript} "${url}"`);

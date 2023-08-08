@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRepoMetadata = exports.getFilesMetadata = exports.getGitMetadata = exports.getLatestCommitSHA_file = exports.getLatestCommitSHA_repo = exports.doesFileHaveChanges = exports.isCleanWorkingDir = exports.getGitStatus = exports.getGitRemote = exports.getRepoName = exports.isGitRepo = exports.isGitInstalled = void 0;
 const node_child_process_1 = require("node:child_process");
+const _1 = require(".");
 const isGitInstalled = () => {
     try {
         (0, node_child_process_1.execSync)('git --version', { stdio: 'ignore' });
@@ -81,22 +82,17 @@ exports.getFilesMetadata = getFilesMetadata;
 const getRepoMetadata = (solidityFiles) => {
     const repositoryName = (0, exports.getRepoName)();
     if (!(0, exports.isGitInstalled)() || !(0, exports.isGitRepo)())
-        return {
-            __type: 'simple',
-            repositoryName,
-        };
+        (0, _1.exit)('metro commands must be run in a git repo', 'please run `git init` and try again');
     const remoteUrl = (0, exports.getGitRemote)();
     const repoHasChanges = !(0, exports.isCleanWorkingDir)();
     const solidityFileStatuses = (0, exports.getFilesMetadata)(solidityFiles);
     const repoCommitSHA = (0, exports.getLatestCommitSHA_repo)();
     const solidityFilesHaveChanges = solidityFileStatuses.some(({ commitSha, hasChanges }) => commitSha && hasChanges);
     return {
-        __type: 'detailed',
         repositoryName,
         remoteUrl,
         repoCommitSHA,
         repoHasChanges,
-        solidityFileStatuses,
         solidityFilesHaveChanges,
     };
 };
