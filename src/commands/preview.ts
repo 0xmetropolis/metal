@@ -75,6 +75,9 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
 export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): string[] => {
   // pull anything after `metro preview <path>` as forge arguments
   let forgeArguments = process.argv.slice(3);
+  forgeArguments = forgeArguments.map(arg =>
+    arg.includes('(') && arg.includes(')') ? `"${arg}"` : arg,
+  );
 
   const UNSAFERpcOverrideIndex = forgeArguments.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
   // if the developer has specified an rpc override, we need to remove that flag and not pass it to forge
