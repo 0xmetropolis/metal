@@ -31,18 +31,3 @@ metro
 
 This will register the current build of `dist/index.js` as a global command `metro`. This is useful
 for testing the CLI tool without having to publish to npm.
-
-## Releasing a new version
-
-1. Write code.
-1. Bump version in package.json, ex: `v0.0.5`.
-1. Add changes to CHANGELOG.md.
-1. Open PR, review, merge to main.
-1. Draft a [new release](https://github.com/0xmetropolis/cli/releases/new).
-
-    - Choose tag: `v0.0.5`.
-    - Release title: `v0.0.5`.
-    - Description: Copy/paste new additions in CHANGELOG.md
-    - Publish release.
-
-1. Confirm [new release](https://www.npmjs.com/package/@0xmetropolis/cli).
