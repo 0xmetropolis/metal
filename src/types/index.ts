@@ -194,6 +194,7 @@ export type ScriptMetadata = Pretty<
 >;
 
 export type PreviewRequestParams = {
+  cliVersion: string;
   chainId: Network;
   repoMetadata: RepoMetadata;
   scriptMetadata: ScriptMetadata;

@@ -16,6 +16,7 @@ const foundry_1 = require("../utils/foundry");
 const git_1 = require("../utils/git");
 const preview_service_1 = require("../utils/preview-service");
 const assert = require("node:assert");
+const version_1 = require("../utils/version");
 exports.command = 'preview';
 exports.description = `Generate preview of transactions from your Forge script`;
 exports.builder = {
