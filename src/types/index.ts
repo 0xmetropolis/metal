@@ -175,12 +175,14 @@ export type BroadcastArtifacts_Partial = {
   commit: HexString;
 };
 
-export type ContractMetadata = {
-  name: string; // name of the contract (ERC20)
-  filePath: string;
-  fullyQualifiedName: string; // fully qualified name of the contract path (e.g: src/ERC20.sol:ERC20)
-  abi: Abi;
-};
+export type ContractMetadata = Pretty<
+  {
+    name: string; // name of the contract (ERC20)
+    filePath: string;
+    fullyQualifiedName: string; // fully qualified name of the contract path (e.g: src/ERC20.sol:ERC20)
+    abi: Abi;
+  } & GitMetadata
+>;
 
 export type ScriptMetadata = Pretty<
   {

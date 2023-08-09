@@ -202,7 +202,14 @@ export const getContractMetadata = (
   const contractMetadata = Object.entries(abis).reduce<ContractMetadata[]>(
     (acc, [fullyQualifiedName, abi]) => {
       const [filePath, name] = fullyQualifiedName.split(':');
-      const metadata: ContractMetadata = { name, filePath, fullyQualifiedName, abi };
+      const gitMetadata = getGitMetadata(filePath);
+      const metadata: ContractMetadata = {
+        name,
+        filePath,
+        fullyQualifiedName,
+        abi,
+        ...gitMetadata,
+      };
 
       return [...acc, metadata];
     },
