@@ -144,11 +144,13 @@ const handler = (yargs) => __awaiter(void 0, void 0, void 0, function* () {
     (0, utils_1.logInfo)(`Forge deployment script ran successfully!`);
     (0, utils_1.logInfo)(`Getting repo metadata...`);
     const repoMetadata = (0, git_1.getRepoMetadata)(solidityFilePaths);
+    const cliVersion = (0, version_1.getCLIVersion)();
     (0, utils_1.logInfo)(`Getting transaction data...`);
     const scriptMetadata = yield (0, foundry_1.getScriptMetadata)(foundryConfig, chainId, forgeScriptPath);
     (0, utils_1.logInfo)(`Getting contract metadata...`);
     const contractMetadata = (0, foundry_1.getContractMetadata)(foundryConfig, scriptMetadata.broadcastArtifacts, solidityFilePaths);
     const payload = {
+        cliVersion,
         chainId,
         repoMetadata,
         scriptMetadata,
