@@ -184,4 +184,5 @@ export type PreviewRequestParams = {
   abis: Abis;
   chainId: Network;
   repoMetadata: RepoMetadata;
+  cliVersion: string;
 };

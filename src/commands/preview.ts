@@ -30,6 +30,7 @@ import {
 import { getRepoMetadata } from '../utils/git';
 import { createMetropolisFork } from '../utils/preview-service';
 import assert = require('node:assert');
+import { getCLIVersion } from '../utils/version';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -188,6 +189,7 @@ export const handler = async (yargs: HandlerInput) => {
 
   logInfo(`Getting repo metadata...`);
   const repoMetadata = getRepoMetadata(solidityFiles);
+  const cliVersion = getCLIVersion();
 
   logInfo(`Getting transactions...`);
   const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, chainId, scriptPath);
@@ -197,6 +199,7 @@ export const handler = async (yargs: HandlerInput) => {
     abis,
     repoMetadata,
     chainId,
+    cliVersion,
   };
   devModeSanityChecks(payload);
 
