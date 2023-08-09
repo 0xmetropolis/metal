@@ -94,6 +94,7 @@ function devModeSanityChecks({ scriptMetadata, chainId, contractMetadata, repoMe
     assert(scriptMetadata.filePath && scriptMetadata.broadcastArtifacts && scriptMetadata.functionName);
 }
 const sendDataToPreviewService = (payload, forkId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const response = yield fetch(`${constants_1.PREVIEW_SERVICE_URL}/preview/${forkId}`, {
             headers: {
@@ -102,19 +103,23 @@ const sendDataToPreviewService = (payload, forkId) => __awaiter(void 0, void 0, 
             method: 'POST',
             body: JSON.stringify(payload),
         });
-        if (response.status !== 200)
-            (0, utils_1.exit)('Error received from preview service:', 'Status Code: ' + response.status, 'Status Text: ' + response.statusText);
+        if (response.status !== 200) {
+            const res = yield response.json();
+            (0, utils_1.logDebug)(res);
+            (0, utils_1.exit)(`Error received from Metropolis! (status ${response.status})`, '===========================', (_a = res.message) !== null && _a !== void 0 ? _a : response.statusText);
+        }
         const res = yield response.json();
         return res.id;
     }
     catch (e) {
+        (0, utils_1.logDebug)(e);
         (0, utils_1.exit)('Error connecting to preview service', e.message);
     }
 });
 exports.sendDataToPreviewService = sendDataToPreviewService;
 // @dev entry point for the preview command
 const handler = (yargs) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _b;
     validateInputs(yargs);
     // @dev arg 0 is the command name: e.g: `preview`
     const { _: [, forgeScriptPath], 'chain-id': chainId, 'UNSAFE-RPC-OVERRIDE': rpcOverride, } = yargs;
@@ -125,23 +130,23 @@ const handler = (yargs) => __awaiter(void 0, void 0, void 0, function* () {
             : yield (0, preview_service_1.createMetropolisFork)(chainId);
     (0, utils_1.logInfo)(`Loading foundry.toml...`);
     const foundryConfig = (0, foundry_1.loadFoundryConfig)();
-    (0, utils_1.logInfo)(`Running Forge Script at ${forgeScriptPath}...`);
-    const foundryArguments = (0, exports.configureForgeScriptInputs)({
-        rpcUrl: (_a = yargs['UNSAFE-RPC-OVERRIDE']) !== null && _a !== void 0 ? _a : rpcUrl,
-    });
-    yield (0, foundry_1.runForgeScript)(foundryArguments);
-    (0, utils_1.logInfo)(`Forge deployment script ran successfully!`);
-    (0, utils_1.logInfo)(`Getting contract metadata...`);
     const normalizedScriptPath = (0, foundry_1.normalizeForgeScriptPath)(forgeScriptPath);
     const solidityFilePaths = [
         normalizedScriptPath,
         ...(0, foundry_1.getScriptDependencies)(foundryConfig, normalizedScriptPath),
     ];
-    const contractMetadata = (0, foundry_1.getContractMetadata)(foundryConfig, solidityFilePaths);
+    (0, utils_1.logInfo)(`Running Forge Script at ${forgeScriptPath}...`);
+    const foundryArguments = (0, exports.configureForgeScriptInputs)({
+        rpcUrl: (_b = yargs['UNSAFE-RPC-OVERRIDE']) !== null && _b !== void 0 ? _b : rpcUrl,
+    });
+    yield (0, foundry_1.runForgeScript)(foundryArguments);
+    (0, utils_1.logInfo)(`Forge deployment script ran successfully!`);
     (0, utils_1.logInfo)(`Getting repo metadata...`);
     const repoMetadata = (0, git_1.getRepoMetadata)(solidityFilePaths);
     (0, utils_1.logInfo)(`Getting transaction data...`);
     const scriptMetadata = yield (0, foundry_1.getScriptMetadata)(foundryConfig, chainId, forgeScriptPath);
+    (0, utils_1.logInfo)(`Getting contract metadata...`);
+    const contractMetadata = (0, foundry_1.getContractMetadata)(foundryConfig, scriptMetadata.broadcastArtifacts, solidityFilePaths);
     const payload = {
         chainId,
         repoMetadata,

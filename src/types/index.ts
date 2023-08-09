@@ -145,7 +145,7 @@ export type BroadcastReceipts = {
 
 export type BroadcastTransaction = {
   hash: HexString;
-  transactionType: 'CREATE' | 'CALL';
+  transactionType: 'CREATE' | 'CREATE2' | 'CALL';
   contractName: string;
   contractAddress: EthAddress;
   function: string | null;
@@ -181,6 +181,7 @@ export type ContractMetadata = Pretty<
     filePath: string;
     fullyQualifiedName: string; // fully qualified name of the contract path (e.g: src/ERC20.sol:ERC20)
     abi: Abi;
+    deployedAddress?: EthAddress;
   } & GitMetadata
 >;
 

@@ -165,15 +165,20 @@ const runForgeScript = (scriptArgs) => __awaiter(void 0, void 0, void 0, functio
     });
 });
 exports.runForgeScript = runForgeScript;
-const getContractMetadata = (foundryConfig, solidityFilePaths) => {
+const getContractMetadata = (foundryConfig, broadcastArtifacts, solidityFilePaths) => {
     const abis = (0, _1.loadSolidityABIs)(foundryConfig, solidityFilePaths);
+    const deployedAddressesByName = broadcastArtifacts.transactions.reduce((acc, { contractName, contractAddress, transactionType }) => contractName && (transactionType === 'CREATE' || transactionType === 'CREATE2')
+        ? Object.assign(Object.assign({}, acc), { [contractName]: contractAddress }) : acc, {});
     const contractMetadata = Object.entries(abis).reduce((acc, [fullyQualifiedName, abi]) => {
         const [filePath, name] = fullyQualifiedName.split(':');
         const gitMetadata = (0, git_1.getGitMetadata)(filePath);
+        // optionally include the deployed address if the contract is being created
+        const deployedAddress = deployedAddressesByName[name];
         const metadata = Object.assign({ name,
             filePath,
             fullyQualifiedName,
-            abi }, gitMetadata);
+            abi,
+            deployedAddress }, gitMetadata);
         return [...acc, metadata];
     }, []);
     return contractMetadata;

@@ -14,6 +14,7 @@ import {
 import {
   exit,
   getConfigFromTenderlyRpc,
+  logDebug,
   logInfo,
   logWarn,
   openInBrowser,
@@ -30,6 +31,7 @@ import {
 import { getRepoMetadata } from '../utils/git';
 import { createMetropolisFork } from '../utils/preview-service';
 import assert = require('node:assert');
+import { writeFile, writeFileSync } from 'node:fs';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -150,16 +152,21 @@ export const sendDataToPreviewService = async (
       body: JSON.stringify(payload),
     });
 
-    if (response.status !== 200)
+    if (response.status !== 200) {
+      const res = await response.json();
+      logDebug(res);
+
       exit(
-        'Error received from preview service:',
-        'Status Code: ' + response.status,
-        'Status Text: ' + response.statusText,
+        `Error received from Metropolis! (status ${response.status})`,
+        '===========================',
+        res.message ?? response.statusText,
       );
+    }
 
     const res: { id: string } = await response.json();
     return res.id;
   } catch (e: any) {
+    logDebug(e);
     exit('Error connecting to preview service', e.message);
   }
 };
@@ -184,6 +191,12 @@ export const handler = async (yargs: HandlerInput) => {
   logInfo(`Loading foundry.toml...`);
   const foundryConfig = loadFoundryConfig();
 
+  const normalizedScriptPath = normalizeForgeScriptPath(forgeScriptPath);
+  const solidityFilePaths = [
+    normalizedScriptPath,
+    ...getScriptDependencies(foundryConfig, normalizedScriptPath),
+  ];
+
   logInfo(`Running Forge Script at ${forgeScriptPath}...`);
   const foundryArguments = configureForgeScriptInputs({
     rpcUrl: yargs['UNSAFE-RPC-OVERRIDE'] ?? rpcUrl,
@@ -191,20 +204,18 @@ export const handler = async (yargs: HandlerInput) => {
   await runForgeScript(foundryArguments);
   logInfo(`Forge deployment script ran successfully!`);
 
-  logInfo(`Getting contract metadata...`);
-  const normalizedScriptPath = normalizeForgeScriptPath(forgeScriptPath);
-  const solidityFilePaths = [
-    normalizedScriptPath,
-    ...getScriptDependencies(foundryConfig, normalizedScriptPath),
-  ];
-
-  const contractMetadata = getContractMetadata(foundryConfig, solidityFilePaths);
-
   logInfo(`Getting repo metadata...`);
   const repoMetadata = getRepoMetadata(solidityFilePaths);
 
   logInfo(`Getting transaction data...`);
   const scriptMetadata = await getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
+
+  logInfo(`Getting contract metadata...`);
+  const contractMetadata = getContractMetadata(
+    foundryConfig,
+    scriptMetadata.broadcastArtifacts,
+    solidityFilePaths,
+  );
 
   const payload: PreviewRequestParams = {
     chainId,

@@ -2,6 +2,7 @@ import { ExecException, spawn } from 'child_process';
 import {
   BroadcastArtifacts_Partial,
   ContractMetadata,
+  EthAddress,
   FoundryConfig,
   Network,
   ScriptMetadata,
@@ -195,19 +196,32 @@ export const runForgeScript = async (scriptArgs: string[]) => {
 
 export const getContractMetadata = (
   foundryConfig: FoundryConfig,
+  broadcastArtifacts: BroadcastArtifacts_Partial,
   solidityFilePaths: string[],
 ): ContractMetadata[] => {
   const abis = loadSolidityABIs(foundryConfig, solidityFilePaths);
+  const deployedAddressesByName = broadcastArtifacts.transactions.reduce<
+    Record<string, EthAddress>
+  >(
+    (acc, { contractName, contractAddress, transactionType }) =>
+      contractName && (transactionType === 'CREATE' || transactionType === 'CREATE2')
+        ? { ...acc, [contractName]: contractAddress }
+        : acc,
+    {},
+  );
 
   const contractMetadata = Object.entries(abis).reduce<ContractMetadata[]>(
     (acc, [fullyQualifiedName, abi]) => {
       const [filePath, name] = fullyQualifiedName.split(':');
       const gitMetadata = getGitMetadata(filePath);
+      // optionally include the deployed address if the contract is being created
+      const deployedAddress: EthAddress | undefined = deployedAddressesByName[name];
       const metadata: ContractMetadata = {
         name,
         filePath,
         fullyQualifiedName,
         abi,
+        deployedAddress,
         ...gitMetadata,
       };
 

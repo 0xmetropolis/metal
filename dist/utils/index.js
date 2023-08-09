@@ -9,22 +9,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loadSolidityABIs = exports.loadSolidityFiles = exports.replaceFlagValues = exports.getConfigFromTenderlyRpc = exports.getChainId = exports.openInBrowser = exports.getFlagValueFromArgv = exports.exit = exports.logDetail = exports.logWarn = exports.logInfo = exports.logError = void 0;
+exports.loadSolidityABIs = exports.loadSolidityFiles = exports.replaceFlagValues = exports.getConfigFromTenderlyRpc = exports.getChainId = exports.openInBrowser = exports.getFlagValueFromArgv = exports.exit = exports.logDetail = exports.logWarn = exports.logDebug = exports.logInfo = exports.logError = void 0;
 const chalk_1 = require("chalk");
 const node_emoji_1 = require("node-emoji");
 const node_child_process_1 = require("node:child_process");
 const node_fs_1 = require("node:fs");
 const foundry_1 = require("./foundry");
-const logError = (...s) => console.log((0, node_emoji_1.emojify)(chalk_1.default.bold.red(s.join('\n'))));
+const logError = (...s) => console.log('\n\n\n' + (0, node_emoji_1.emojify)(chalk_1.default.bold.red(s.join('\n'))));
 exports.logError = logError;
 const logInfo = (s) => console.log((0, node_emoji_1.emojify)(chalk_1.default.bold(s)));
 exports.logInfo = logInfo;
+const logDebug = (s) => !!process.env.DEBUG &&
+    console.log((0, node_emoji_1.emojify)(chalk_1.default.yellowBright(typeof s === 'object' ? JSON.stringify(s, null, 2) : s)));
+exports.logDebug = logDebug;
 const logWarn = (...s) => console.warn((0, node_emoji_1.emojify)(chalk_1.default.bold.yellow(s.map(str => '⚠️ ' + str + ' ⚠️').join('\n'))));
 exports.logWarn = logWarn;
 const logDetail = (s) => console.log((0, node_emoji_1.emojify)(chalk_1.default.dim(s)));
 exports.logDetail = logDetail;
 const exit = (...message) => {
-    exports.logError.call(this, message);
+    exports.logError.call(this, message.join('\n'));
     process.exit(1);
 };
 exports.exit = exit;
