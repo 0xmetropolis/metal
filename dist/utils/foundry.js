@@ -169,7 +169,11 @@ const getContractMetadata = (foundryConfig, solidityFilePaths) => {
     const abis = (0, _1.loadSolidityABIs)(foundryConfig, solidityFilePaths);
     const contractMetadata = Object.entries(abis).reduce((acc, [fullyQualifiedName, abi]) => {
         const [filePath, name] = fullyQualifiedName.split(':');
-        const metadata = { name, filePath, fullyQualifiedName, abi };
+        const gitMetadata = (0, git_1.getGitMetadata)(filePath);
+        const metadata = Object.assign({ name,
+            filePath,
+            fullyQualifiedName,
+            abi }, gitMetadata);
         return [...acc, metadata];
     }, []);
     return contractMetadata;
