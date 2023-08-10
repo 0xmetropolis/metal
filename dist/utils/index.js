@@ -9,8 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loadSolidityABIs = exports.loadSolidityFiles = exports.replaceFlagValues = exports.getConfigFromTenderlyRpc = exports.getChainId = exports.openInBrowser = exports.exit = exports.logDetail = exports.logWarn = exports.logInfo = exports.logError = void 0;
+exports.loadSolidityABIs = exports.loadSolidityFiles = exports.replaceFlagValues = exports.getConfigFromTenderlyRpc = exports.getChainIdFromNetworkName = exports.getChainId = exports.openInBrowser = exports.exit = exports.logDetail = exports.logWarn = exports.logInfo = exports.logError = void 0;
 const chalk_1 = require("chalk");
+const index_1 = require("index");
 const node_emoji_1 = require("node-emoji");
 const node_child_process_1 = require("node:child_process");
 const node_fs_1 = require("node:fs");
@@ -50,6 +51,12 @@ const getChainId = (rpcUrl) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getChainId = getChainId;
+const getChainIdFromNetworkName = (network) => {
+    const chainId = index_1.Network[network.toUpperCase()];
+    !chainId && (0, exports.exit)(`Network name ${network} not recognized.`);
+    return chainId;
+};
+exports.getChainIdFromNetworkName = getChainIdFromNetworkName;
 const getConfigFromTenderlyRpc = (rpcOverride) => ({
     rpcUrl: rpcOverride,
     id: rpcOverride.split('/').at(-1),

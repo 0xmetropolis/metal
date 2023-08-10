@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { Abi, FoundryConfig, HexString } from 'index';
+import { Abi, FoundryConfig, HexString, Network } from 'index';
 import { emojify } from 'node-emoji';
 import { exec } from 'node:child_process';
 import { UUID } from 'node:crypto';
@@ -39,6 +39,14 @@ export const getChainId = async (rpcUrl: string) => {
   } catch (e: any) {
     exit('Error fetching chainId from RPC endpoint');
   }
+};
+
+export const getChainIdFromNetworkName = (network: string): number => {
+  const chainId = Network[network.toUpperCase() as keyof typeof Network];
+
+  !chainId && exit(`Network name ${network} not recognized.`);
+
+  return chainId;
 };
 
 export const getConfigFromTenderlyRpc = (rpcOverride: string): { rpcUrl: string; id: UUID } => ({

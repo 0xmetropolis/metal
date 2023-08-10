@@ -9,10 +9,12 @@ import {
   PREVIEW_WEB_URL,
   RPC_OVERRIDE_FLAG,
   SUPPORTED_CHAINS,
+  SUPPORTED_NETWORKS,
   doNotCommunicateWithPreviewService,
 } from '../constants';
 import {
   exit,
+  getChainIdFromNetworkName,
   getConfigFromTenderlyRpc,
   loadSolidityABIs,
   logInfo,
@@ -45,8 +47,13 @@ export const builder: { [key: string]: Options } = {
   },
   'chain-id': {
     type: 'number',
-    required: true,
+    required: false,
     description: 'The chain id of the network you wish to preview',
+  },
+  network: {
+    type: 'string',
+    required: false,
+    description: 'The name of the network you wish to preview',
   },
   'UNSAFE-RPC-OVERRIDE': {
     type: 'string',
@@ -55,7 +62,11 @@ export const builder: { [key: string]: Options } = {
   },
 };
 
-function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput) {
+function validateInputs({
+  _: [, scriptPath],
+  'chain-id': chainId,
+  network: network,
+}: HandlerInput) {
   const cliInput = process.argv.slice(3);
   const rpcIndex = cliInput.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
 
@@ -68,7 +79,11 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
   if (!scriptPath || !scriptPath.includes('.sol'))
     exit('You must specify a solidity script to preview');
 
-  if (!SUPPORTED_CHAINS.includes(chainId)) exit(`Chain Id ${chainId} is not supported`);
+  if (!chainId && !network) exit(`You must include either --chain-id or --network`);
+
+  if (chainId && !SUPPORTED_CHAINS.includes(chainId)) exit(`Chain Id ${chainId} is not supported`);
+
+  if (network && !SUPPORTED_NETWORKS.includes(network)) exit(`Network ${network} is not supported`);
 }
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
@@ -160,9 +175,11 @@ export const handler = async (yargs: HandlerInput) => {
   // @dev arg 0 is the command name: e.g: `preview`
   const {
     _: [, forgeScriptPath],
-    'chain-id': chainId,
+    'chain-id': chainIdFlag,
+    network,
     'UNSAFE-RPC-OVERRIDE': rpcOverride,
   } = yargs;
+  const chainId = chainIdFlag ?? getChainIdFromNetworkName(network);
 
   const { rpcUrl, id: forkId } = doNotCommunicateWithPreviewService
     ? { id: undefined, rpcUrl: undefined }
