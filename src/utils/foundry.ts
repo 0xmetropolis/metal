@@ -1,4 +1,4 @@
-import { ExecException, spawn } from 'child_process';
+import { ExecException, execSync, spawn } from 'child_process';
 import {
   BroadcastArtifacts_Partial,
   ContractMetadata,
@@ -131,6 +131,7 @@ export const loadSolidityFilesCache = (
 ): SolidityFilesCache_Partial => {
   const cachePath = getCachePath(foundryConfig);
   console.log('cachePath: ', cachePath);
+  execSync(`ls`);
   let filesCache_raw: string;
   try {
     filesCache_raw = readFileSync(`${cachePath}/solidity-files-cache.json`, {
