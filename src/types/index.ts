@@ -1,3 +1,8 @@
+// a utility type to unwrap mulitple type inheritances on hover
+export type Pretty<T> = {
+  [K in keyof T]: T[K];
+} & {};
+
 // @dev Tenderly supported networks
 export enum Network {
   MAINNET = 1,
@@ -45,17 +50,13 @@ export type GitMetadata = {
   statusLabel: string;
 };
 
-export type RepoMetadata =
-  | { __type: 'simple'; repositoryName: string }
-  | {
-      __type: 'detailed';
-      repositoryName: string;
-      remoteUrl: string;
-      repoCommitSHA: HexString;
-      repoHasChanges: boolean;
-      solidityFileStatuses: GitMetadata[];
-      solidityFilesHaveChanges: boolean;
-    };
+export type RepoMetadata = {
+  repositoryName: string;
+  remoteUrl: string;
+  repoCommitSHA: HexString;
+  repoHasChanges: boolean;
+  solidityFilesHaveChanges: boolean;
+};
 
 export type FoundryConfig = {
   profile: {
@@ -73,11 +74,6 @@ export type FoundryConfig = {
 };
 
 export type Abi = any;
-
-export type Abis = {
-  // mapping from fully qualified contract name to abi
-  [fullyQualifiedPath: string]: Abi;
-};
 
 export type SolidityFilesCache_Partial = {
   _format: 'ethers-rs-sol-cache-3' | 'hh-sol-cache-2' | string;
@@ -149,7 +145,7 @@ export type BroadcastReceipts = {
 
 export type BroadcastTransaction = {
   hash: HexString;
-  transactionType: 'CREATE' | 'CALL';
+  transactionType: 'CREATE' | 'CREATE2' | 'CALL';
   contractName: string;
   contractAddress: EthAddress;
   function: string | null;
@@ -179,10 +175,28 @@ export type BroadcastArtifacts_Partial = {
   commit: HexString;
 };
 
+export type ContractMetadata = Pretty<
+  {
+    name: string; // name of the contract (ERC20)
+    filePath: string;
+    fullyQualifiedName: string; // fully qualified name of the contract path (e.g: src/ERC20.sol:ERC20)
+    abi: Abi;
+    deployedAddress?: EthAddress;
+  } & GitMetadata
+>;
+
+export type ScriptMetadata = Pretty<
+  {
+    scriptName: string; // name of the script (e.g: Deploy.s.sol)
+    functionName: string; // name of the function to call (default = "run()")
+    broadcastArtifacts: BroadcastArtifacts_Partial;
+  } & GitMetadata
+>;
+
 export type PreviewRequestParams = {
-  broadcastArtifacts: BroadcastArtifacts_Partial;
-  abis: Abis;
+  cliVersion: string;
   chainId: Network;
   repoMetadata: RepoMetadata;
-  cliVersion: string;
+  scriptMetadata: ScriptMetadata;
+  contractMetadata: ContractMetadata[];
 };

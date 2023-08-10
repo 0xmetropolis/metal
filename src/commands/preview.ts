@@ -14,15 +14,16 @@ import {
 import {
   exit,
   getConfigFromTenderlyRpc,
-  loadSolidityABIs,
+  logDebug,
   logInfo,
   logWarn,
   openInBrowser,
   replaceFlagValues,
 } from '../utils';
 import {
-  getBroadcastArtifacts,
+  getContractMetadata,
   getScriptDependencies,
+  getScriptMetadata,
   loadFoundryConfig,
   normalizeForgeScriptPath,
   runForgeScript,
@@ -76,6 +77,10 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
 export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): string[] => {
   // pull anything after `metro preview <path>` as forge arguments
   let forgeArguments = process.argv.slice(3);
+  // rewrap function signatures in quotes, ex: --sig "run()"
+  forgeArguments = forgeArguments.map(arg =>
+    arg.includes('(') && arg.includes(')') ? `"${arg}"` : arg,
+  );
 
   const UNSAFERpcOverrideIndex = forgeArguments.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
   // if the developer has specified an rpc override, we need to remove that flag and not pass it to forge
@@ -116,14 +121,22 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
 };
 
 /// @dev sanity checks while we scaffold the app
-function devModeSanityChecks({ abis, broadcastArtifacts, repoMetadata }: PreviewRequestParams) {
-  assert(Object.values(abis).length > 0 && Object.values(abis).every(Boolean));
-  assert(broadcastArtifacts.transactions.length > 0);
+function devModeSanityChecks({
+  scriptMetadata,
+  chainId,
+  contractMetadata,
+  repoMetadata,
+}: PreviewRequestParams) {
+  contractMetadata.forEach(({ abi, name, filePath, fullyQualifiedName }) => {
+    assert(!!abi);
+    assert(!!name);
+    assert(!!filePath);
+    assert(!!fullyQualifiedName);
+  });
+  assert(typeof chainId === 'number');
+  assert(repoMetadata.remoteUrl && repoMetadata.repoCommitSHA && repoMetadata.repositoryName);
   assert(
-    repoMetadata.__type === 'detailed' &&
-      repoMetadata.remoteUrl &&
-      repoMetadata.repoCommitSHA &&
-      repoMetadata.repositoryName,
+    scriptMetadata.filePath && scriptMetadata.broadcastArtifacts && scriptMetadata.functionName,
   );
 }
 
@@ -140,16 +153,21 @@ export const sendDataToPreviewService = async (
       body: JSON.stringify(payload),
     });
 
-    if (response.status !== 200)
+    if (response.status !== 200) {
+      const res = await response.json();
+      logDebug(res);
+
       exit(
-        'Error received from preview service:',
-        'Status Code: ' + response.status,
-        'Status Text: ' + response.statusText,
+        `Error received from Metropolis! (status ${response.status})`,
+        '===========================',
+        res.message ?? response.statusText,
       );
+    }
 
     const res: { id: string } = await response.json();
     return res.id;
   } catch (e: any) {
+    logDebug(e);
     exit('Error connecting to preview service', e.message);
   }
 };
@@ -181,25 +199,32 @@ export const handler = async (yargs: HandlerInput) => {
   await runForgeScript(foundryArguments);
   logInfo(`Forge deployment script ran successfully!`);
 
-  logInfo(`Retreiving Solidity source code...`);
-  const scriptPath = normalizeForgeScriptPath(forgeScriptPath);
-  const dependencyList = getScriptDependencies(foundryConfig, scriptPath);
-  const solidityFiles = [scriptPath, ...dependencyList];
-  const abis = loadSolidityABIs(foundryConfig, solidityFiles);
+  const normalizedScriptPath = normalizeForgeScriptPath(forgeScriptPath);
+  const solidityFilePaths = [
+    normalizedScriptPath,
+    ...getScriptDependencies(foundryConfig, normalizedScriptPath),
+  ];
 
   logInfo(`Getting repo metadata...`);
-  const repoMetadata = getRepoMetadata(solidityFiles);
+  const repoMetadata = getRepoMetadata(solidityFilePaths);
   const cliVersion = getCLIVersion();
 
-  logInfo(`Getting transactions...`);
-  const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, chainId, scriptPath);
+  logInfo(`Getting transaction data...`);
+  const scriptMetadata = await getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
 
-  const payload = {
-    broadcastArtifacts,
-    abis,
-    repoMetadata,
-    chainId,
+  logInfo(`Getting contract metadata...`);
+  const contractMetadata = getContractMetadata(
+    foundryConfig,
+    scriptMetadata.broadcastArtifacts,
+    solidityFilePaths,
+  );
+
+  const payload: PreviewRequestParams = {
     cliVersion,
+    chainId,
+    repoMetadata,
+    scriptMetadata,
+    contractMetadata,
   };
   devModeSanityChecks(payload);
 

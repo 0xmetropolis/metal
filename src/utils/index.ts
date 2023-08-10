@@ -6,15 +6,25 @@ import { UUID } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { getOutPath, isSparseModeEnabled } from './foundry';
 
-export const logError = (...s: string[]) => console.log(emojify(chalk.bold.red(s.join('\n'))));
+export const logError = (...s: string[]) =>
+  console.log('\n\n\n' + emojify(chalk.bold.red(s.join('\n'))));
 export const logInfo = (s: string) => console.log(emojify(chalk.bold(s)));
+export const logDebug = (s: string) =>
+  !!process.env.DEBUG &&
+  console.log(emojify(chalk.yellowBright(typeof s === 'object' ? JSON.stringify(s, null, 2) : s)));
 export const logWarn = (...s: string[]) =>
   console.warn(emojify(chalk.bold.yellow(s.map(str => '⚠️ ' + str + ' ⚠️').join('\n'))));
 export const logDetail = (s: string) => console.log(emojify(chalk.dim(s)));
 
 export const exit = (...message: string[]) => {
-  logError.call(this, message);
+  logError.call(this, message.join('\n'));
   process.exit(1);
+};
+
+export const getFlagValueFromArgv = (flag: string): string | undefined => {
+  const flagIndex = process.argv.findIndex(arg => arg === flag);
+  if (flagIndex === -1) return undefined;
+  else return process.argv[flagIndex + 1];
 };
 
 export const openInBrowser = (url: string) => {
