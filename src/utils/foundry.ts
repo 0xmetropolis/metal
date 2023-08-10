@@ -153,7 +153,7 @@ export const loadSolidityFilesCache = (
 // @dev loads the solidity-files-cache.json and finds the relative paths to the dependencies
 export const getScriptDependencies = (foundryConfig: FoundryConfig, forgeScriptPath: string) => {
   const filesCache = loadSolidityFilesCache(foundryConfig);
-
+  console.log(filesCache)
   if (filesCache.files[forgeScriptPath] === undefined) {
     exit(
       `Could not find ${forgeScriptPath} in solidity-files-cache.json, ensure it is a valid forge script`,
