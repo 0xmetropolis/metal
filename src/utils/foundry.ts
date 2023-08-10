@@ -234,6 +234,7 @@ export const getContractMetadata = (
 };
 
 const resolveTargetContract = (forgeScriptPath: string): string => {
+  // forgeScriptPath might be a fully qualified path (src/Deploy.s.sol:DeployerContract)
   const [scriptPath, maybeContractName] = forgeScriptPath.split(':');
 
   if (maybeContractName) return maybeContractName;

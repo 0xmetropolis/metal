@@ -77,6 +77,7 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
 export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): string[] => {
   // pull anything after `metro preview <path>` as forge arguments
   let forgeArguments = process.argv.slice(3);
+  // rewrap function signatures in quotes, ex: --sig "run()"
   forgeArguments = forgeArguments.map(arg =>
     arg.includes('(') && arg.includes(')') ? `"${arg}"` : arg,
   );
