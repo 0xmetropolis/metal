@@ -192,18 +192,18 @@ export const handler = async (yargs: HandlerInput) => {
   logInfo(`Loading foundry.toml...`);
   const foundryConfig = loadFoundryConfig();
 
-  const normalizedScriptPath = normalizeForgeScriptPath(forgeScriptPath);
-  const solidityFilePaths = [
-    normalizedScriptPath,
-    ...getScriptDependencies(foundryConfig, normalizedScriptPath),
-  ];
-
   logInfo(`Running Forge Script at ${forgeScriptPath}...`);
   const foundryArguments = configureForgeScriptInputs({
     rpcUrl: yargs['UNSAFE-RPC-OVERRIDE'] ?? rpcUrl,
   });
   await runForgeScript(foundryArguments);
   logInfo(`Forge deployment script ran successfully!`);
+
+  const normalizedScriptPath = normalizeForgeScriptPath(forgeScriptPath);
+  const solidityFilePaths = [
+    normalizedScriptPath,
+    ...getScriptDependencies(foundryConfig, normalizedScriptPath),
+  ];
 
   logInfo(`Getting repo metadata...`);
   const repoMetadata = getRepoMetadata(solidityFilePaths);

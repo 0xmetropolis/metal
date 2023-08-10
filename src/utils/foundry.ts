@@ -1,4 +1,4 @@
-import { ExecException, exec, execSync, spawn } from 'child_process';
+import { ExecException, spawn } from 'child_process';
 import {
   BroadcastArtifacts_Partial,
   ContractMetadata,
@@ -130,11 +130,6 @@ export const loadSolidityFilesCache = (
   foundryConfig: FoundryConfig,
 ): SolidityFilesCache_Partial => {
   const cachePath = getCachePath(foundryConfig);
-  console.log('cachePath: ', cachePath);
-  const output = execSync(`ls`, {
-    stdio: 'inherit',
-  });
-  console.log(output.toString());
   let filesCache_raw: string;
   try {
     filesCache_raw = readFileSync(`${cachePath}/solidity-files-cache.json`, {
@@ -156,7 +151,6 @@ export const loadSolidityFilesCache = (
 
 // @dev loads the solidity-files-cache.json and finds the relative paths to the dependencies
 export const getScriptDependencies = (foundryConfig: FoundryConfig, forgeScriptPath: string) => {
-  console.log('foundryConfig', foundryConfig);
   const filesCache = loadSolidityFilesCache(foundryConfig);
   if (filesCache.files[forgeScriptPath] === undefined) {
     exit(
