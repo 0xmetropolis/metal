@@ -261,7 +261,7 @@ export const getScriptMetadata = async (
   return {
     scriptName: targetContract,
     functionName,
-    filePath: forgeScriptPath,
+    filePath: scriptPath,
     broadcastArtifacts,
     ...scriptGitMetadata,
   };
