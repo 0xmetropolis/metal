@@ -131,11 +131,10 @@ export const loadSolidityFilesCache = (
 ): SolidityFilesCache_Partial => {
   const cachePath = getCachePath(foundryConfig);
   console.log('cachePath: ', cachePath);
-  console.log(
-    exec(`ls`, (err, stdout, stderrror) => {
-      console.log(`stdout: ${stdout}`);
-    }),
-  );
+  const output = execSync(`ls`, {
+    stdio: 'inherit',
+  });
+  console.log(output.toString());
   let filesCache_raw: string;
   try {
     filesCache_raw = readFileSync(`${cachePath}/solidity-files-cache.json`, {
