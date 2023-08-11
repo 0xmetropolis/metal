@@ -6,6 +6,9 @@
   "bin": {
     "metro": "./bin/run"
   },
+  "engines": {
+    "node": ">=16.10.0"
+  },
   "homepage": "https://github.com/0xmetropolis/cli",
   "license": "ISC",
   "main": "dist/index.js",
