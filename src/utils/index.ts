@@ -5,6 +5,7 @@ import { exec } from 'node:child_process';
 import { UUID } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { getOutPath, isSparseModeEnabled } from './foundry';
+import fetch from 'node-fetch';
 
 export const logError = (...s: string[]) =>
   console.log('\n\n\n' + emojify(chalk.bold.red(s.join('\n'))));

@@ -31,6 +31,7 @@ import {
 import { getRepoMetadata } from '../utils/git';
 import { createMetropolisFork } from '../utils/preview-service';
 import assert = require('node:assert');
+import fetch from 'node-fetch';
 import { getCLIVersion } from '../utils/version';
 
 export const command = 'preview';
