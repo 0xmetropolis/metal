@@ -3,6 +3,7 @@ import { PREVIEW_SERVICE_URL } from '../constants';
 import { exit, logError } from '.';
 import { UUID } from 'crypto';
 import assert = require('node:assert');
+import fetch from 'node-fetch';
 
 export type ForkConfig = {
   __type: 'tenderly' | 'anvil';
