@@ -33,7 +33,7 @@
     "@types/cors": "^2.8.13",
     "@types/inquirer": "^0.0.35",
     "@types/jest": "^29.5.3",
-    "@types/node": "^18.17.3",
+    "@types/node": "^18.17.5",
     "@types/node-emoji": "^1.4.0",
     "@types/node-fetch": "^2.6.4",
     "@types/supertest": "^2.0.12",
