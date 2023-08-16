@@ -32,7 +32,13 @@ export const getRepoName = () => {
 
 // @dev gets the url of the repo
 export const getGitRemote = () => {
-  const remote = execSync('git config --get remote.origin.url').toString().trim();
+  const remote = execSync('git config --get remote.origin.url')
+    .toString()
+    .trim()
+    .replace('.git', '');
+
+  const isSSH = remote.startsWith('git@');
+  if (isSSH) return remote.replace(':', '/').replace('git@', 'https://');
 
   return remote;
 };
