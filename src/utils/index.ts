@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { Abi, FoundryConfig, HexString } from 'index';
 import { emojify } from 'node-emoji';
-import { exec } from 'node:child_process';
+import { exec, execSync } from 'node:child_process';
 import { UUID } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { getOutPath, isSparseModeEnabled } from './foundry';
@@ -104,28 +104,60 @@ export const loadSolidityABIs = (foundryConfig: FoundryConfig, pathsToSolidityFi
   // find the correct `out` path where the metadata files go by checking the foundry.toml
   const outPath = getOutPath(foundryConfig);
 
+  let allABIPaths: string[] = [];
+  try {
+    // recursively builds an array any *.sol directories
+    //   (will match `out/MyContract.sol/` and `out/long/dependency/path/MyContract.sol/)`
+    allABIPaths = execSync(`find ${outPath} -type d -name "**.sol"`).toString().split('\n');
+  } catch (e) {
+    logDebug(e);
+    exit(`Error finding build metadata in the ${outPath} directory`);
+  }
+
   // collect all abis from the metadata files
   const abis = pathsToSolidityFiles.reduce<{ [fullyQualifiedContractName: string]: string }>(
     (abiAcc, pathToSolidityFile) => {
       // get the file name by grabbing the last item in the path
       const fileName = pathToSolidityFile.split('/').at(-1); // e.g: /Users/.../contracts/MyContract.sol -> MyContract.sol
-      const pathToMetadata = `${outPath}/${fileName}`; // e.g: out/MyContract.sol
-      const files = readdirSync(pathToMetadata, { encoding: 'utf-8' }); // e.g: ['MyContract.json', 'MyContract2.json']
+
+      // the path to all the contract ABIs for a given solidity file
+      const fullMetadataFilDirPath = allABIPaths.find((path: string) => {
+        // the directory name is the same as the solidity file name
+        const fileMetadataDir = path.split('/').at(-1).toLowerCase();
+
+        return fileMetadataDir === fileName.toLowerCase();
+      });
+
+      if (!fullMetadataFilDirPath) {
+        logError(`Could not find metadata for ${fileName}`);
+        // do not try and load metadata if the metadata dir
+        return abiAcc;
+      }
+
+      let files: string[] = [];
+      try {
+        // all the child files in a sol metadata dir are contract ABIs: e.g: ['MyContract.json', 'MyContract2.json']
+        files = readdirSync(fullMetadataFilDirPath, { encoding: 'utf-8' });
+      } catch (e: any) {
+        logDebug(e);
+        logError(`Could not find metadata for ${fullMetadataFilDirPath}`);
+      }
 
       // for each pathToSolc, load all child files in the `out/MyContract.sol/` directory.
       const abis = files.reduce<[string, Abi][]>((abiAcc, file) => {
         try {
-          const metadataPath = `${pathToMetadata}/${file}`;
+          const metadataPath = `${fullMetadataFilDirPath}/${file}`;
           // JSON.parse each file and return only the .abi member.
           const abi = JSON.parse(readFileSync(metadataPath, 'utf-8')).abi;
-          if (!abi) throw new Error(`ABI not found for ${pathToMetadata}/${file}`);
+          if (!abi) throw new Error(`ABI not found for ${fullMetadataFilDirPath}/${file}`);
 
           const contractName = file.replace('.json', '');
           const fullyQualifiedContractName = `${pathToSolidityFile}:${contractName}`;
           return [...abiAcc, [fullyQualifiedContractName, abi]];
         } catch (e: any) {
-          // handle throw if any of the json is invalid / missing .abi
-          exit(`Could not find ABI for ${file}`);
+          logDebug(e);
+          // handle error if any of the json is invalid / missing .abi
+          logError(`Could not find ABI for ${file}`);
         }
       }, []);
 
