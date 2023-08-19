@@ -24,7 +24,7 @@
   "dependencies": {
     "chalk": "^2.0.1",
     "node-emoji": "^1.7.0",
-    "node-fetch": "^2.6.12",
+    "node-fetch": "^2.6.13",
     "toml": "^3.0.0",
     "yargs": "^17.7.2"
   },
