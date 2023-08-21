@@ -37,7 +37,7 @@ import { getCLIVersion } from '../utils/version';
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
 
-export type Params = { broadcast: boolean; 'chain-id': number; 'UNSAFE-RPC-OVERRIDE'?: string };
+export type Params = { broadcast: boolean; 'chain-id': number };
 export type HandlerInput = Arguments & Params;
 
 export const builder: { [key: string]: Options } = {
@@ -54,7 +54,6 @@ export const builder: { [key: string]: Options } = {
   'UNSAFE-RPC-OVERRIDE': {
     type: 'string',
     required: false,
-    description: 'DEV-ONLY!: Specify an RPC override for the `forge script` command',
   },
 };
 
