@@ -1,6 +1,6 @@
 import { Network } from 'index';
 import { PREVIEW_SERVICE_URL } from '../constants';
-import { exit, logError } from '.';
+import { exit, logDebug, logError } from '.';
 import { UUID } from 'crypto';
 import assert = require('node:assert');
 import fetch from 'node-fetch';
@@ -28,6 +28,7 @@ export const createMetropolisFork = async (chainId: Network) => {
 
     return data;
   } catch (e) {
+    logDebug(e);
     logError(`
     Error creating fork with chainId ${chainId}
     ==BEGIN ERROR==

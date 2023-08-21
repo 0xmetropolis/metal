@@ -10,7 +10,7 @@ import {
 } from 'index';
 import { readFileSync } from 'node:fs';
 import * as toml from 'toml';
-import { exit, getFlagValueFromArgv, loadSolidityABIs, logError, logWarn } from '.';
+import { exit, getFlagValueFromArgv, loadSolidityABIs, logDebug, logError, logWarn } from '.';
 import { getGitMetadata } from './git';
 
 export const processForgeError = ({ message }: ExecException) => {
@@ -40,6 +40,7 @@ export const loadFoundryConfig = () => {
   try {
     foundryToml_raw = readFileSync('foundry.toml', { encoding: 'utf-8' });
   } catch (e: any) {
+    logDebug(e);
     exit('Could not find foundry.toml, ensure you in the root directory of a Foundry project');
   }
 
@@ -48,6 +49,7 @@ export const loadFoundryConfig = () => {
   try {
     foundryConfig = toml.parse(foundryToml_raw);
   } catch (e: any) {
+    logDebug(e);
     exit(
       'Could not parse foundry.toml, ensure it is valid TOML',
       'see https://github.com/foundry-rs/foundry/tree/master/config for more information.',
@@ -97,6 +99,7 @@ export const getBroadcastArtifacts = async (
       encoding: 'utf-8',
     });
   } catch (e: any) {
+    logDebug(e);
     exit('Could not load run-latest.json');
   }
 
@@ -104,6 +107,7 @@ export const getBroadcastArtifacts = async (
   try {
     broadcastArtifacts = JSON.parse(runLatest_raw);
   } catch (e: any) {
+    logDebug(e);
     exit('run-latest.json is corrupt / invalid JSON');
   }
 
@@ -136,6 +140,7 @@ export const loadSolidityFilesCache = (
       encoding: 'utf-8',
     });
   } catch (e: any) {
+    logDebug(e);
     exit('Could not find solidity-files-cache.json', e.message);
   }
 
@@ -143,6 +148,7 @@ export const loadSolidityFilesCache = (
   try {
     filesCache = JSON.parse(filesCache_raw);
   } catch (e: any) {
+    logDebug(e);
     exit('Could not parse solidity-files-cache.json, ensure it is valid JSON');
   }
 
