@@ -48,6 +48,7 @@ export const getChainId = async (rpcUrl: string) => {
 
     return Number(response.result); // convert hex to number
   } catch (e: any) {
+    logDebug(e);
     exit('Error fetching chainId from RPC endpoint');
   }
 };
@@ -80,6 +81,7 @@ export const loadSolidityFiles = (pathToSolc: string[]): { [filePath: string]: s
         const code = readFileSync(path, { encoding: 'utf-8' });
         return { ...sourceCodeAcc, [path]: code };
       } catch (e: any) {
+        logDebug(e);
         exit(`Could not find Solidity source file: ${path}`);
       }
     },

@@ -197,6 +197,7 @@ export const handler = async (yargs: HandlerInput) => {
   const foundryArguments = configureForgeScriptInputs({
     rpcUrl: yargs['UNSAFE-RPC-OVERRIDE'] ?? rpcUrl,
   });
+
   await runForgeScript(foundryArguments);
   logInfo(`Forge deployment script ran successfully!`);
 

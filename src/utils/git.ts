@@ -1,12 +1,13 @@
 import { GitMetadata, HexString, RepoMetadata } from 'index';
 import { execSync } from 'node:child_process';
-import { exit } from '.';
+import { exit, logDebug } from '.';
 
 export const isGitInstalled = () => {
   try {
     execSync('git --version', { stdio: 'ignore' });
     return true;
   } catch (e: any) {
+    logDebug(e);
     return false;
   }
 };
@@ -16,6 +17,7 @@ export const isGitRepo = () => {
     execSync('git status', { stdio: 'ignore' });
     return true;
   } catch (e: any) {
+    logDebug(e);
     return false;
   }
 };
