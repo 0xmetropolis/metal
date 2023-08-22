@@ -1,6 +1,14 @@
 # Changelog
 
 All notable changes to the Metropolis CLI will be listed in this file.
+## [0.2.2] - 2023-08-22
+- chore(dev-deps): bump @types/node from 18.17.4 to 18.17.5 by @dependabot in https://github.com/0xmetropolis/cli/pull/67
+- chore(dev-deps): bump eslint from 8.46.0 to 8.47.0 by @dependabot in https://github.com/0xmetropolis/cli/pull/66
+- fix: normalize git remotes by @colinnielsen in https://github.com/0xmetropolis/cli/pull/68
+- feat: walk out dir by @colinnielsen in https://github.com/0xmetropolis/cli/pull/71
+- chore: add log debugs by @colinnielsen in https://github.com/0xmetropolis/cli/pull/74
+- chore: kill dependabot by @colinnielsen in https://github.com/0xmetropolis/cli/pull/72
+- chore: remove unsafe-rpc-overide description by @colinnielsen in https://github.com/0xmetropolis/cli/pull/73
 
 ## [0.1.5] - 2023-08-02
 
