@@ -1,14 +1,24 @@
 # Changelog
 
 All notable changes to the Metropolis CLI will be listed in this file.
+
+## [0.2.3] - 2023-08-24
+
+- feat: remove requirement for the `--broadcast` flag by @colinnielsen in
+  [#75](https://github.com/0xmetropolis/cli/pull/75)
+
 ## [0.2.2] - 2023-08-22
-- chore(dev-deps): bump @types/node from 18.17.4 to 18.17.5 by @dependabot in https://github.com/0xmetropolis/cli/pull/67
-- chore(dev-deps): bump eslint from 8.46.0 to 8.47.0 by @dependabot in https://github.com/0xmetropolis/cli/pull/66
-- fix: normalize git remotes by @colinnielsen in https://github.com/0xmetropolis/cli/pull/68
-- feat: walk out dir by @colinnielsen in https://github.com/0xmetropolis/cli/pull/71
-- chore: add log debugs by @colinnielsen in https://github.com/0xmetropolis/cli/pull/74
-- chore: kill dependabot by @colinnielsen in https://github.com/0xmetropolis/cli/pull/72
-- chore: remove unsafe-rpc-overide description by @colinnielsen in https://github.com/0xmetropolis/cli/pull/73
+
+- chore(dev-deps): bump @types/node from 18.17.4 to 18.17.5 by @dependabot in
+  [#67](https://github.com/0xmetropolis/cli/pull/67)
+- chore(dev-deps): bump eslint from 8.46.0 to 8.47.0 by @dependabot in
+  [#66](https://github.com/0xmetropolis/cli/pull/66)
+- fix: normalize git remotes by @colinnielsen in [#68](https://github.com/0xmetropolis/cli/pull/68)
+- feat: walk out dir by @colinnielsen in [#71](https://github.com/0xmetropolis/cli/pull/71)
+- chore: add log debugs by @colinnielsen in [#74](https://github.com/0xmetropolis/cli/pull/74)
+- chore: kill dependabot by @colinnielsen in [#72](https://github.com/0xmetropolis/cli/pull/72)
+- chore: remove unsafe-rpc-overide description by @colinnielsen in
+  [#73](https://github.com/0xmetropolis/cli/pull/73)
 
 ## [0.1.5] - 2023-08-02
 
@@ -60,15 +70,16 @@ All notable changes to the Metropolis CLI will be listed in this file.
 
 - `preview` command now sends contract ABIs to metropolis to generate a preview URL.
 - Adds `NO_PREVIEW_SERVICE` env var to skip making real requests for testing and CI.
-- feat: :sparkles: point txs to fork by @colinnielsen in https://github.com/0xmetropolis/cli/pull/27
+- feat: :sparkles: point txs to fork by @colinnielsen in
+  [#27](https://github.com/0xmetropolis/cli/pull/27)
 - chore(dev-deps): bump @types/jest from 29.5.2 to 29.5.3 by @dependabot in
-  https://github.com/0xmetropolis/cli/pull/28
+  [#28](https://github.com/0xmetropolis/cli/pull/28)
 - chore(dev-deps): bump @typescript-eslint/eslint-plugin from 5.61.0 to 5.62.0 by @dependabot in
-  https://github.com/0xmetropolis/cli/pull/29
+  [#29](https://github.com/0xmetropolis/cli/pull/29)
 - chore(dev-deps): bump eslint from 8.44.0 to 8.45.0 by @dependabot in
-  https://github.com/0xmetropolis/cli/pull/31
-- Get Contract ABIs by @colinnielsen in https://github.com/0xmetropolis/cli/pull/33
-- 0.1.0 release by @colinnielsen in https://github.com/0xmetropolis/cli/pull/34
+  [#31](https://github.com/0xmetropolis/cli/pull/31)
+- Get Contract ABIs by @colinnielsen in [#33](https://github.com/0xmetropolis/cli/pull/33)
+- 0.1.0 release by @colinnielsen in [#34](https://github.com/0xmetropolis/cli/pull/34)
 
 ### Removed
 
