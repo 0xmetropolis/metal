@@ -37,15 +37,10 @@ import { getCLIVersion } from '../utils/version';
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
 
-export type Params = { broadcast: boolean; 'chain-id': number };
+export type Params = { 'chain-id': number };
 export type HandlerInput = Arguments & Params;
 
 export const builder: { [key: string]: Options } = {
-  broadcast: {
-    type: 'boolean',
-    required: true,
-    description: 'Send the transaction to the metropolis RPC',
-  },
   'chain-id': {
     type: 'number',
     required: true,
@@ -83,9 +78,9 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
   );
 
   const UNSAFERpcOverrideIndex = forgeArguments.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
+  
   // if the developer has specified an rpc override, we need to remove that flag and not pass it to forge
   const userHasSpecifiedUNSAFEOverrideRPC = UNSAFERpcOverrideIndex !== -1;
-
   if (userHasSpecifiedUNSAFEOverrideRPC)
     forgeArguments = forgeArguments.filter(
       (_, argIndex) =>
@@ -105,18 +100,16 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
 
   // if a user setup the script to use a private key / wallet store
   const userHasSpecifiedWalletOpts = forgeArguments.some(arg => FORGE_WALLET_OPTIONS.includes(arg));
-  // put the default account in there so they can visualize
+  // if there is no wallet specified, use the default account
   if (!userHasSpecifiedWalletOpts) {
-    logWarn('No private key specified.', 'Simulating default account 0');
+    logWarn('No private key specified. Using default account');
     forgeArguments = [...forgeArguments, '--private-key', DEFAULT_PRIVATE_KEY];
   }
-  // const argsWithChainId = replaceFlagValues({
-  //   args: argsWithRPCUrl,
-  //   flags: ['--chain-id'],
-  //   replaceWith: CHAIN_ID_OVERRIDE.toString(),
-  // });
 
-  forgeArguments = [...forgeArguments, '--slow'];
+  // include the broadcast flag for previews
+  if (!forgeArguments.includes('--broadcast')) forgeArguments.push('--broadcast');
+  if (!forgeArguments.includes('--slow')) forgeArguments.push('--slow');
+
   return forgeArguments;
 };
 
