@@ -43,7 +43,7 @@ jobs:
           NO_PREVIEW_SERVICE: true
         run: |
           anvil --chain-id 1 &
-          ../bin/run preview script/Deploy.s.sol --broadcast --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
+          ../bin/run preview script/Deploy.s.sol --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
 
   bulla-contracts-v2:
     name: Bulla Contracts V2
@@ -84,7 +84,7 @@ jobs:
           NO_PREVIEW_SERVICE: true
         run: |
           anvil --chain-id 1 &
-          ../bin/run preview script/Deployment.s.sol --broadcast --private-key $PK --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
+          ../bin/run preview script/Deployment.s.sol --private-key $PK --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
 
   frax-governance:
     name: Frax Governance 👩‍⚖️
@@ -122,7 +122,7 @@ jobs:
           NO_PREVIEW_SERVICE: true
         run: |
           anvil --chain-id 1 --code-size-limit 5000000 &
-          ../bin/run preview script/test/DeployTestnet.s.sol --private-key $PK --code-size-limit 5000000 --broadcast --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
+          ../bin/run preview script/test/DeployTestnet.s.sol --private-key $PK --code-size-limit 5000000 --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
 
   llama:
     name: Llama 🦙
@@ -162,4 +162,4 @@ jobs:
           ETHERSCAN_API_KEY: 'XFGE58C46F89RWGDW6EZ8SYFNGH22J70J6' # not real, but required by the script
         run: |
           anvil --chain-id 1 --code-size-limit 5000000 &
-          ../bin/run preview script/DeployLlama.s.sol --private-key $PK --code-size-limit 5000000 --broadcast --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
+          ../bin/run preview script/DeployLlama.s.sol --private-key $PK --code-size-limit 5000000 --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
