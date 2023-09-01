@@ -73,14 +73,6 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
 
   forgeArguments.push('--rpc-url', rpcUrl);
 
-  // if a user setup the script to use a private key / wallet store
-  const userHasSpecifiedWalletOpts = forgeArguments.some(arg => FORGE_WALLET_OPTIONS.includes(arg));
-  // if there is no wallet specified, use the default account
-  if (!userHasSpecifiedWalletOpts) {
-    logWarn('No private key specified. Attempting to use default account');
-    forgeArguments.push('--private-key', DEFAULT_PRIVATE_KEY);
-  }
-
   if (!forgeArguments.includes('--slow')) forgeArguments.push('--slow');
 
   return forgeArguments;
