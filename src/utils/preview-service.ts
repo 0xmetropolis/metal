@@ -12,6 +12,13 @@ export type ForkConfig = {
   rpcUrl: string;
 };
 
+export type ChainConfig = {
+  chainId: Network;
+  label: string;
+  rpcUrl: string;
+  etherscanUrl: string;
+};
+
 export const createMetropolisFork = async (chainId: Network) => {
   const createUrl = `${PREVIEW_SERVICE_URL}/create`;
   try {
@@ -33,6 +40,27 @@ export const createMetropolisFork = async (chainId: Network) => {
     Error creating fork with chainId ${chainId}
     ==BEGIN ERROR==
     ${createUrl}
+    ${e.message}
+    `);
+    exit();
+  }
+};
+
+export const getChainConfig = async (chainId: Network) => {
+  const configUrl = `${PREVIEW_SERVICE_URL}/chain-config/${chainId}`;
+  try {
+    const response = await fetch(configUrl);
+    assert(response.status === 200, `${response.status} ${response.statusText}`);
+
+    const data: ChainConfig = await response.json();
+
+    return data;
+  } catch (e) {
+    logDebug(e);
+    logError(`
+    Error fetching chain config at chain-id: ${chainId}
+    ==BEGIN ERROR==
+    ${configUrl}
     ${e.message}
     `);
     exit();
