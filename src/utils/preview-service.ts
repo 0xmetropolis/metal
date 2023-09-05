@@ -46,7 +46,7 @@ export const createMetropolisFork = async (chainId: Network) => {
   }
 };
 
-export const getChainConfig = async (chainId: Network) => {
+export const fetchChainConfig = async (chainId: Network) => {
   const configUrl = `${PREVIEW_SERVICE_URL}/chain-config/${chainId}`;
   try {
     const response = await fetch(configUrl);
