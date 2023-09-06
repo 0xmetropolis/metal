@@ -1,4 +1,4 @@
-import { Network } from 'index';
+import { Network, PreviewRequestParams } from 'index';
 import { PREVIEW_SERVICE_URL } from '../constants';
 import { exit, logDebug, logError } from '.';
 import { UUID } from 'crypto';
@@ -64,5 +64,34 @@ export const fetchChainConfig = async (chainId: Network) => {
     ${e.message}
     `);
     exit();
+  }
+};
+
+export const uploadDeploymentData = async (payload: PreviewRequestParams): Promise<UUID> => {
+  try {
+    const response = await fetch(`${PREVIEW_SERVICE_URL}/deploy`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (response.status !== 200) {
+      const res = await response.json();
+      logDebug(res);
+
+      exit(
+        `Error received from Metropolis! (status ${response.status})`,
+        '===========================',
+        res.message ?? response.statusText,
+      );
+    }
+
+    const res: { id: UUID } = await response.json();
+    return res.id;
+  } catch (e: any) {
+    logDebug(e);
+    exit('Error connecting to preview service', e.message);
   }
 };

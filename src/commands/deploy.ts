@@ -1,10 +1,7 @@
-import { DeploymentRequestParams, Network, PreviewRequestParams } from 'index';
-import fetch from 'node-fetch';
-import { UUID } from 'node:crypto';
+import { DeploymentRequestParams, Network } from 'index';
 import { type Arguments, type Options } from 'yargs';
 import {
   FORGE_FORK_ALIASES,
-  PREVIEW_SERVICE_URL,
   PREVIEW_WEB_URL,
   SUPPORTED_CHAINS,
   doNotCommunicateWithPreviewService,
@@ -19,7 +16,7 @@ import {
   runForgeScript,
 } from '../utils/foundry';
 import { getRepoMetadata } from '../utils/git';
-import { ChainConfig, fetchChainConfig } from '../utils/preview-service';
+import { ChainConfig, fetchChainConfig, uploadDeploymentData } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
 import inquirer = require('inquirer');
 
@@ -88,35 +85,6 @@ const getChainConfig = async (chainId: Network): Promise<Partial<ChainConfig>> =
     : await fetchChainConfig(chainId);
 };
 
-export const uploadDeploymentData = async (payload: PreviewRequestParams): Promise<UUID> => {
-  try {
-    const response = await fetch(`${PREVIEW_SERVICE_URL}/deploy`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-
-    if (response.status !== 200) {
-      const res = await response.json();
-      logDebug(res);
-
-      exit(
-        `Error received from Metropolis! (status ${response.status})`,
-        '===========================',
-        res.message ?? response.statusText,
-      );
-    }
-
-    const res: { id: UUID } = await response.json();
-    return res.id;
-  } catch (e: any) {
-    logDebug(e);
-    exit('Error connecting to preview service', e.message);
-  }
-};
-
 // @dev entry point for the preview command
 export const handler = async (yargs: HandlerInput) => {
   validateInputs(yargs);
@@ -129,7 +97,7 @@ export const handler = async (yargs: HandlerInput) => {
 
   const { rpcUrl, label } = await getChainConfig(chainId);
 
-  logInfo(`Loading foundry.toml...`);
+  logDebug(`Loading foundry.toml...`);
   const foundryConfig = loadFoundryConfig();
 
   const foundryArguments = configureForgeScriptInputs({
@@ -156,14 +124,14 @@ export const handler = async (yargs: HandlerInput) => {
     ...getScriptDependencies(foundryConfig, normalizedScriptPath),
   ];
 
-  logInfo(`Getting repo metadata...`);
+  logDebug(`Getting repo metadata...`);
   const repoMetadata = getRepoMetadata(solidityFilePaths);
   const cliVersion = getCLIVersion();
 
   logInfo(`Getting transaction data...`);
   const scriptMetadata = await getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
 
-  logInfo(`Getting contract metadata...`);
+  logDebug(`Getting contract metadata...`);
   const contractMetadata = getContractMetadata(
     foundryConfig,
     scriptMetadata.broadcastArtifacts,
