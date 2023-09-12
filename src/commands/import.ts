@@ -1,15 +1,15 @@
 import { type Arguments, type Options } from 'yargs';
 import { PREVIEW_WEB_URL, doNotCommunicateWithPreviewService } from '../constants';
 import { DeploymentRequestParams, ScriptMetadata } from '../types';
-import { logInfo, openInBrowser } from '../utils';
+import { getFlagValueFromArgv, logInfo, openInBrowser } from '../utils';
 import {
   getContractMetadata,
   getScriptDependencies,
-  getScriptMetadata,
   loadBroadcastArtifacts,
   loadFoundryConfig,
+  resolveTargetContract,
 } from '../utils/foundry';
-import { checkoutToCommit, getRepoMetadata } from '../utils/git';
+import { checkoutToCommit, getGitMetadata, getRepoMetadata } from '../utils/git';
 import {
   buildProject,
   checkRepoForUncommittedChanges,
@@ -51,7 +51,7 @@ export const handler = async (yargs: HandlerInput) => {
 
   const broadcastArtifacts = loadBroadcastArtifacts(artifactPath);
 
-  const chainConfig = await fetchChainConfig(broadcastArtifacts.chain);
+  const chainConfig = await fetchChainConfig(selectedChainId);
 
   const continueWithBroadcastFile = await ensureBroadcastArtifactValidityAndContinue(
     artifactPath,
@@ -81,14 +81,18 @@ export const handler = async (yargs: HandlerInput) => {
   const solidityFilePaths = [pathToScript, ...getScriptDependencies(foundryConfig, pathToScript)];
   const repoMetadata = getRepoMetadata(solidityFilePaths);
 
-  // pull out the run-latest.json as the script metadata's artifacts
-  const { broadcastArtifacts: _runLatestJSON, ...scriptMetadataWithOutRunLatest } =
-    getScriptMetadata(foundryConfig, selectedChainId, pathToScript);
-  // replace them with the user selected broadcast artifacts
+  const targetContract = resolveTargetContract(selectedScript);
+  const functionName = getFlagValueFromArgv('-s') || getFlagValueFromArgv('--sig') || 'run()';
+  const scriptGitMetadata = getGitMetadata(selectedScript);
+
   const scriptMetadata: ScriptMetadata = {
-    ...scriptMetadataWithOutRunLatest,
+    scriptName: targetContract,
+    functionName,
+    filePath: selectedScript,
     broadcastArtifacts,
+    ...scriptGitMetadata,
   };
+
   const contractMetadata = getContractMetadata(
     foundryConfig,
     scriptMetadata.broadcastArtifacts,
@@ -129,5 +133,5 @@ export const handler = async (yargs: HandlerInput) => {
 
   openInBrowser(metropoliswebUrl);
 
-  if (returnToCommitAfterImport) checkoutToCommit(returnToCommitAfterImport);
+  if (returnToCommitAfterImport) checkoutToCommit('-');
 };
