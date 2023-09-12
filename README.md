@@ -40,7 +40,3 @@ The `--chain-id` flag allows you to choose the network to preview your deploymen
 # Getting Help
 
 If you run into problems or find a bug, consider opening an [issue](https://github.com/0xmetropolis/cli/issues/new).
-
-# License
-
-[OUR LICENSE]
