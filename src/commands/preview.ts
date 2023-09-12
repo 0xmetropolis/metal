@@ -78,7 +78,7 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
   );
 
   const UNSAFERpcOverrideIndex = forgeArguments.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
-  
+
   // if the developer has specified an rpc override, we need to remove that flag and not pass it to forge
   const userHasSpecifiedUNSAFEOverrideRPC = UNSAFERpcOverrideIndex !== -1;
   if (userHasSpecifiedUNSAFEOverrideRPC)
@@ -204,7 +204,7 @@ export const handler = async (yargs: HandlerInput) => {
   const cliVersion = getCLIVersion();
 
   logInfo(`Getting transaction data...`);
-  const scriptMetadata = await getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
+  const scriptMetadata = getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
 
   logInfo(`Getting contract metadata...`);
   const contractMetadata = getContractMetadata(

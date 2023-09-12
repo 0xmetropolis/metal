@@ -53,7 +53,7 @@ export type GitMetadata = {
 export type RepoMetadata = {
   repositoryName: string;
   remoteUrl: string;
-  repoCommitSHA: HexString;
+  repoCommitSHA: string;
   repoHasChanges: boolean;
   solidityFilesHaveChanges: boolean;
 };

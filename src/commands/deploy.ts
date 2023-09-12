@@ -129,7 +129,7 @@ export const handler = async (yargs: HandlerInput) => {
   const cliVersion = getCLIVersion();
 
   logInfo(`Getting transaction data...`);
-  const scriptMetadata = await getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
+  const scriptMetadata = getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
 
   logDebug(`Getting contract metadata...`);
   const contractMetadata = getContractMetadata(
