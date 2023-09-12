@@ -8,7 +8,7 @@ Metropolis is a smart contract visualization tool.
 
 ## Dependencies
 
-- [Foundry](https://github.com/foundry-rs/foundry)
+- [Foundry](https://getfoundry.sh/)
 
 ## Installation
 
@@ -22,7 +22,7 @@ yarn global add @0xmetropolis/cli
 
 # Usage
 
-## Previewing A Deployment
+## Generate A Preview
 
 In the directory of your Foundry project, run the following command:
 
