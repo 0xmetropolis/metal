@@ -200,3 +200,11 @@ export type PreviewRequestParams = {
   scriptMetadata: ScriptMetadata;
   contractMetadata: ContractMetadata[];
 };
+
+export type DeploymentRequestParams = {
+  cliVersion: string;
+  chainId: Network;
+  repoMetadata: RepoMetadata;
+  scriptMetadata: ScriptMetadata;
+  contractMetadata: ContractMetadata[];
+};
