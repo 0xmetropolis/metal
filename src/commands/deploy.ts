@@ -1,4 +1,3 @@
-import { DeploymentRequestParams, Network } from 'index';
 import { type Arguments, type Options } from 'yargs';
 import {
   FORGE_FORK_ALIASES,
@@ -6,6 +5,7 @@ import {
   SUPPORTED_CHAINS,
   doNotCommunicateWithPreviewService,
 } from '../constants';
+import { DeploymentRequestParams, Network } from '../types/index';
 import {
   exit,
   getFlagValueFromArgv,

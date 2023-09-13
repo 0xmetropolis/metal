@@ -1,9 +1,9 @@
-import { Network, PreviewRequestParams } from 'index';
-import { PREVIEW_SERVICE_URL } from '../constants';
-import { exit, logDebug, logError } from '.';
 import { UUID } from 'crypto';
-import assert = require('node:assert');
 import fetch from 'node-fetch';
+import assert from 'node:assert';
+import { exit, logDebug, logError } from '.';
+import { PREVIEW_SERVICE_URL } from '../constants';
+import { Network, PreviewRequestParams } from '../types';
 
 export type ForkConfig = {
   __type: 'tenderly' | 'anvil';
