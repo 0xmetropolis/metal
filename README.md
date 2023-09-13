@@ -2,32 +2,41 @@
 
 [![Integration Tests 🌁](https://github.com/0xmetropolis/cli/actions/workflows/integrationTest.yml/badge.svg)](https://github.com/0xmetropolis/cli/actions/workflows/integrationTest.yml)
 
-Smart contract visualization CLI tool.
+Metropolis is a smart contract visualization tool. 
 
-## Dev Setup
+# Getting Started
 
-```bash
-yarn
-yarn install:dev # should only need to do this once
-source ~/.zshrc # or ~/.bashrc
+## Dependencies
 
-yarn watch
+- [Foundry](https://getfoundry.sh/)
 
-mdev # in a new terminal
-```
-
-This will register the `mdev` command in your $PATH - which points to [run](./bin/run). `yarn watch`
-will look for changes in src and recompile with `tsc` command. Any runs of `mdev` will run the
-`/dist/index.js` entry point.
-
-## Register as a global package
+## Installation
 
 ```bash
-yarn build
-yarn install:global
+# with npm
+npm install -g @0xmetropolis/cli
 
-metro
+# with yarn
+yarn global add @0xmetropolis/cli
 ```
 
-This will register the current build of `dist/index.js` as a global command `metro`. This is useful
-for testing the CLI tool without having to publish to npm.
+# Usage
+
+## Generate A Preview
+
+In the directory of your Foundry project, run the following command:
+
+```bash
+metro preview --chain-id 1 $PATH_TO_DEPLOY_SCRIPT
+```
+NOTE: Metropolis wraps around `forge` commands, but `metro preview` does *not* send any deployment transactions.
+
+This will compile your contracts and start a deployment simulation. Once the simulation is done, your browser will open to display the results of the simulation.
+
+## Setting the Chain Id
+
+The `--chain-id` flag allows you to choose the network to preview your deployment on.
+
+# Getting Help
+
+If you run into problems or find a bug, consider opening an [issue](https://github.com/0xmetropolis/cli/issues/new).
