@@ -24,6 +24,7 @@
   "dependencies": {
     "chalk": "^2.0.1",
     "inquirer": "^8.0.0",
+    "inquirer-file-tree-selection-prompt": "^1",
     "node-emoji": "^1.7.0",
     "node-fetch": "^2.6.12",
     "toml": "^3.0.0",

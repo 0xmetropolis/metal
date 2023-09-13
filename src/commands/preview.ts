@@ -18,6 +18,7 @@ import {
   logInfo,
   logWarn,
   openInBrowser,
+  printPreviewLinkWithASCIIArt,
   replaceFlagValues,
 } from '../utils';
 import {
@@ -78,7 +79,7 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
   );
 
   const UNSAFERpcOverrideIndex = forgeArguments.findIndex(arg => arg === RPC_OVERRIDE_FLAG);
-  
+
   // if the developer has specified an rpc override, we need to remove that flag and not pass it to forge
   const userHasSpecifiedUNSAFEOverrideRPC = UNSAFERpcOverrideIndex !== -1;
   if (userHasSpecifiedUNSAFEOverrideRPC)
@@ -204,7 +205,7 @@ export const handler = async (yargs: HandlerInput) => {
   const cliVersion = getCLIVersion();
 
   logInfo(`Getting transaction data...`);
-  const scriptMetadata = await getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
+  const scriptMetadata = getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
 
   logInfo(`Getting contract metadata...`);
   const contractMetadata = getContractMetadata(
@@ -226,22 +227,7 @@ export const handler = async (yargs: HandlerInput) => {
   const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${forkId}`;
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
-  logInfo(`
-                             ^
-                _______     ^^^
-               |xxxxxxx|  _^^^^^_
-               |xxxxxxx| | [][][]|
-            ______xxxxx| |[][][] |
-           |++++++|xxxx| | [][][]|      METROPOLIS
-           |++++++|xxxx| |[][][] |
-           |++++++|_________ [][]|
-           |++++++|=|=|=|=|=| [] |
-           |++++++|=|=|=|=|=|[][]|
-___________|++HH++|  _HHHH__|   _________   _________  _________
-
-${previewServiceUrl}
-__________________  ___________    __________________    ____________
-  `);
+  printPreviewLinkWithASCIIArt(previewServiceUrl);
 
   openInBrowser(previewServiceUrl);
 };

@@ -84,23 +84,15 @@ export const getOutPath = (foundryConfig: FoundryConfig): string =>
 export const isSparseModeEnabled = (foundryConfig: FoundryConfig): boolean =>
   getFoundryConfigValue(foundryConfig, 'sparse_mode') ?? false;
 
-// @dev loads the run-latest.json from the latest broadcast at METRO_DEPLOY_URL
-export const getBroadcastArtifacts = async (
-  foundryConfig: FoundryConfig,
-  chainId: Network,
-  forgeScriptPath: string,
-): Promise<BroadcastArtifacts_Partial> => {
-  const scriptName = forgeScriptPath.split('/').at(-1);
-  const broadcastPath = getBroadcastPath(foundryConfig);
-
+export const loadBroadcastArtifacts = (pathToArtifact: string): BroadcastArtifacts_Partial => {
   let runLatest_raw: string;
   try {
-    runLatest_raw = readFileSync(`${broadcastPath}/${scriptName}/${chainId}/run-latest.json`, {
+    runLatest_raw = readFileSync(pathToArtifact, {
       encoding: 'utf-8',
     });
   } catch (e: any) {
     logDebug(e);
-    exit('Could not load run-latest.json');
+    exit(`Could not load ${pathToArtifact}`);
   }
 
   let broadcastArtifacts: BroadcastArtifacts_Partial;
@@ -108,8 +100,23 @@ export const getBroadcastArtifacts = async (
     broadcastArtifacts = JSON.parse(runLatest_raw);
   } catch (e: any) {
     logDebug(e);
-    exit('run-latest.json is corrupt / invalid JSON');
+    exit(`${pathToArtifact} is corrupt / invalid JSON`);
   }
+
+  return broadcastArtifacts;
+};
+
+// @dev loads the run-latest.json from the latest broadcast at METRO_DEPLOY_URL
+export const getRunLatestJSON = (
+  foundryConfig: FoundryConfig,
+  chainId: Network,
+  forgeScriptPath: string,
+): BroadcastArtifacts_Partial => {
+  const scriptName = forgeScriptPath.split('/').at(-1);
+  const broadcastPath = getBroadcastPath(foundryConfig);
+  const broadcastArtifacts = loadBroadcastArtifacts(
+    `${broadcastPath}/${scriptName}/${chainId}/run-latest.json`,
+  );
 
   if (broadcastArtifacts.transactions.length === 0)
     exit(`Cannot preview ${scriptName} as it generated 0 transactions`);
@@ -198,6 +205,33 @@ export const runForgeScript = async (scriptArgs: string[]) => {
   });
 };
 
+export const runForgeBuild = async (buildOpts: string[]) => {
+  return await new Promise<number>((resolve, reject) => {
+    const clonedEnv = { ...process.env };
+
+    const forge_script = spawn(`forge build ${buildOpts.join(' ')}`, {
+      shell: true,
+      stdio: 'inherit',
+      env: clonedEnv,
+    });
+
+    // log any errors
+    forge_script.on('error', err => {
+      logError('\n' + processForgeError(err) + '\n');
+      reject();
+    });
+
+    // on completion, resolve or reject the promise
+    forge_script.on('close', (code, signal) => {
+      if (code === 0) resolve(code);
+      else {
+        logError('\n' + 'Forge script failed' + '\n');
+        reject(signal);
+      }
+    });
+  });
+};
+
 export const getContractMetadata = (
   foundryConfig: FoundryConfig,
   broadcastArtifacts: BroadcastArtifacts_Partial,
@@ -237,7 +271,7 @@ export const getContractMetadata = (
   return contractMetadata;
 };
 
-const resolveTargetContract = (forgeScriptPath: string): string => {
+export const resolveTargetContract = (forgeScriptPath: string): string => {
   // forgeScriptPath might be a fully qualified path (src/Deploy.s.sol:DeployerContract)
   const [scriptPath, maybeContractName] = forgeScriptPath.split(':');
 
@@ -250,17 +284,17 @@ const resolveTargetContract = (forgeScriptPath: string): string => {
   return scriptPath.split('/').at(-1).split('.')[0];
 };
 
-export const getScriptMetadata = async (
+export const getScriptMetadata = (
   foundryConfig: FoundryConfig,
   chainId: number,
   forgeScriptPath: string,
-): Promise<ScriptMetadata> => {
+): ScriptMetadata => {
   const [scriptPath] = forgeScriptPath.split(':');
   const targetContract = resolveTargetContract(forgeScriptPath);
   const functionName = getFlagValueFromArgv('-s') || getFlagValueFromArgv('--sig') || 'run()';
   const scriptGitMetadata = getGitMetadata(scriptPath);
 
-  const broadcastArtifacts = await getBroadcastArtifacts(foundryConfig, chainId, scriptPath);
+  const broadcastArtifacts = getRunLatestJSON(foundryConfig, chainId, scriptPath);
 
   return {
     scriptName: targetContract,

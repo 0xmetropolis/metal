@@ -64,10 +64,10 @@ export const doesFileHaveChanges = (filePath: string) => {
 const latestCommitHashCommand = `git log -n 1 --pretty=format:%H`;
 
 // @dev returns the sha of the repo
-export const getLatestCommitSHA_repo = (): HexString => {
+export const getLatestCommitSHA_repo = (): string => {
   const sha = execSync(latestCommitHashCommand).toString().trim();
 
-  return sha as HexString;
+  return sha;
 };
 
 // @dev returns the sha of the file or undefined if uncomitted
@@ -113,4 +113,12 @@ export const getRepoMetadata = (solidityFiles: string[]): RepoMetadata => {
     repoHasChanges,
     solidityFilesHaveChanges,
   };
+};
+
+export const checkoutToCommit = (commitSha: string, { silent } = { silent: false }) => {
+  try {
+    execSync(`git checkout ${commitSha}`, { stdio: silent ? 'ignore' : 'inherit' });
+  } catch (e: any) {
+    exit(`Unable to checkout to commit ${commitSha}!\n ${e.message}`);
+  }
 };

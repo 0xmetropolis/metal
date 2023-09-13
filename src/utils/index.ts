@@ -10,12 +10,31 @@ import fetch from 'node-fetch';
 export const logError = (...s: string[]) =>
   console.log('\n\n\n' + emojify(chalk.bold.red(s.join('\n'))));
 export const logInfo = (s: string) => console.log(emojify(chalk.bold(s)));
-export const logDebug = (s: string) =>
+export const logDebug = (s: string | any) =>
   !!process.env.DEBUG &&
-  console.log(emojify(chalk.yellowBright(typeof s === 'object' ? JSON.stringify(s, null, 2) : s)));
+  console.log(chalk.yellowBright(typeof s === 'object' ? JSON.stringify(s?.message ?? s) : s));
 export const logWarn = (...s: string[]) =>
   console.warn(emojify(chalk.bold.yellow(s.map(str => '⚠️ ' + str + ' ⚠️').join('\n'))));
 export const logDetail = (s: string) => console.log(emojify(chalk.dim(s)));
+
+export const printPreviewLinkWithASCIIArt = (previewUrl: string) => {
+  logInfo(`
+                               ^
+                  _______     ^^^
+                 |xxxxxxx|  _^^^^^_
+                 |xxxxxxx| | [][][]|
+              ______xxxxx| |[][][] |
+             |++++++|xxxx| | [][][]|      METROPOLIS
+             |++++++|xxxx| |[][][] |
+             |++++++|_________ [][]|
+             |++++++|=|=|=|=|=| [] |
+             |++++++|=|=|=|=|=|[][]|
+  ___________|++HH++|  _HHHH__|   _________   _________  _________
+
+  ${previewUrl}
+  __________________  ___________    __________________    ____________
+    `);
+};
 
 export const exit = (...message: string[]) => {
   logError.call(this, message.join('\n'));
@@ -51,6 +70,59 @@ export const getChainId = async (rpcUrl: string) => {
     logDebug(e);
     exit('Error fetching chainId from RPC endpoint');
   }
+};
+
+export const getTransactionByHash = async (rpcUrl: string, txHash: string) => {
+  try {
+    if (typeof txHash !== 'string' || txHash.length !== 66)
+      throw new Error(`Invalid transaction hash: ${txHash}`);
+
+    const request = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'eth_getTransactionByHash',
+        params: [txHash],
+        id: 0,
+      }),
+    });
+
+    const response: {
+      jsonrpc: '2.0';
+      id: number;
+      result: {
+        blockHash: HexString | null;
+        blockNumber: HexString | null;
+        from: HexString;
+        gas: HexString;
+        gasPrice: HexString;
+        hash: HexString;
+        input: HexString;
+        nonce: HexString;
+        to: HexString;
+        transactionIndex: HexString;
+        value: HexString;
+        v: HexString;
+        r: HexString;
+        s: HexString;
+      } | null;
+    } = await request.json();
+
+    return response.result;
+  } catch (e: any) {
+    logDebug(e);
+    exit(`Error fetching transaction: ${txHash} from RPC endpoint`);
+  }
+};
+
+export const isTxConfirmed = async (rpcUrl: string, txHash: string) => {
+  const response = await getTransactionByHash(rpcUrl, txHash);
+  if (response === null || response.blockNumber === null) return false;
+
+  return true;
 };
 
 export const getConfigFromTenderlyRpc = (rpcOverride: string): { rpcUrl: string; id: UUID } => ({
