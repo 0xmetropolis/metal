@@ -1,7 +1,12 @@
 import { type Arguments, type Options } from 'yargs';
 import { PREVIEW_WEB_URL, doNotCommunicateWithPreviewService } from '../constants';
 import { DeploymentRequestParams, ScriptMetadata } from '../types';
-import { getFlagValueFromArgv, logInfo, openInBrowser } from '../utils';
+import {
+  getFlagValueFromArgv,
+  logInfo,
+  openInBrowser,
+  printPreviewLinkWithASCIIArt,
+} from '../utils';
 import {
   getContractMetadata,
   getScriptDependencies,
@@ -33,7 +38,7 @@ export const builder: { [key: string]: Options } = {
   'build-options': {
     type: 'array',
     required: false,
-    description: 'Flags to pass to the `forge build` command',
+    description: 'Parameters to be passed to the `forge build` command',
   },
 };
 
@@ -114,22 +119,7 @@ export const handler = async (yargs: HandlerInput) => {
   const metropoliswebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
 
   logInfo(`Upload Successful! 🎉\n\n`);
-  logInfo(`
-                               ^
-                  _______     ^^^
-                 |xxxxxxx|  _^^^^^_
-                 |xxxxxxx| | [][][]|
-              ______xxxxx| |[][][] |
-             |++++++|xxxx| | [][][]|      METROPOLIS
-             |++++++|xxxx| |[][][] |
-             |++++++|_________ [][]|
-             |++++++|=|=|=|=|=| [] |
-             |++++++|=|=|=|=|=|[][]|
-  ___________|++HH++|  _HHHH__|   _________   _________  _________
-
-  ${metropoliswebUrl}
-  __________________  ___________    __________________    ____________
-    `);
+  printPreviewLinkWithASCIIArt(metropoliswebUrl);
 
   openInBrowser(metropoliswebUrl);
 

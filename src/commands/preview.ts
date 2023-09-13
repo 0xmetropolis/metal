@@ -18,6 +18,7 @@ import {
   logInfo,
   logWarn,
   openInBrowser,
+  printPreviewLinkWithASCIIArt,
   replaceFlagValues,
 } from '../utils';
 import {
@@ -226,22 +227,7 @@ export const handler = async (yargs: HandlerInput) => {
   const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${forkId}`;
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
-  logInfo(`
-                             ^
-                _______     ^^^
-               |xxxxxxx|  _^^^^^_
-               |xxxxxxx| | [][][]|
-            ______xxxxx| |[][][] |
-           |++++++|xxxx| | [][][]|      METROPOLIS
-           |++++++|xxxx| |[][][] |
-           |++++++|_________ [][]|
-           |++++++|=|=|=|=|=| [] |
-           |++++++|=|=|=|=|=|[][]|
-___________|++HH++|  _HHHH__|   _________   _________  _________
-
-${previewServiceUrl}
-__________________  ___________    __________________    ____________
-  `);
+  printPreviewLinkWithASCIIArt(previewServiceUrl);
 
   openInBrowser(previewServiceUrl);
 };

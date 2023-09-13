@@ -17,6 +17,25 @@ export const logWarn = (...s: string[]) =>
   console.warn(emojify(chalk.bold.yellow(s.map(str => '⚠️ ' + str + ' ⚠️').join('\n'))));
 export const logDetail = (s: string) => console.log(emojify(chalk.dim(s)));
 
+export const printPreviewLinkWithASCIIArt = (previewUrl: string) => {
+  logInfo(`
+                               ^
+                  _______     ^^^
+                 |xxxxxxx|  _^^^^^_
+                 |xxxxxxx| | [][][]|
+              ______xxxxx| |[][][] |
+             |++++++|xxxx| | [][][]|      METROPOLIS
+             |++++++|xxxx| |[][][] |
+             |++++++|_________ [][]|
+             |++++++|=|=|=|=|=| [] |
+             |++++++|=|=|=|=|=|[][]|
+  ___________|++HH++|  _HHHH__|   _________   _________  _________
+
+  ${previewUrl}
+  __________________  ___________    __________________    ____________
+    `);
+};
+
 export const exit = (...message: string[]) => {
   logError.call(this, message.join('\n'));
   process.exit(1);

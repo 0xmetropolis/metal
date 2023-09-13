@@ -6,7 +6,14 @@ import {
   SUPPORTED_CHAINS,
   doNotCommunicateWithPreviewService,
 } from '../constants';
-import { exit, getFlagValueFromArgv, logDebug, logInfo, openInBrowser } from '../utils';
+import {
+  exit,
+  getFlagValueFromArgv,
+  logDebug,
+  logInfo,
+  openInBrowser,
+  printPreviewLinkWithASCIIArt,
+} from '../utils';
 import {
   getContractMetadata,
   getScriptDependencies,
@@ -89,7 +96,7 @@ const getChainConfig = async (chainId: Network): Promise<Partial<ChainConfig>> =
 export const handler = async (yargs: HandlerInput) => {
   validateInputs(yargs);
 
-  // @dev arg 0 is the command name: e.g: `preview`
+  // @dev arg 0 is the command name: e.g: `deploy`
   const {
     _: [, forgeScriptPath],
     'chain-id': chainId,
@@ -152,22 +159,7 @@ export const handler = async (yargs: HandlerInput) => {
   const metropoliswebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
 
   logInfo(`Deployment successful! 🎉\n\n`);
-  logInfo(`
-                             ^
-                _______     ^^^
-               |xxxxxxx|  _^^^^^_
-               |xxxxxxx| | [][][]|
-            ______xxxxx| |[][][] |
-           |++++++|xxxx| | [][][]|      METROPOLIS
-           |++++++|xxxx| |[][][] |
-           |++++++|_________ [][]|
-           |++++++|=|=|=|=|=| [] |
-           |++++++|=|=|=|=|=|[][]|
-___________|++HH++|  _HHHH__|   _________   _________  _________
-
-${metropoliswebUrl}
-__________________  ___________    __________________    ____________
-  `);
+  printPreviewLinkWithASCIIArt(metropoliswebUrl);
 
   openInBrowser(metropoliswebUrl);
 };
