@@ -123,5 +123,5 @@ export const handler = async (yargs: HandlerInput) => {
 
   openInBrowser(metropoliswebUrl);
 
-  if (returnToCommitAfterImport) checkoutToCommit('-');
+  if (returnToCommitAfterImport) checkoutToCommit('-', { silent: true });
 };

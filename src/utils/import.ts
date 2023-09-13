@@ -197,9 +197,7 @@ export const ensureBroadcastArtifactValidityAndContinue = async (
   logInfo(`Checking broadcast artifacts...`);
 
   const invalidate = () => {
-    logError(
-      `The transactions in this file don't exist on chain: ${chainConfig.label}\n`,
-    );
+    logError(`The transactions in this file don't exist on chain: ${chainConfig.label}\n`);
     return false;
   };
 
@@ -263,7 +261,7 @@ export const ensureRepoIsOnCorrectCommit = async (
       .then(({ confirm }) => !confirm && exit('Aborting import'));
 
     logInfo(`Checking out to commit ${commitSHAOfBroadcast}...`);
-    checkoutToCommit(commitSHAOfBroadcast);
+    checkoutToCommit(commitSHAOfBroadcast, { silent: true });
 
     return commitSHAOfRepo;
   }

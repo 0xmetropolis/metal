@@ -115,6 +115,6 @@ export const getRepoMetadata = (solidityFiles: string[]): RepoMetadata => {
   };
 };
 
-export const checkoutToCommit = (commitSha: string) => {
-  execSync(`git checkout ${commitSha}`);
+export const checkoutToCommit = (commitSha: string, { silent } = { silent: false }) => {
+  execSync(`git checkout ${commitSha}`, { stdio: silent ? 'ignore' : 'inherit' });
 };
