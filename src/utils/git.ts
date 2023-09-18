@@ -42,15 +42,22 @@ export const getRepositoryRoot = () => {
 };
 
 export const getGitRemote = () => {
-  const remote = execSync('git config --get remote.origin.url')
-    .toString()
-    .trim()
-    .replace('.git', '');
+  try {
+    const remote = execSync('git config --get remote.origin.url')
+      .toString()
+      .trim()
+      .replace('.git', '');
 
-  const isSSH = remote.startsWith('git@');
-  if (isSSH) return remote.replace(':', '/').replace('git@', 'https://');
+    const isSSH = remote.startsWith('git@');
+    if (isSSH) return remote.replace(':', '/').replace('git@', 'https://');
 
-  return remote;
+    return remote;
+  } catch (e: any) {
+    logDebug('could not get git remote url');
+    logDebug(e);
+
+    return undefined;
+  }
 };
 
 // a `contractsPath` is the path to the foundry project _from the repoository root_
