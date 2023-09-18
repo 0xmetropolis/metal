@@ -1,6 +1,7 @@
-import { GitMetadata, HexString, RepoMetadata } from 'index';
 import { execSync } from 'node:child_process';
+import { cwd } from 'node:process';
 import { exit, logDebug } from '.';
+import { GitMetadata, HexString, RepoMetadata } from '../types/index';
 
 export const isGitInstalled = () => {
   try {
@@ -32,7 +33,14 @@ export const getRepoName = () => {
   return execSync(printFolderNameCommand).toString().trim();
 };
 
-// @dev gets the url of the repo
+// @dev gets root of the git repo, regardless of where the command is run (helpful for monorepos)
+//   will print something like `/Users/You/your-repo` where `your-repo/.git` exists and you're in any subfolder of `your-repo`
+export const getRepositoryRoot = () => {
+  const root = execSync('git rev-parse --show-toplevel').toString().trim();
+
+  return root;
+};
+
 export const getGitRemote = () => {
   try {
     const remote = execSync('git config --get remote.origin.url')
@@ -50,6 +58,20 @@ export const getGitRemote = () => {
 
     return undefined;
   }
+};
+
+// a `contractsPath` is the path to the foundry project _from the repoository root_
+//   for example: with a monorepo, your repo root may be `/Users/You/your-repo`
+//   and your foundry project may be in `/Users/You/your-repo/packages/your-foundry-project`
+export const getContractsPath = (): string | undefined => {
+  const repoRoot = getRepositoryRoot();
+
+  // can slice off the non-intersection of the two paths (i.e: packages/your-foundry-project)
+  // use + 1 to slice off the leading `/`
+  const subtree = cwd().slice(repoRoot.length + 1);
+
+  // if subtree is '' or '/' then we are in the the root of the repo, and can return undefined
+  return subtree === '' || subtree === '/' ? undefined : subtree;
 };
 
 // @dev returns the changes in the working directory
@@ -106,6 +128,7 @@ export const getRepoMetadata = (solidityFiles: string[]): RepoMetadata => {
     exit('metro commands must be run in a git repo', 'please run `git init` and try again');
 
   const remoteUrl = getGitRemote();
+  const contractsPath = getContractsPath();
   const repoHasChanges = !isCleanWorkingDir();
   const solidityFileStatuses = getFilesMetadata(solidityFiles);
   const repoCommitSHA = getLatestCommitSHA_repo();
@@ -116,6 +139,7 @@ export const getRepoMetadata = (solidityFiles: string[]): RepoMetadata => {
   return {
     repositoryName,
     remoteUrl,
+    contractsPath,
     repoCommitSHA,
     repoHasChanges,
     solidityFilesHaveChanges,

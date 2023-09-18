@@ -52,7 +52,10 @@ export type GitMetadata = {
 
 export type RepoMetadata = {
   repositoryName: string;
-  remoteUrl: string | undefined;
+  // a link to _base_ remote url (i.e: https://github.com/0xmetropolis/contracts)
+  remoteUrl?: string;
+  // the path to the contracts folder, which is useful for monorepos, where the foundry project root may be nested
+  contractsPath?: string;
   repoCommitSHA: string;
   repoHasChanges: boolean;
   solidityFilesHaveChanges: boolean;
