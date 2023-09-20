@@ -1,4 +1,4 @@
-import { GitMetadata, HexString, RepoMetadata } from 'index';
+import { GitMetadata, HexString, RepoMetadata } from '../types';
 import { execSync } from 'node:child_process';
 import { exit, logDebug } from '.';
 

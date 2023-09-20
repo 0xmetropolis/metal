@@ -7,7 +7,7 @@ import {
   Network,
   ScriptMetadata,
   SolidityFilesCache_Partial,
-} from 'index';
+} from '../types';
 import { readFileSync } from 'node:fs';
 import * as toml from 'toml';
 import { exit, getFlagValueFromArgv, loadSolidityABIs, logDebug, logError, logWarn } from '.';

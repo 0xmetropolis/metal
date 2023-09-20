@@ -1,4 +1,4 @@
-import { PreviewRequestParams } from 'index';
+import { PreviewRequestParams } from '../types';
 import { UUID } from 'node:crypto';
 import { type Arguments, type Options } from 'yargs';
 import {
