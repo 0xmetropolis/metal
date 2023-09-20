@@ -2,6 +2,11 @@
 
 All notable changes to the Metropolis CLI will be listed in this file.
 
+## [0.3.1] - 2023-09-18
+
+* fix: allow remote-less origins by @colinnielsen in [81](https://github.com/0xmetropolis/cli/pull/81)
+* fix: preview links on monorepos by @colinnielsen in [82](https://github.com/0xmetropolis/cli/pull/82)
+
 ## [0.3.0] - 2023-09-12
 
 - Metro deploy command by @colinnielsen in [77](https://github.com/0xmetropolis/cli/pull/77)
