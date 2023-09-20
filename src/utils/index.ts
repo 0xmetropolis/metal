@@ -11,8 +11,7 @@ export const logError = (...s: string[]) =>
   console.log('\n\n\n' + emojify(chalk.bold.red(s.join('\n'))));
 export const logInfo = (s: string) => console.log(emojify(chalk.bold(s)));
 export const logDebug = (s: string | any) =>
-  !!process.env.DEBUG &&
-  console.log(chalk.yellowBright(typeof s === 'object' ? JSON.stringify(s) : s));
+  !!process.env.DEBUG && console.log('\x1b[36m%s\x1b[0m', s);
 export const logWarn = (...s: string[]) =>
   console.warn(emojify(chalk.bold.yellow(s.map(str => '⚠️ ' + str + ' ⚠️').join('\n'))));
 export const logDetail = (s: string) => console.log(emojify(chalk.dim(s)));

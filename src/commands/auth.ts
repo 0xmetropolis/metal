@@ -22,7 +22,7 @@ export const builder: { [key: string]: Options } = {
   force: {
     type: 'boolean',
     required: false,
-    description: 'Force authentication even if already authenticated',
+    description: 'Force re-authentication even if already authenticated',
   },
 };
 
@@ -30,7 +30,8 @@ export const builder: { [key: string]: Options } = {
  * @dev entry point for the auth command
  */
 export const handler = async (_yargs: HandlerInput) => {
-  const isAuthenticated = checkAuthentication();
+  const isAuthenticated = await checkAuthentication();
+
   if (isAuthenticated && !_yargs.force) {
     logInfo('Already authenticated 🎉\n\n💡 Use the `--force` flag to re-authenticate');
     return;
