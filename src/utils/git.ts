@@ -1,7 +1,7 @@
+import { GitMetadata, HexString, RepoMetadata } from '../types';
 import { execSync } from 'node:child_process';
 import { cwd } from 'node:process';
 import { exit, logDebug } from '.';
-import { GitMetadata, HexString, RepoMetadata } from '../types/index';
 
 export const isGitInstalled = () => {
   try {

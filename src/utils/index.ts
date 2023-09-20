@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { Abi, FoundryConfig, HexString } from 'index';
+import { Abi, FoundryConfig, HexString } from '../types';
 import { emojify } from 'node-emoji';
 import { exec, execSync } from 'node:child_process';
 import { UUID } from 'node:crypto';
@@ -12,7 +12,7 @@ export const logError = (...s: string[]) =>
 export const logInfo = (s: string) => console.log(emojify(chalk.bold(s)));
 export const logDebug = (s: string | any) =>
   !!process.env.DEBUG &&
-  console.log(chalk.yellowBright(typeof s === 'object' ? JSON.stringify(s?.message ?? s) : s));
+  console.log(chalk.yellowBright(typeof s === 'object' ? JSON.stringify(s) : s));
 export const logWarn = (...s: string[]) =>
   console.warn(emojify(chalk.bold.yellow(s.map(str => '⚠️ ' + str + ' ⚠️').join('\n'))));
 export const logDetail = (s: string) => console.log(emojify(chalk.dim(s)));
