@@ -1,6 +1,6 @@
 import { decodeJwt, importJWK, jwtVerify } from 'jose';
 import { BinaryLike, createHash, randomBytes } from 'node:crypto';
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { Server, createServer } from 'node:http';
 import { join } from 'node:path';
 import { parse } from 'url';
@@ -35,6 +35,25 @@ export type JWT = {
 export const sha256 = (buffer: BinaryLike) => createHash('sha256').update(buffer).digest();
 
 export const base64URLEncode = (input: Buffer) => input.toString('base64url');
+
+export const checkAuthentication = async (): Promise<boolean> => {
+  const idTokenPath = join(__dirname, '..', ID_TOKEN_FILE);
+  const idTokenIsCached = existsSync(idTokenPath);
+  if (!idTokenIsCached) return false;
+
+  try {
+    const idToken_raw = readFileSync(idTokenPath);
+    const idToken: IDToken = JSON.parse(idToken_raw.toString());
+
+    await validateAccessToken(idToken.access_token);
+
+    return true;
+  } catch (err) {
+    logDebug(err);
+
+    return false;
+  }
+};
 
 /**
  * @dev think of a codeVerifier as "our secret". We'll hash that secret create the "codeChallenge" and send that to auth0.

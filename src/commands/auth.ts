@@ -1,6 +1,7 @@
 import { Arguments, Options } from 'yargs';
 import { logError, logInfo } from '../utils';
 import {
+  checkAuthentication,
   decodeIdToken,
   generateHashChallenges,
   listenForAuthorizationCode,
@@ -9,6 +10,7 @@ import {
   saveIdToken,
   validateAccessToken,
 } from '../utils/auth';
+import { log } from 'node:console';
 
 export const command = 'auth';
 export const description = `Authenticate with Metropolis`;
@@ -16,12 +18,24 @@ export const description = `Authenticate with Metropolis`;
 export type Params = {};
 export type HandlerInput = Arguments & Params;
 
-export const builder: { [key: string]: Options } = {};
+export const builder: { [key: string]: Options } = {
+  force: {
+    type: 'boolean',
+    required: false,
+    description: 'Force authentication even if already authenticated',
+  },
+};
 
 /**
  * @dev entry point for the auth command
  */
 export const handler = async (_yargs: HandlerInput) => {
+  const isAuthenticated = checkAuthentication();
+  if (isAuthenticated && !_yargs.force) {
+    logInfo('Already authenticated 🎉\n\n💡 Use the `--force` flag to re-authenticate');
+    return;
+  }
+
   try {
     // generate a code challenge and verifier as base64 strings
     const { codeChallenge, codeVerifier, state } = generateHashChallenges();
