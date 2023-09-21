@@ -28,15 +28,21 @@ export const builder: { [key: string]: Options } = {
 
 /**
  * @dev entry point for the auth command
+ * @param force the user can force re-authentication, even if their token is valid
  */
-export const handler = async (_yargs: HandlerInput) => {
+export const handler = async ({ force }: HandlerInput) => {
   const isAuthenticated = await checkAuthentication();
 
-  if (isAuthenticated && !_yargs.force) {
+  if (isAuthenticated && !force) {
     logInfo('Already authenticated 🎉\n\n💡 Use the `--force` flag to re-authenticate');
     return;
   }
 
+  /**
+   * @dev we use the "PCKE Authorization Flow" to authenticate with Auth0
+   *   See this diagram for a visual representation of the flow:
+   *   https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-proof-key-for-code-exchange-pkce#how-it-works
+   */
   try {
     // generate a code challenge and verifier as base64 strings
     const { codeChallenge, codeVerifier, state } = generateHashChallenges();
