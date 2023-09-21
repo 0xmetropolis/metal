@@ -10,7 +10,6 @@ import {
   saveIdToken,
   validateAccessToken,
 } from '../utils/auth';
-import { log } from 'node:console';
 
 export const command = 'auth';
 export const description = `Authenticate with Metropolis`;
