@@ -43,6 +43,42 @@ export enum Network {
 export type EthAddress = `0x${string}`;
 export type HexString = `0x${string}`;
 
+export type JWT = {
+  /**
+   * Token issuer
+   */
+  iss?: string;
+  /**
+   * Token subject
+   */
+  sub?: string;
+  /**
+   * Token audience
+   */
+  aud?: string | string[];
+  /**
+   * Unique token ID
+   */
+  jti?: string;
+  /**
+   * Not before time
+   */
+  nbf?: number;
+  /**
+   * Expiration time
+   */
+  exp?: number;
+  /**
+   * Issued at time
+   */
+  iat?: number;
+} & {
+  /**
+   * Other properties
+   */
+  [key: string]: unknown;
+};
+
 export type GitMetadata = {
   filePath: string;
   hasChanges: boolean;

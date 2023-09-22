@@ -27,7 +27,7 @@ export const builder: { [key: string]: Options } = {
 
 /**
  * @dev entry point for the auth command
- * @param force the user can force re-authentication, even if their token is valid
+ * @param force - the user can force re-authentication, even if their token is valid
  */
 export const handler = async ({ force }: HandlerInput) => {
   const isAuthenticated = await checkAuthentication();
@@ -49,7 +49,7 @@ export const handler = async ({ force }: HandlerInput) => {
     // open a new window for the user to authorize a login...
     openLoginWindow(codeChallenge, state);
 
-    // ... and listen for up to 30 seconds for an auth0 to reply with an authorization code
+    // ... and listen for up to AUTHORIZATION_TIMEOUT seconds for an auth0 to reply with an authorization code
     const authorizationCode = await listenForAuthorizationCode({ expectedCSRFToken: state });
 
     // take the authorization code and exchange it for an id token

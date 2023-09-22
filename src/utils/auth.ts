@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { parse } from 'url';
 import { logDebug, logError, openInBrowser } from '.';
 import { ID_TOKEN_FILE } from '../constants';
+import { JWT } from '../types';
 
 type Base64String = string;
 export type IDToken = {
@@ -17,20 +18,12 @@ export type IDToken = {
 };
 
 const PORT = 42224;
+const AUTHORIZATION_TIMEOUT = 60_000;
 const AUTH0ֹֹֹֹֹ_DOMAIN = 'dev-y3yet3c7w2jdjgo7.us.auth0.com';
+const AUTH0ֹֹֹֹֹ_VANITY_URI = 'auth.metropolis.sh';
 const AUTH0_CLIENT_ID = '9TFnIsSYlxiSKIs5bvwhfxu9yQFvhT0R';
 const AUTH0_AUDIENCE = 'metro-api';
 const AUTH0_SCOPES = ['profile', 'offline_access'] as const;
-
-export type JWT = {
-  iss?: string;
-  sub?: string;
-  aud?: string | string[];
-  jti?: string;
-  nbf?: number;
-  exp?: number;
-  iat?: number;
-} & { [key: string]: unknown };
 
 export const sha256 = (buffer: BinaryLike) => createHash('sha256').update(buffer).digest();
 
@@ -152,12 +145,13 @@ export const listenForAuthorizationCode = async ({
     });
   });
 
-  const TIMEOUT = 40_000;
-
   const authorizationTimeout = new Promise<Error>((_, reject) =>
     setTimeout(
-      () => reject(Error(`Authorization request timed out after ${TIMEOUT / 1000} seconds`)),
-      TIMEOUT,
+      () =>
+        reject(
+          Error(`Authorization request timed out after ${AUTHORIZATION_TIMEOUT / 1000} seconds`),
+        ),
+      AUTHORIZATION_TIMEOUT,
     ),
   );
 
