@@ -24,7 +24,7 @@ export const checkRegistration = async ({
     }
   } catch (e: any) {
     logDebug(e.message);
-    logError('User registration failed. Please reach out for support');
+    logError('Could not verify user status. Please reach out for support');
 
     process.exit(0);
   }
