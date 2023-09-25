@@ -19,6 +19,8 @@ export const PREVIEW_WEB_URL = process.env.PREVIEW_WEB_URL
   ? 'http://localhost:3000'
   : 'https://metropolis.sh';
 
+export const ID_TOKEN_FILE = 'id_token.json';
+
 export const doNotCommunicateWithPreviewService = !!process.env.NO_PREVIEW_SERVICE;
 
 export const FORGE_FORK_ALIASES = ['--fork-url', '-f', '--rpc-url'];
