@@ -33,6 +33,7 @@ export const builder: { [key: string]: Options } = {
 export const handler = async ({ force }: HandlerInput) => {
   const isAuthenticated = await checkAuthentication();
 
+  // if the user is already authenticated, bail early
   if (isAuthenticated && !force) {
     logInfo('Already authenticated 🎉\n\n💡 Use the `--force` flag to re-authenticate');
     return;
