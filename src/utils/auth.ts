@@ -1,4 +1,5 @@
 import { decodeJwt, importJWK, jwtVerify } from 'jose';
+import fetch from 'node-fetch';
 import { BinaryLike, createHash, randomBytes } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { Server, createServer } from 'node:http';

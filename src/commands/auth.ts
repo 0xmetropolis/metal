@@ -10,6 +10,7 @@ import {
   saveIdToken,
   validateAccessToken,
 } from '../utils/auth';
+import { upsertUser } from '../utils/user';
 
 export const command = 'auth';
 export const description = `Authenticate with Metropolis`;
@@ -32,6 +33,7 @@ export const builder: { [key: string]: Options } = {
 export const handler = async ({ force }: HandlerInput) => {
   const isAuthenticated = await checkAuthentication();
 
+  // if the user is already authenticated, bail early
   if (isAuthenticated && !force) {
     logInfo('Already authenticated 🎉\n\n💡 Use the `--force` flag to re-authenticate');
     return;
@@ -64,6 +66,8 @@ export const handler = async ({ force }: HandlerInput) => {
 
     // decode the id token to get the user's nickname
     const idTokenPayload = decodeIdToken(idToken.id_token);
+
+    await upsertUser(idToken);
 
     logInfo(`Successfully authenticated as ${idTokenPayload?.nickname} 🎉`);
   } catch (err) {
