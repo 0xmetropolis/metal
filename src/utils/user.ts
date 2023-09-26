@@ -3,12 +3,12 @@ import { logDebug, logError } from '.';
 import { PREVIEW_SERVICE_URL } from '../constants';
 import { IDToken } from './auth';
 
-export const checkRegistration = async ({
-  id_token: idToken,
-  access_token: accessToken,
-}: IDToken) => {
+/**
+ * @dev checks if the user is in the db and creates them if they're not
+ */
+export const upsertUser = async ({ id_token: idToken, access_token: accessToken }: IDToken) => {
   try {
-    const request = await fetch(`${PREVIEW_SERVICE_URL}/user/check-registration`, {
+    const request = await fetch(`${PREVIEW_SERVICE_URL}/user/upsert-user`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

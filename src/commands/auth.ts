@@ -10,7 +10,7 @@ import {
   saveIdToken,
   validateAccessToken,
 } from '../utils/auth';
-import { checkRegistration } from '../utils/user';
+import { upsertUser } from '../utils/user';
 
 export const command = 'auth';
 export const description = `Authenticate with Metropolis`;
@@ -67,7 +67,7 @@ export const handler = async ({ force }: HandlerInput) => {
     // decode the id token to get the user's nickname
     const idTokenPayload = decodeIdToken(idToken.id_token);
 
-    await checkRegistration(idToken);
+    await upsertUser(idToken);
 
     logInfo(`Successfully authenticated as ${idTokenPayload?.nickname} 🎉`);
   } catch (err) {
