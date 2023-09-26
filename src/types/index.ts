@@ -42,42 +42,53 @@ export enum Network {
 
 export type EthAddress = `0x${string}`;
 export type HexString = `0x${string}`;
+// parsed from token.sub. In the future, we may have auth0, google, etc.
+export type IdentityProvider = 'github';
 
-export type JWT = {
-  /**
-   * Token issuer
-   */
-  iss?: string;
-  /**
-   * Token subject
-   */
-  sub?: string;
+export type BaseAuth0JWT = {
   /**
    * Token audience
    */
-  aud?: string | string[];
-  /**
-   * Unique token ID
-   */
-  jti?: string;
-  /**
-   * Not before time
-   */
-  nbf?: number;
+  aud: string | string[];
   /**
    * Expiration time
    */
-  exp?: number;
+  exp: number;
   /**
    * Issued at time
    */
-  iat?: number;
-} & {
+  iat: number;
   /**
-   * Other properties
+   * Token issuer (we issued the token, so this is our auth0 domain)
    */
-  [key: string]: unknown;
+  iss: string;
+  /**
+   * Session Id
+   */
+  sid: string;
+  /**
+   * Token subject (a unique user id / who the token was issued to)
+   */
+  sub: string;
+  updated_at: string; // ISO string
 };
+
+export type AccessToken = Required<
+  Pretty<
+    BaseAuth0JWT & {
+      // override the sub field to be a little more specific
+      sub?: `${IdentityProvider}|${string}`; // can add more providers later
+    }
+  >
+>;
+
+export type IdTokenWithProfileScope = Pretty<
+  AccessToken & {
+    nickname: string;
+    name: string;
+    picture: string;
+  }
+>;
 
 export type GitMetadata = {
   filePath: string;
@@ -232,15 +243,10 @@ export type ScriptMetadata = Pretty<
   } & GitMetadata
 >;
 
-export type PreviewRequestParams = {
-  cliVersion: string;
-  chainId: Network;
-  repoMetadata: RepoMetadata;
-  scriptMetadata: ScriptMetadata;
-  contractMetadata: ContractMetadata[];
-};
-
 export type DeploymentRequestParams = {
+  prompt: 'deploy' | 'preview' | 'import';
+  // the name of the project the user wants to associate their deployment to
+  project?: string;
   cliVersion: string;
   chainId: Network;
   repoMetadata: RepoMetadata;

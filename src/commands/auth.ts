@@ -8,7 +8,7 @@ import {
   openLoginWindow,
   requestForIdToken,
   saveIdToken,
-  validateAccessToken,
+  validateJWT,
 } from '../utils/auth';
 import { upsertUser } from '../utils/user';
 
@@ -31,7 +31,7 @@ export const builder: { [key: string]: Options } = {
  * @param force - the user can force re-authentication, even if their token is valid
  */
 export const handler = async ({ force }: HandlerInput) => {
-  const isAuthenticated = await checkAuthentication();
+  const { isAuthenticated } = await checkAuthentication();
 
   // if the user is already authenticated, bail early
   if (isAuthenticated && !force) {
@@ -59,7 +59,7 @@ export const handler = async ({ force }: HandlerInput) => {
     const idToken = await requestForIdToken(codeVerifier, authorizationCode);
 
     // validate the attached access token is valid
-    await validateAccessToken(idToken.access_token);
+    await validateJWT(idToken.access_token);
 
     // save the id token to the local filesystem
     saveIdToken(idToken);

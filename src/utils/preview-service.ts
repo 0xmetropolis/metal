@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import assert from 'node:assert';
 import { exit, logDebug, logError } from '.';
 import { PREVIEW_SERVICE_URL } from '../constants';
-import { Network, PreviewRequestParams } from '../types';
+import { DeploymentRequestParams, Network } from '../types';
 
 export type ForkConfig = {
   __type: 'tenderly' | 'anvil';
@@ -67,12 +67,18 @@ export const fetchChainConfig = async (chainId: Network) => {
   }
 };
 
-export const uploadDeploymentData = async (payload: PreviewRequestParams): Promise<UUID> => {
+export const uploadDeploymentData = async (
+  payload: DeploymentRequestParams,
+  authToken?: string,
+): Promise<UUID> => {
   try {
+    let headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
     const response = await fetch(`${PREVIEW_SERVICE_URL}/deploy`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       method: 'POST',
       body: JSON.stringify(payload),
     });

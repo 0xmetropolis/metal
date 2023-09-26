@@ -1,4 +1,4 @@
-import { PreviewRequestParams } from '../types';
+import fetch from 'node-fetch';
 import { UUID } from 'node:crypto';
 import { type Arguments, type Options } from 'yargs';
 import {
@@ -11,6 +11,7 @@ import {
   SUPPORTED_CHAINS,
   doNotCommunicateWithPreviewService,
 } from '../constants';
+import { DeploymentRequestParams } from '../types';
 import {
   exit,
   getConfigFromTenderlyRpc,
@@ -31,9 +32,8 @@ import {
 } from '../utils/foundry';
 import { getRepoMetadata } from '../utils/git';
 import { createMetropolisFork } from '../utils/preview-service';
-import assert = require('node:assert');
-import fetch from 'node-fetch';
 import { getCLIVersion } from '../utils/version';
+import { checkAuthentication } from '../utils/auth';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -114,35 +114,23 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
   return forgeArguments;
 };
 
-/// @dev sanity checks while we scaffold the app
-function devModeSanityChecks({
-  scriptMetadata,
-  chainId,
-  contractMetadata,
-  repoMetadata,
-}: PreviewRequestParams) {
-  contractMetadata.forEach(({ abi, name, filePath, fullyQualifiedName }) => {
-    assert(!!abi);
-    assert(!!name);
-    assert(!!filePath);
-    assert(!!fullyQualifiedName);
-  });
-  assert(typeof chainId === 'number');
-  assert(repoMetadata.remoteUrl && repoMetadata.repoCommitSHA && repoMetadata.repositoryName);
-  assert(
-    scriptMetadata.filePath && scriptMetadata.broadcastArtifacts && scriptMetadata.functionName,
-  );
-}
-
 export const sendDataToPreviewService = async (
-  payload: PreviewRequestParams,
+  payload: DeploymentRequestParams,
   forkId: UUID,
 ): Promise<string> => {
   try {
+    const authenticationStatus = await checkAuthentication();
+    const authToken = authenticationStatus.isAuthenticated
+      ? authenticationStatus.access_token
+      : undefined;
+
+    let headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
     const response = await fetch(`${PREVIEW_SERVICE_URL}/preview/${forkId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -214,14 +202,14 @@ export const handler = async (yargs: HandlerInput) => {
     solidityFilePaths,
   );
 
-  const payload: PreviewRequestParams = {
+  const payload: DeploymentRequestParams = {
+    prompt: 'preview',
     cliVersion,
     chainId,
     repoMetadata,
     scriptMetadata,
     contractMetadata,
   };
-  devModeSanityChecks(payload);
 
   if (!doNotCommunicateWithPreviewService) await sendDataToPreviewService(payload, forkId);
   const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${forkId}`;

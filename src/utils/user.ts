@@ -1,12 +1,15 @@
 import fetch from 'node-fetch';
 import { logDebug, logError } from '.';
 import { PREVIEW_SERVICE_URL } from '../constants';
-import { IDToken } from './auth';
+import { CachedIDToken } from './auth';
 
 /**
  * @dev checks if the user is in the db and creates them if they're not
  */
-export const upsertUser = async ({ id_token: idToken, access_token: accessToken }: IDToken) => {
+export const upsertUser = async ({
+  id_token: idToken,
+  access_token: accessToken,
+}: CachedIDToken) => {
   try {
     const request = await fetch(`${PREVIEW_SERVICE_URL}/user/upsert-user`, {
       method: 'POST',

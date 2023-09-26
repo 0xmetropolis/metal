@@ -7,10 +7,10 @@ import { join } from 'node:path';
 import { parse } from 'url';
 import { logDebug, logError, openInBrowser } from '.';
 import { ID_TOKEN_FILE } from '../constants';
-import { JWT } from '../types';
+import { AccessToken, IdTokenWithProfileScope, Pretty } from '../types';
 
 type Base64String = string;
-export type IDToken = {
+export type CachedIDToken = {
   access_token: string;
   refresh_token: string;
   id_token: string;
@@ -18,36 +18,34 @@ export type IDToken = {
   expires_in: number;
 };
 
+type ParsedCachedIdToken = Pretty<
+  CachedIDToken & {
+    parsedAccessToken: AccessToken;
+    parsedIdToken: IdTokenWithProfileScope;
+  }
+>;
+
+export type AuthenticationStatus =
+  | {
+      isAuthenticated: false;
+    }
+  | Pretty<
+      {
+        isAuthenticated: true;
+      } & ParsedCachedIdToken
+    >;
+
 const PORT = 42224;
 const AUTHORIZATION_TIMEOUT = 60_000;
 const AUTH0ֹֹֹֹֹ_DOMAIN = 'dev-y3yet3c7w2jdjgo7.us.auth0.com';
 const AUTH0ֹֹֹֹֹ_VANITY_URI = 'auth.metropolis.sh';
-const AUTH0_CLIENT_ID = '9TFnIsSYlxiSKIs5bvwhfxu9yQFvhT0R';
+const AUTH0_CLI_CLIENT_ID = '9TFnIsSYlxiSKIs5bvwhfxu9yQFvhT0R';
 const AUTH0_AUDIENCE = 'metro-api';
 const AUTH0_SCOPES = ['profile', 'offline_access'] as const;
 
 export const sha256 = (buffer: BinaryLike) => createHash('sha256').update(buffer).digest();
 
 export const base64URLEncode = (input: Buffer) => input.toString('base64url');
-
-export const checkAuthentication = async (): Promise<boolean> => {
-  const idTokenPath = join(__dirname, '..', ID_TOKEN_FILE);
-  const idTokenIsCached = existsSync(idTokenPath);
-  if (!idTokenIsCached) return false;
-
-  try {
-    const idToken_raw = readFileSync(idTokenPath);
-    const idToken: IDToken = JSON.parse(idToken_raw.toString());
-
-    await validateAccessToken(idToken.access_token);
-
-    return true;
-  } catch (err) {
-    logDebug(err);
-
-    return false;
-  }
-};
 
 /**
  * @dev think of a codeVerifier as "our secret". We'll hash that secret create the "codeChallenge" and send that to auth0.
@@ -85,7 +83,7 @@ export const openLoginWindow = (codeChallenge: string, state: string) => {
     `&response_type=code`,
     `&code_challenge=${codeChallenge}`,
     `&code_challenge_method=S256`,
-    `&client_id=${AUTH0_CLIENT_ID}`,
+    `&client_id=${AUTH0_CLI_CLIENT_ID}`,
     `&scope=${encodeURIComponent(['openid', ...AUTH0_SCOPES].join(' '))}`,
     `&state=${state}`,
     `&redirect_uri=http://localhost:${PORT}`,
@@ -183,14 +181,14 @@ export const requestForIdToken = async (codeVerifier: string, authorizationCode:
     },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
-      client_id: AUTH0_CLIENT_ID,
+      client_id: AUTH0_CLI_CLIENT_ID,
       code_verifier: codeVerifier,
       code: authorizationCode,
       redirect_uri: `http://localhost:${PORT}`,
     }),
   });
 
-  const response: IDToken = await req.json();
+  const response: CachedIDToken = await req.json();
 
   return response;
 };
@@ -220,7 +218,10 @@ const fetchJWKSFromAuth0Domain = async () => {
   return key;
 };
 
-export const validateAccessToken = async (accessToken: string) => {
+export const validateJWT = async <T extends AccessToken>(
+  accessToken: string,
+  audience = AUTH0_AUDIENCE,
+): Promise<T> => {
   // fetch the public key from the auth0 domain
   const rs256PubKey = await fetchJWKSFromAuth0Domain().catch(err => {
     logDebug(err);
@@ -236,7 +237,7 @@ export const validateAccessToken = async (accessToken: string) => {
 
   // verify the id token with the public key
   const decodedToken = await jwtVerify(accessToken, publicKey, {
-    audience: AUTH0_AUDIENCE,
+    audience,
     issuer: `https://${AUTH0ֹֹֹֹֹ_DOMAIN}/`,
   }).catch(err => {
     logDebug(err);
@@ -246,12 +247,16 @@ export const validateAccessToken = async (accessToken: string) => {
   // make sure the token hasn't expired
   if (decodedToken.payload.exp < Math.floor(Date.now() / 1000)) throw Error('Token expired');
 
-  return decodedToken;
+  return decodedToken.payload as T;
 };
 
-export const decodeIdToken = (idToken: string): JWT => {
+/**
+ * @dev only parses the id token, does not validate it
+ * @param idToken the raw b64 encoded id token string
+ */
+export const decodeIdToken = (idToken: string): IdTokenWithProfileScope => {
   try {
-    return decodeJwt(idToken) as JWT;
+    return decodeJwt(idToken) as IdTokenWithProfileScope;
   } catch (e: any) {
     logDebug(e);
 
@@ -259,8 +264,38 @@ export const decodeIdToken = (idToken: string): JWT => {
   }
 };
 
-export const saveIdToken = (idToken: IDToken) => {
+export const saveIdToken = (idToken: CachedIDToken) => {
   // save the id token to the local filesystem (in dist/)
   const idTokenPath = join(__dirname, '..', ID_TOKEN_FILE);
   writeFileSync(idTokenPath, JSON.stringify(idToken, null, 2));
+};
+
+/**
+ * @dev should never throw, but returns a verbose Authentication object with both the id and access tokens if they're cached and valid
+ */
+export const checkAuthentication = async (): Promise<AuthenticationStatus> => {
+  const idTokenPath = join(__dirname, '..', ID_TOKEN_FILE);
+  const idTokenIsCached = existsSync(idTokenPath);
+  if (!idTokenIsCached) return { isAuthenticated: false };
+
+  try {
+    const tokenCache_raw = readFileSync(idTokenPath);
+    const tokenCache: CachedIDToken = JSON.parse(tokenCache_raw.toString());
+
+    const [accessToken, parsedIdToken] = await Promise.all([
+      validateJWT(tokenCache.access_token),
+      validateJWT<IdTokenWithProfileScope>(tokenCache.id_token, AUTH0_CLI_CLIENT_ID),
+    ]);
+
+    return {
+      isAuthenticated: true,
+      ...tokenCache,
+      parsedAccessToken: accessToken,
+      parsedIdToken,
+    };
+  } catch (err) {
+    logDebug(err);
+
+    return { isAuthenticated: false };
+  }
 };
