@@ -26,6 +26,7 @@ import { getRepoMetadata } from '../utils/git';
 import { ChainConfig, fetchChainConfig, uploadDeploymentData } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
 import inquirer = require('inquirer');
+import { checkAuthentication } from '../utils/auth';
 
 export const command = 'deploy';
 export const description = `Run your deployments against a live network and generate a Metropolis preview`;
@@ -95,6 +96,7 @@ const getChainConfig = async (chainId: Network): Promise<Partial<ChainConfig>> =
 // @dev entry point for the preview command
 export const handler = async (yargs: HandlerInput) => {
   validateInputs(yargs);
+  const authenticationStatus = await checkAuthentication();
 
   // @dev arg 0 is the command name: e.g: `deploy`
   const {
@@ -146,6 +148,7 @@ export const handler = async (yargs: HandlerInput) => {
   );
 
   const payload: DeploymentRequestParams = {
+    prompt: 'deploy',
     cliVersion,
     chainId,
     repoMetadata,
@@ -153,12 +156,16 @@ export const handler = async (yargs: HandlerInput) => {
     contractMetadata,
   };
 
+  const authToken = authenticationStatus.isAuthenticated
+    ? authenticationStatus.access_token
+    : undefined;
+
   const deploymentId = doNotCommunicateWithPreviewService
     ? undefined
-    : await uploadDeploymentData(payload);
-  const metropoliswebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
+    : await uploadDeploymentData(payload, authToken);
 
   logInfo(`Deployment successful! 🎉\n\n`);
+  const metropoliswebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
   printPreviewLinkWithASCIIArt(metropoliswebUrl);
 
   openInBrowser(metropoliswebUrl);

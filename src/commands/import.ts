@@ -25,6 +25,7 @@ import {
 } from '../utils/import';
 import { fetchChainConfig, uploadDeploymentData } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
+import { checkAuthentication } from '../utils/auth';
 
 export const command = 'import';
 export const description = `Import past deployments into a Metropolis preview`;
@@ -47,6 +48,8 @@ export const builder: { [key: string]: Options } = {
  */
 export const handler = async (yargs: HandlerInput) => {
   checkRepoForUncommittedChanges();
+
+  const authenticationStatus = await checkAuthentication();
 
   const foundryConfig = loadFoundryConfig();
 
@@ -105,6 +108,7 @@ export const handler = async (yargs: HandlerInput) => {
   );
 
   const payload: DeploymentRequestParams = {
+    prompt: 'import',
     cliVersion: getCLIVersion(),
     chainId: selectedChainId,
     repoMetadata,
@@ -113,9 +117,14 @@ export const handler = async (yargs: HandlerInput) => {
   };
 
   logInfo(`Uploading repo metadata...`);
+
+  const authToken = authenticationStatus.isAuthenticated
+    ? authenticationStatus.access_token
+    : undefined;
+
   const deploymentId = doNotCommunicateWithPreviewService
     ? undefined
-    : await uploadDeploymentData(payload);
+    : await uploadDeploymentData(payload, authToken);
   const metropoliswebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
 
   logInfo(`Upload Successful! 🎉\n\n`);
