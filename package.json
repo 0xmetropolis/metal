@@ -1,5 +1,5 @@
 {
-  "name": "@0xmetropolis/cli",
+  "name": "0xmetropolis/metal",
   "version": "0.4.0",
   "description": "Smart contract visualization tool.",
   "author": "Metropolis (@0xmetropolis)",
@@ -9,10 +9,10 @@
   "engines": {
     "node": ">=16.10.0"
   },
-  "homepage": "https://github.com/0xmetropolis/cli",
+  "homepage": "https://github.com/0xmetropolis/metal",
   "license": "ISC",
   "main": "dist/index.js",
-  "repository": "0xmetropolis/cli",
+  "repository": "0xmetropolis/metal",
   "scripts": {
     "build": "npx tsc",
     "test": "jest",
