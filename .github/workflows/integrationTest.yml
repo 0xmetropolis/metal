@@ -23,7 +23,7 @@ jobs:
         with:
           version: nightly
 
-      - name: Install Metro CLI
+      - name: Install Metal CLI
         run: |
           yarn
           yarn build
@@ -36,7 +36,7 @@ jobs:
           git checkout d38ea9337144c05d5abbdb36fc5badd76d38324c
           forge install
 
-      - name: Run Metro CLI
+      - name: Run Metal CLI
         working-directory: forge-simple
         env:
           RPC_URL: http://127.0.0.1:8545
@@ -60,7 +60,7 @@ jobs:
         with:
           version: nightly
 
-      - name: Install Metro CLI
+      - name: Install Metal CLI
         run: |
           yarn
           yarn build
@@ -74,7 +74,7 @@ jobs:
           yarn
           forge install
 
-      - name: Run Metro CLI
+      - name: Run Metal CLI
         working-directory: bulla-contracts-v2
         env:
           FEE_RECEIVER: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
@@ -101,7 +101,7 @@ jobs:
         with:
           version: nightly
 
-      - name: Install Metro CLI
+      - name: Install Metal CLI
         run: |
           yarn
           yarn build
@@ -114,7 +114,7 @@ jobs:
           git checkout 776e70d4e48c3f6a84b353518a1b3af9b931237a
           npm i
 
-      - name: Run Metro CLI
+      - name: Run Metal CLI
         working-directory: frax-governance
         env:
           RPC_URL: http://127.0.0.1:8545
@@ -139,7 +139,7 @@ jobs:
         with:
           version: nightly
 
-      - name: Install Metro CLI
+      - name: Install Metal CLI
         run: |
           yarn
           yarn build
@@ -153,7 +153,7 @@ jobs:
           forge install
           forge build
 
-      - name: Run Metro CLI
+      - name: Run Metal CLI
         working-directory: 2023-06-llama
         env:
           RPC_URL: http://127.0.0.1:8545

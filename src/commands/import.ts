@@ -28,7 +28,7 @@ import { getCLIVersion } from '../utils/version';
 import { checkAuthentication } from '../utils/auth';
 
 export const command = 'import';
-export const description = `Import past deployments into a Metropolis preview`;
+export const description = `Import past deployments into a Metal preview`;
 
 export type Params = {
   'build-options': string[];
@@ -125,12 +125,12 @@ export const handler = async (yargs: HandlerInput) => {
   const deploymentId = doNotCommunicateWithPreviewService
     ? undefined
     : await uploadDeploymentData(payload, authToken);
-  const metropoliswebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
+  const metalWebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
 
   logInfo(`Upload Successful! 🎉\n\n`);
-  printPreviewLinkWithASCIIArt(metropoliswebUrl);
+  printPreviewLinkWithASCIIArt(metalWebUrl);
 
-  openInBrowser(metropoliswebUrl);
+  openInBrowser(metalWebUrl);
 
   if (returnToCommitAfterImport) checkoutToCommit('-', { silent: true });
 };

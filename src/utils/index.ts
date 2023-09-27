@@ -23,8 +23,8 @@ export const printPreviewLinkWithASCIIArt = (previewUrl: string) => {
                  |xxxxxxx|  _^^^^^_
                  |xxxxxxx| | [][][]|
               ______xxxxx| |[][][] |
-             |++++++|xxxx| | [][][]|      METROPOLIS
-             |++++++|xxxx| |[][][] |
+             |++++++|xxxx| | [][][]|      METAL
+             |++++++|xxxx| |[][][] |      by Metropolis
              |++++++|_________ [][]|
              |++++++|=|=|=|=|=| [] |
              |++++++|=|=|=|=|=|[][]|

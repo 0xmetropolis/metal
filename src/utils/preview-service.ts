@@ -19,7 +19,7 @@ export type ChainConfig = {
   etherscanUrl: string;
 };
 
-export const createMetropolisFork = async (chainId: Network) => {
+export const createMetalFork = async (chainId: Network) => {
   const createUrl = `${PREVIEW_SERVICE_URL}/create`;
   try {
     const response = await fetch(createUrl, {
@@ -88,7 +88,7 @@ export const uploadDeploymentData = async (
       logDebug(res);
 
       exit(
-        `Error received from Metropolis! (status ${response.status})`,
+        `Error received from Metal! (status ${response.status})`,
         '===========================',
         res.message ?? response.statusText,
       );
