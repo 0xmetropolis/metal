@@ -15,10 +15,10 @@ Metal.
 
 ```bash
 # with npm
-npm install -g @0xmetropolis/cli
+npm install -g @0xmetropolis/metal
 
 # with yarn
-yarn global add @0xmetropolis/cli
+yarn global add @0xmetropolis/metal
 ```
 
 # Usage
@@ -31,7 +31,7 @@ In the directory of your Foundry project, run the following command:
 metro preview --chain-id 1 $PATH_TO_DEPLOY_SCRIPT
 ```
 
-NOTE: Metropolis wraps around `forge` commands, but `metro preview` does _not_ send any deployment
+NOTE: Metal wraps around `forge` commands, but `metro preview` does _not_ send any deployment
 transactions.
 
 This will compile your contracts and start a deployment simulation. Once the simulation is done,
