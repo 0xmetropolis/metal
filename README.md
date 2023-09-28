@@ -28,10 +28,10 @@ yarn global add @0xmetropolis/metal
 In the directory of your Foundry project, run the following command:
 
 ```bash
-metro preview --chain-id 1 $PATH_TO_DEPLOY_SCRIPT
+metal preview --chain-id 1 $PATH_TO_DEPLOY_SCRIPT
 ```
 
-NOTE: Metal wraps around `forge` commands, but `metro preview` does _not_ send any deployment
+NOTE: Metal wraps around `forge` commands, but `metal preview` does _not_ send any deployment
 transactions.
 
 This will compile your contracts and start a deployment simulation. Once the simulation is done,

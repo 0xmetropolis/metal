@@ -29,7 +29,7 @@ import inquirer = require('inquirer');
 import { checkAuthentication } from '../utils/auth';
 
 export const command = 'deploy';
-export const description = `Run your deployments against a live network and generate a Metropolis preview`;
+export const description = `Run your deployments against a live network and generate a Metal preview`;
 
 export type Params = { 'chain-id': number };
 export type HandlerInput = Arguments & Params;
@@ -60,7 +60,7 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
 export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): string[] => {
-  // pull anything after `metro preview <path>` as forge arguments
+  // pull anything after `metal preview <path>` as forge arguments
   let forgeArguments = process.argv.slice(3);
 
   // rewrap function signatures in quotes, ex: --sig "run()"
@@ -165,8 +165,8 @@ export const handler = async (yargs: HandlerInput) => {
     : await uploadDeploymentData(payload, authToken);
 
   logInfo(`Deployment successful! 🎉\n\n`);
-  const metropoliswebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
-  printPreviewLinkWithASCIIArt(metropoliswebUrl);
+  const metalWebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
+  printPreviewLinkWithASCIIArt(metalWebUrl);
 
-  openInBrowser(metropoliswebUrl);
+  openInBrowser(metalWebUrl);
 };

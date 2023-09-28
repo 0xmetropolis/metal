@@ -13,7 +13,7 @@ import {
 import { upsertUser } from '../utils/user';
 
 export const command = 'auth';
-export const description = `Authenticate with Metropolis`;
+export const description = `Authenticate with Metal`;
 
 export type Params = {};
 export type HandlerInput = Arguments & Params;

@@ -106,7 +106,6 @@ export const loadBroadcastArtifacts = (pathToArtifact: string): BroadcastArtifac
   return broadcastArtifacts;
 };
 
-// @dev loads the run-latest.json from the latest broadcast at METRO_DEPLOY_URL
 export const getRunLatestJSON = (
   foundryConfig: FoundryConfig,
   chainId: Network,

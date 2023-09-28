@@ -31,7 +31,7 @@ import {
   runForgeScript,
 } from '../utils/foundry';
 import { getRepoMetadata } from '../utils/git';
-import { createMetropolisFork } from '../utils/preview-service';
+import { createMetalFork } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
 import { checkAuthentication } from '../utils/auth';
 
@@ -60,7 +60,7 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
   if (rpcIndex !== -1)
     logWarn(
       'You have specified a custom RPC',
-      'This will be ignored and transactions will be sent to the Metropolis RPC',
+      'This will be ignored and transactions will be sent to the Metal RPC',
     );
 
   if (!scriptPath || !scriptPath.includes('.sol'))
@@ -71,7 +71,7 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
 export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): string[] => {
-  // pull anything after `metro preview <path>` as forge arguments
+  // pull anything after `metal preview <path>` as forge arguments
   let forgeArguments = process.argv.slice(3);
   // rewrap function signatures in quotes, ex: --sig "run()"
   forgeArguments = forgeArguments.map(arg =>
@@ -140,7 +140,7 @@ export const sendDataToPreviewService = async (
       logDebug(res);
 
       exit(
-        `Error received from Metropolis! (status ${response.status})`,
+        `Error received from Metal! (status ${response.status})`,
         '===========================',
         res.message ?? response.statusText,
       );
@@ -169,7 +169,7 @@ export const handler = async (yargs: HandlerInput) => {
     ? { id: undefined, rpcUrl: undefined }
     : !!rpcOverride
     ? getConfigFromTenderlyRpc(rpcOverride)
-    : await createMetropolisFork(chainId);
+    : await createMetalFork(chainId);
 
   logInfo(`Loading foundry.toml...`);
   const foundryConfig = loadFoundryConfig();

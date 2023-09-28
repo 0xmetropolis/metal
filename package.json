@@ -1,10 +1,10 @@
 {
   "name": "@0xmetropolis/metal",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Smart contract visualization tool.",
   "author": "Metropolis (@0xmetropolis)",
   "bin": {
-    "metro": "./bin/run"
+    "metal": "./bin/run"
   },
   "engines": {
     "node": ">=16.10.0"
@@ -17,7 +17,7 @@
     "build": "npx tsc",
     "test": "jest",
     "watch": "tsc -w",
-    "dev": "yarn build && yarn install:dev && metro -h",
+    "dev": "yarn build && yarn install:dev && metal -h",
     "install:dev": "sh ./bin/setup-dev.sh",
     "install:global": "yarn global add file:$PWD"
   },
