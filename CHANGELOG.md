@@ -2,6 +2,11 @@
 
 All notable changes to the Metropolis CLI will be listed in this file.
 
+## [0.5.1] - 2023-09-28
+
+- chore: Update url from `metropolish.sh` to `metal.build`
+  [94](https://github.com/0xmetropolis/cli/pull/94)
+
 ## [0.5.0] - 2023-09-28
 
 - chore: Update command from `metro` to `metal` [88](https://github.com/0xmetropolis/cli/pull/88)
