@@ -1,8 +1,9 @@
-# Metropolis CLI
+# Metal CLI
 
-[![Integration Tests 🌁](https://github.com/0xmetropolis/cli/actions/workflows/integrationTest.yml/badge.svg)](https://github.com/0xmetropolis/cli/actions/workflows/integrationTest.yml)
+#### by [@0xmetropolis](https://twitter.com/0xMetropolis)
 
-Metropolis is a smart contract visualization tool. 
+[Metal](https://metal.build/) is a smart contract visualization tool. This repo contains the CLI for
+Metal.
 
 # Getting Started
 
@@ -14,10 +15,10 @@ Metropolis is a smart contract visualization tool.
 
 ```bash
 # with npm
-npm install -g @0xmetropolis/cli
+npm install -g @0xmetropolis/metal
 
 # with yarn
-yarn global add @0xmetropolis/cli
+yarn global add @0xmetropolis/metal
 ```
 
 # Usage
@@ -29,14 +30,22 @@ In the directory of your Foundry project, run the following command:
 ```bash
 metro preview --chain-id 1 $PATH_TO_DEPLOY_SCRIPT
 ```
-NOTE: Metropolis wraps around `forge` commands, but `metro preview` does *not* send any deployment transactions.
 
-This will compile your contracts and start a deployment simulation. Once the simulation is done, your browser will open to display the results of the simulation.
+NOTE: Metal wraps around `forge` commands, but `metro preview` does _not_ send any deployment
+transactions.
+
+This will compile your contracts and start a deployment simulation. Once the simulation is done,
+your browser will open to display the results of the simulation.
 
 ## Setting the Chain Id
 
 The `--chain-id` flag allows you to choose the network to preview your deployment on.
 
+## Testing
+
+[![Integration Tests 🌁](https://github.com/0xmetropolis/cli/actions/workflows/integrationTest.yml/badge.svg)](https://github.com/0xmetropolis/cli/actions/workflows/integrationTest.yml)
+
 # Getting Help
 
-If you run into problems or find a bug, consider opening an [issue](https://github.com/0xmetropolis/cli/issues/new).
+If you run into problems or find a bug, consider opening an
+[issue](https://github.com/0xmetropolis/cli/issues/new).
