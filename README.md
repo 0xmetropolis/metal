@@ -1,12 +1,9 @@
-### This version of the CLI has been deprecated in favor of ✨ [Metal](https://www.npmjs.com/package/@0xmetropolis/metal)
-
----
-
-# [deprecated] Metropolis CLI
+# Metal CLI
 
 #### by [@0xmetropolis](https://twitter.com/0xMetropolis)
 
-Metropolis is a smart contract visualization tool.
+[Metal](https://metal.build/) is a smart contract visualization tool. This repo contains the CLI for
+Metal.
 
 # Getting Started
 
