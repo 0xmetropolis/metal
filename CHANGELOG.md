@@ -2,10 +2,28 @@
 
 All notable changes to the Metropolis CLI will be listed in this file.
 
+## [0.4.1] - 2023-09-28
+
+- chore: Deprecrate metropolis CLI in favor of Metal by @kevinweaver in
+  [89](https://github.com/0xmetropolis/cli/pull/89)
+  [90](https://github.com/0xmetropolis/cli/pull/89)
+
+## [0.4.0] - 2023-09-26
+
+- fix: make import paths relative by @colinnielsen in
+  [83](https://github.com/0xmetropolis/cli/pull/83)
+- feat: add $ metro auth by @colinnielsen in [84](https://github.com/0xmetropolis/cli/pull/84)
+- feat: check user registration by @colinnielsen in
+  [85](https://github.com/0xmetropolis/cli/pull/85)
+- feat: put deployments into the user's default project by @colinnielsen in
+  [86](https://github.com/0xmetropolis/cli/pull/86)
+
 ## [0.3.1] - 2023-09-18
 
-* fix: allow remote-less origins by @colinnielsen in [81](https://github.com/0xmetropolis/cli/pull/81)
-* fix: preview links on monorepos by @colinnielsen in [82](https://github.com/0xmetropolis/cli/pull/82)
+- fix: allow remote-less origins by @colinnielsen in
+  [81](https://github.com/0xmetropolis/cli/pull/81)
+- fix: preview links on monorepos by @colinnielsen in
+  [82](https://github.com/0xmetropolis/cli/pull/82)
 
 ## [0.3.0] - 2023-09-12
 
