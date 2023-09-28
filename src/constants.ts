@@ -17,7 +17,7 @@ export const PREVIEW_WEB_URL = process.env.PREVIEW_WEB_URL
   ? process.env.PREVIEW_WEB_URL
   : IS_DEV
   ? 'http://localhost:3000'
-  : 'https://metropolis.sh';
+  : 'https://metal.build';
 
 export const ID_TOKEN_FILE = 'id_token.json';
 
