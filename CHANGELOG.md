@@ -2,6 +2,10 @@
 
 All notable changes to the Metropolis CLI will be listed in this file.
 
+## [0.5.0] - 2023-09-28
+
+- chore: Update command from `metro` to `metal` [88](https://github.com/0xmetropolis/cli/pull/88)
+
 ## [0.4.1] - 2023-09-28
 
 - chore: Update readme for Metal [93](https://github.com/0xmetropolis/cli/pull/93)
