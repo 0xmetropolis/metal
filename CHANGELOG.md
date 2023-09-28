@@ -4,9 +4,7 @@ All notable changes to the Metropolis CLI will be listed in this file.
 
 ## [0.4.1] - 2023-09-28
 
-- chore: Deprecrate metropolis CLI in favor of Metal by @kevinweaver in
-  [89](https://github.com/0xmetropolis/cli/pull/89)
-  [90](https://github.com/0xmetropolis/cli/pull/90)
+- chore: Update readme for Metal [93](https://github.com/0xmetropolis/cli/pull/93)
 
 ## [0.4.0] - 2023-09-26
 
