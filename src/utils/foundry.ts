@@ -21,13 +21,18 @@ import {
 } from '.';
 import { getGitMetadata } from './git';
 
-const FILTERED_FORGE_MESSAGES = ['ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.'];
+const FILTERED_FORGE_MESSAGES = [
+  // @dev this message makes it look like previews are being run against a live chain
+  // so we filter them for peace-of-mind
+  'ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.\n',
+];
 
-const filterForgeMessages = (
-  msg: string | number | bigint | boolean | object,
-): string | undefined => {
-  const msgAsString = msg.toString();
-  if (FILTERED_FORGE_MESSAGES.includes(msgAsString)) return undefined;
+const filterForgeMessages = (msg: string | number | bigint | boolean | object): string => {
+  let msgAsString = msg.toString();
+  // search the output for messages that should be filtered
+  for (const filteredMsg of FILTERED_FORGE_MESSAGES) {
+    if (msgAsString.includes(filteredMsg)) msgAsString = msgAsString.replace(filteredMsg, '');
+  }
 
   return msgAsString;
 };
@@ -229,12 +234,12 @@ export const runForgeScriptForPreviewCommand = async (scriptArgs: string[]) => {
 
     const forge_script = spawn(`forge script ${scriptArgs.join(' ')}`, {
       shell: true,
-      stdio: 'inherit',
+      stdio: ['inherit', 'pipe', 'inherit'],
       env: clonedEnv,
     });
 
     // filter std out messages
-    forge_script.on('message', msg => {
+    forge_script.stdout.on('data', msg => {
       const message = filterForgeMessages(msg);
 
       if (message) logInfo(message);
