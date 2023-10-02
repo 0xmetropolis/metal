@@ -27,6 +27,7 @@ import { ChainConfig, fetchChainConfig, uploadDeploymentData } from '../utils/pr
 import { getCLIVersion } from '../utils/version';
 import inquirer = require('inquirer');
 import { checkAuthentication } from '../utils/auth';
+import { checkRepoForUncommittedChanges } from '../utils/import';
 
 export const command = 'deploy';
 export const description = `Run your deployments against a live network and generate a Metal preview`;
@@ -96,6 +97,8 @@ const getChainConfig = async (chainId: Network): Promise<Partial<ChainConfig>> =
 // @dev entry point for the preview command
 export const handler = async (yargs: HandlerInput) => {
   validateInputs(yargs);
+  checkRepoForUncommittedChanges();
+
   const authenticationStatus = await checkAuthentication();
 
   // @dev arg 0 is the command name: e.g: `deploy`
