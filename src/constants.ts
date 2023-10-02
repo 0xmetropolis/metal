@@ -11,7 +11,7 @@ export const PREVIEW_SERVICE_URL = process.env.PREVIEW_SERVICE_URL
   ? process.env.PREVIEW_SERVICE_URL
   : IS_DEV
   ? 'http://localhost:1234'
-  : 'https://preview-service-225b51c334ef.herokuapp.com';
+  : 'https://api.metal.build';
 
 export const PREVIEW_WEB_URL = process.env.PREVIEW_WEB_URL
   ? process.env.PREVIEW_WEB_URL
