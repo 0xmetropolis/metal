@@ -29,6 +29,7 @@ import {
   loadFoundryConfig,
   normalizeForgeScriptPath,
   runForgeScript,
+  runForgeScriptForPreviewCommand,
 } from '../utils/foundry';
 import { getRepoMetadata } from '../utils/git';
 import { createMetalFork } from '../utils/preview-service';
@@ -179,7 +180,7 @@ export const handler = async (yargs: HandlerInput) => {
     rpcUrl: yargs['UNSAFE-RPC-OVERRIDE'] ?? rpcUrl,
   });
 
-  await runForgeScript(foundryArguments);
+  await runForgeScriptForPreviewCommand(foundryArguments);
   logInfo(`Forge deployment script ran successfully!`);
 
   const normalizedScriptPath = normalizeForgeScriptPath(forgeScriptPath);
