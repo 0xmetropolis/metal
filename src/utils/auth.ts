@@ -38,7 +38,7 @@ export type AuthenticationStatus =
 const PORT = 42224;
 const AUTHORIZATION_TIMEOUT = 60_000;
 const AUTH0ֹֹֹֹֹ_DOMAIN = 'dev-y3yet3c7w2jdjgo7.us.auth0.com';
-const AUTH0ֹֹֹֹֹ_VANITY_URI = 'auth.metropolis.sh';
+const AUTH0ֹֹֹֹֹ_VANITY_URI = 'auth.metal.build';
 const AUTH0_CLI_CLIENT_ID = '9TFnIsSYlxiSKIs5bvwhfxu9yQFvhT0R';
 const AUTH0_AUDIENCE = 'metro-api';
 const AUTH0_SCOPES = ['profile', 'offline_access'] as const;
@@ -78,7 +78,7 @@ export const generateHashChallenges = (): {
  */
 export const openLoginWindow = (codeChallenge: string, state: string) => {
   const auth0Url = [
-    `https://${AUTH0ֹֹֹֹֹ_DOMAIN}/authorize?`,
+    `https://${AUTH0ֹֹֹֹֹ_VANITY_URI}/authorize?`,
     `audience=${AUTH0_AUDIENCE}`,
     `&response_type=code`,
     `&code_challenge=${codeChallenge}`,
@@ -120,13 +120,9 @@ export const listenForAuthorizationCode = async ({
       const authorizationSuccessful = !!code && state == expectedCSRFToken;
 
       // create a self-closing window to close the browser tab
-      res.write(
-        `<html><body><h2>${
-          authorizationSuccessful
-            ? 'Authorization success, you may close this window'
-            : 'Authorization failed, please try again'
-        }</h2></body><script>setTimeout(() => {\nwindow.open("", "_self");\nwindow.close();\n},10);</script></html>`,
-      );
+      res.writeHead(302, {
+        Location: `https://metal.build/auth/${authorizationSuccessful ? 'success' : 'failure'}`,
+      });
       res.end();
 
       // make sure we receive an authorization code, and that the csrf token matches
@@ -172,7 +168,7 @@ export const listenForAuthorizationCode = async ({
 };
 
 export const requestForIdToken = async (codeVerifier: string, authorizationCode: string) => {
-  const url = `https://${AUTH0ֹֹֹֹֹ_DOMAIN}/oauth/token`;
+  const url = `https://${AUTH0ֹֹֹֹֹ_VANITY_URI}/oauth/token`;
 
   const req = await fetch(url, {
     method: 'POST',
@@ -196,7 +192,7 @@ export const requestForIdToken = async (codeVerifier: string, authorizationCode:
 const fetchJWKSFromAuth0Domain = async () => {
   // every openid provider publishes a JWKS (JSON Web Key Set) this `well-known` endpoint
   //   this comes off the JSON Web Key spec: https://openid.net/specs/draft-jones-json-web-key-03.html
-  const res = await fetch(`https://${AUTH0ֹֹֹֹֹ_DOMAIN}/.well-known/jwks.json`);
+  const res = await fetch(`https://${AUTH0ֹֹֹֹֹ_VANITY_URI}/.well-known/jwks.json`);
 
   // hitting this public endpoint returns a JSON object with a set of public keys
   const jwks: {
