@@ -120,13 +120,9 @@ export const listenForAuthorizationCode = async ({
       const authorizationSuccessful = !!code && state == expectedCSRFToken;
 
       // create a self-closing window to close the browser tab
-      res.write(
-        `<html><body><h2>${
-          authorizationSuccessful
-            ? 'Authorization success, you may close this window'
-            : 'Authorization failed, please try again'
-        }</h2></body><script>setTimeout(() => {\nwindow.open("", "_self");\nwindow.close();\n},10);</script></html>`,
-      );
+      res.writeHead(302, {
+        Location: `https://metal.build/auth/${authorizationSuccessful ? 'success' : 'failure'}`,
+      });
       res.end();
 
       // make sure we receive an authorization code, and that the csrf token matches
