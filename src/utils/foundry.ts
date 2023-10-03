@@ -10,8 +10,32 @@ import {
 } from '../types';
 import { readFileSync } from 'node:fs';
 import * as toml from 'toml';
-import { exit, getFlagValueFromArgv, loadSolidityABIs, logDebug, logError, logWarn } from '.';
+import {
+  exit,
+  getFlagValueFromArgv,
+  loadSolidityABIs,
+  logDebug,
+  logError,
+  logInfo,
+  logWarn,
+} from '.';
 import { getGitMetadata } from './git';
+
+const FILTERED_FORGE_MESSAGES = [
+  // @dev this message makes it look like previews are being run against a live chain
+  // so we filter them for peace-of-mind
+  'ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.\n',
+];
+
+const filterForgeMessages = (msg: string | number | bigint | boolean | object): string => {
+  let msgAsString = msg.toString();
+  // search the output for messages that should be filtered
+  for (const filteredMsg of FILTERED_FORGE_MESSAGES) {
+    if (msgAsString.includes(filteredMsg)) msgAsString = msgAsString.replace(filteredMsg, '');
+  }
+
+  return msgAsString;
+};
 
 export const processForgeError = ({ message }: ExecException) => {
   if (message.includes('connect error'))
@@ -185,6 +209,40 @@ export const runForgeScript = async (scriptArgs: string[]) => {
       shell: true,
       stdio: 'inherit',
       env: clonedEnv,
+    });
+
+    // log any errors
+    forge_script.on('error', err => {
+      logError('\n' + processForgeError(err) + '\n');
+      reject();
+    });
+
+    // on completion, resolve or reject the promise
+    forge_script.on('close', (code, signal) => {
+      if (code === 0) resolve(code);
+      else {
+        logError('\n' + 'Forge script failed' + '\n');
+        reject(signal);
+      }
+    });
+  });
+};
+
+export const runForgeScriptForPreviewCommand = async (scriptArgs: string[]) => {
+  return await new Promise<number>((resolve, reject) => {
+    const clonedEnv = { ...process.env };
+
+    const forge_script = spawn(`forge script ${scriptArgs.join(' ')}`, {
+      shell: true,
+      stdio: ['inherit', 'pipe', 'inherit'],
+      env: clonedEnv,
+    });
+
+    // filter std out messages
+    forge_script.stdout.on('data', msg => {
+      const message = filterForgeMessages(msg);
+
+      if (message) logInfo(message);
     });
 
     // log any errors
