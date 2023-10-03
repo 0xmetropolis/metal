@@ -234,7 +234,7 @@ export const validateJWT = async <T extends AccessToken>(
   // verify the id token with the public key
   const decodedToken = await jwtVerify(accessToken, publicKey, {
     audience,
-    issuer: `https://${AUTH0ֹֹֹֹֹ_DOMAIN}/`,
+    issuer: `https://${AUTH0ֹֹֹֹֹ_VANITY_URI}/`,
   }).catch(err => {
     logDebug(err);
     throw Error('Failed to verify IDToken!');
