@@ -118,7 +118,7 @@ export const handler = async (yargs: HandlerInput) => {
 
   logInfo(`Uploading repo metadata...`);
 
-  const authToken = authenticationStatus.isAuthenticated
+  const authToken = authenticationStatus.status === 'authenticated'
     ? authenticationStatus.access_token
     : undefined;
 

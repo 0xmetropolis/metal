@@ -6,7 +6,7 @@ import {
   generateHashChallenges,
   listenForAuthorizationCode,
   openLoginWindow,
-  requestForIdToken,
+  requestForIdTokenViaPCKE,
   saveIdToken,
   validateJWT,
 } from '../utils/auth';
@@ -31,11 +31,13 @@ export const builder: { [key: string]: Options } = {
  * @param force - the user can force re-authentication, even if their token is valid
  */
 export const handler = async ({ force }: HandlerInput) => {
-  const { isAuthenticated } = await checkAuthentication();
+  // check if the user is already authenticated (includes an expiry check and a refresh - if necessary)
+  const { status } = await checkAuthentication();
 
   // if the user is already authenticated, bail early
-  if (isAuthenticated && !force) {
+  if (status === 'authenticated' && !force) {
     logInfo('Already authenticated 🎉\n\n💡 Use the `--force` flag to re-authenticate');
+
     return;
   }
 
@@ -56,7 +58,7 @@ export const handler = async ({ force }: HandlerInput) => {
 
     // take the authorization code and exchange it for an id token
     //  https://auth0.com/docs/secure/tokens/id-tokens
-    const idToken = await requestForIdToken(codeVerifier, authorizationCode);
+    const idToken = await requestForIdTokenViaPCKE(codeVerifier, authorizationCode);
 
     // validate the attached access token is valid
     await validateJWT(idToken.access_token);

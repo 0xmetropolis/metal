@@ -1,4 +1,4 @@
-import { decodeJwt, importJWK, jwtVerify } from 'jose';
+import { JWTPayload, decodeJwt, importJWK, jwtVerify } from 'jose';
 import fetch from 'node-fetch';
 import { BinaryLike, createHash, randomBytes } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -10,7 +10,7 @@ import { ID_TOKEN_FILE } from '../constants';
 import { AccessToken, IdTokenWithProfileScope, Pretty } from '../types';
 
 type Base64String = string;
-export type CachedIDToken = {
+export type CachedTokenSet = {
   access_token: string;
   refresh_token: string;
   id_token: string;
@@ -19,7 +19,7 @@ export type CachedIDToken = {
 };
 
 type ParsedCachedIdToken = Pretty<
-  CachedIDToken & {
+  CachedTokenSet & {
     parsedAccessToken: AccessToken;
     parsedIdToken: IdTokenWithProfileScope;
   }
@@ -27,17 +27,28 @@ type ParsedCachedIdToken = Pretty<
 
 export type AuthenticationStatus =
   | {
-      isAuthenticated: false;
+      /**
+       * @dev the user has never authenticated
+       */
+      status: 'unregistered';
+    }
+  | {
+      /**
+       * @dev the user has authenticated before, but their token is expired
+       */
+      status: 'unauthenticated';
     }
   | Pretty<
       {
-        isAuthenticated: true;
+        /**
+         * @dev the user has authenticated before, and their token is valid
+         */
+        status: 'authenticated';
       } & ParsedCachedIdToken
     >;
 
 const PORT = 42224;
 const AUTHORIZATION_TIMEOUT = 60_000;
-const AUTH0ֹֹֹֹֹ_DOMAIN = 'dev-y3yet3c7w2jdjgo7.us.auth0.com';
 const AUTH0ֹֹֹֹֹ_VANITY_URI = 'auth.metal.build';
 const AUTH0_CLI_CLIENT_ID = '9TFnIsSYlxiSKIs5bvwhfxu9yQFvhT0R';
 const AUTH0_AUDIENCE = 'metro-api';
@@ -167,7 +178,7 @@ export const listenForAuthorizationCode = async ({
   return maybeAuthCode;
 };
 
-export const requestForIdToken = async (codeVerifier: string, authorizationCode: string) => {
+export const requestForIdToken = async (body: URLSearchParams) => {
   const url = `https://${AUTH0ֹֹֹֹֹ_VANITY_URI}/oauth/token`;
 
   const req = await fetch(url, {
@@ -175,19 +186,41 @@ export const requestForIdToken = async (codeVerifier: string, authorizationCode:
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({
+    body,
+  });
+
+  const response: CachedTokenSet = await req.json();
+
+  return response;
+};
+
+/**
+ * @dev request for an id token via the "PCKE Authorization Flow"
+ */
+export const requestForIdTokenViaPCKE = async (codeVerifier: string, authorizationCode: string) =>
+  await requestForIdToken(
+    new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: AUTH0_CLI_CLIENT_ID,
       code_verifier: codeVerifier,
       code: authorizationCode,
       redirect_uri: `http://localhost:${PORT}`,
     }),
-  });
+  );
 
-  const response: CachedIDToken = await req.json();
-
-  return response;
-};
+/**
+ * @dev request for an id token via a request token
+ */
+export const requestForIdTokenViaRefreshToken = async (refreshToken: string) =>
+  await requestForIdToken(
+    new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: AUTH0_CLI_CLIENT_ID,
+      refresh_token: refreshToken,
+      // scope: @dev you can add additional scopes in this request:
+      //   https://auth0.com/docs/api/authentication#request-parameters
+    }),
+  );
 
 const fetchJWKSFromAuth0Domain = async () => {
   // every openid provider publishes a JWKS (JSON Web Key Set) this `well-known` endpoint
@@ -213,6 +246,8 @@ const fetchJWKSFromAuth0Domain = async () => {
 
   return key;
 };
+
+export const isTokenExpired = ({ exp }: JWTPayload) => exp < Math.floor(Date.now() / 1000);
 
 export const validateJWT = async <T extends AccessToken>(
   accessToken: string,
@@ -241,7 +276,7 @@ export const validateJWT = async <T extends AccessToken>(
   });
 
   // make sure the token hasn't expired
-  if (decodedToken.payload.exp < Math.floor(Date.now() / 1000)) throw Error('Token expired');
+  if (isTokenExpired(decodedToken.payload)) throw Error('Token expired');
 
   return decodedToken.payload as T;
 };
@@ -260,38 +295,75 @@ export const decodeIdToken = (idToken: string): IdTokenWithProfileScope => {
   }
 };
 
-export const saveIdToken = (idToken: CachedIDToken) => {
+export const saveIdToken = (idToken: CachedTokenSet) => {
   // save the id token to the local filesystem (in dist/)
   const idTokenPath = join(__dirname, '..', ID_TOKEN_FILE);
   writeFileSync(idTokenPath, JSON.stringify(idToken, null, 2));
 };
 
 /**
- * @dev should never throw, but returns a verbose Authentication object with both the id and access tokens if they're cached and valid
+ * @dev loads in the cached token set, and refreshes it if it's expired
+ */
+async function getOrRefreshCachedTokenSet(idTokenPath: string): Promise<CachedTokenSet> {
+  // load the token, expecting `accessToken`, `refresh_token`, and `idToken` members
+  const tokenCache_raw = readFileSync(idTokenPath);
+  const cachedToken: CachedTokenSet = JSON.parse(tokenCache_raw.toString());
+
+  const { access_token, id_token, refresh_token } = cachedToken;
+
+  // validate cache shape
+  if (!access_token || !id_token || !refresh_token) {
+    logDebug(cachedToken);
+
+    throw new Error('Malformed token cache');
+  }
+
+  const [accessTokenPayload, idTokenPayload] = [decodeJwt(access_token), decodeJwt(id_token)];
+
+  // check if the token is expired
+  if (isTokenExpired(accessTokenPayload) || isTokenExpired(idTokenPayload)) {
+    // use the refresh token to re-authenticate
+    const refreshedToken = await requestForIdTokenViaRefreshToken(refresh_token);
+    // and save it to the filesystem
+    saveIdToken(refreshedToken);
+
+    return refreshedToken;
+  } else {
+    // otherwise, the token is ready to use
+    return cachedToken;
+  }
+}
+
+/**
+ * @dev should never throw
+ * @dev will refresh the cached token if it's expired
+ * @returns a verbose Authentication object with both the id and access tokens if they're cached and valid
  */
 export const checkAuthentication = async (): Promise<AuthenticationStatus> => {
+  // if the user has never authenticated (or we update the location between versions)
+  // they will not have an ID token cached
   const idTokenPath = join(__dirname, '..', ID_TOKEN_FILE);
   const idTokenIsCached = existsSync(idTokenPath);
-  if (!idTokenIsCached) return { isAuthenticated: false };
+  if (!idTokenIsCached) return { status: 'unregistered' };
 
   try {
-    const tokenCache_raw = readFileSync(idTokenPath);
-    const tokenCache: CachedIDToken = JSON.parse(tokenCache_raw.toString());
+    // load the cache and refresh it if any of the tokens are expired
+    const cachedTokens: CachedTokenSet = await getOrRefreshCachedTokenSet(idTokenPath);
 
-    const [accessToken, parsedIdToken] = await Promise.all([
-      validateJWT(tokenCache.access_token),
-      validateJWT<IdTokenWithProfileScope>(tokenCache.id_token, AUTH0_CLI_CLIENT_ID),
+    const [parsedAccessToken, parsedIdToken] = await Promise.all([
+      validateJWT(cachedTokens.access_token),
+      validateJWT<IdTokenWithProfileScope>(cachedTokens.id_token, AUTH0_CLI_CLIENT_ID),
     ]);
 
     return {
-      isAuthenticated: true,
-      ...tokenCache,
-      parsedAccessToken: accessToken,
+      status: 'authenticated',
+      ...cachedTokens,
+      parsedAccessToken,
       parsedIdToken,
     };
   } catch (err) {
     logDebug(err);
 
-    return { isAuthenticated: false };
+    return { status: 'unauthenticated' };
   }
 };
