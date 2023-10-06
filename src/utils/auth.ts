@@ -178,6 +178,9 @@ export const listenForAuthorizationCode = async ({
   return maybeAuthCode;
 };
 
+/**
+ * @throws if the token request fails
+ */
 export const requestForIdToken = async (body: URLSearchParams) => {
   const url = `https://${AUTH0ֹֹֹֹֹ_VANITY_URI}/oauth/token`;
 
@@ -190,6 +193,9 @@ export const requestForIdToken = async (body: URLSearchParams) => {
   });
 
   const response: CachedTokenSet = await req.json();
+
+  if (req.status.toString()[0] !== '2')
+    throw Error(`Failed to request id token: ${req.statusText}\n${response}`);
 
   return response;
 };
