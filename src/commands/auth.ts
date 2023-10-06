@@ -1,5 +1,5 @@
 import { Arguments, Options } from 'yargs';
-import { logError, logInfo } from '../utils';
+import { logDebug, logError, logInfo } from '../utils';
 import {
   checkAuthentication,
   decodeIdToken,
@@ -32,10 +32,13 @@ export const builder: { [key: string]: Options } = {
  */
 export const handler = async ({ force }: HandlerInput) => {
   // check if the user is already authenticated (includes an expiry check and a refresh - if necessary)
-  const { status } = await checkAuthentication();
+  const auth = await checkAuthentication();
+
+  // debug for development
+  if (auth.status === 'authenticated') logDebug(JSON.stringify(auth, null, 2));
 
   // if the user is already authenticated, bail early
-  if (status === 'authenticated' && !force) {
+  if (auth.status === 'authenticated' && !force) {
     logInfo('Already authenticated 🎉\n\n💡 Use the `--force` flag to re-authenticate');
 
     return;
