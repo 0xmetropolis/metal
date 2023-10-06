@@ -1,12 +1,12 @@
 import { Arguments, Options } from 'yargs';
-import { logError, logInfo } from '../utils';
+import { logDebug, logError, logInfo } from '../utils';
 import {
   checkAuthentication,
   decodeIdToken,
   generateHashChallenges,
   listenForAuthorizationCode,
   openLoginWindow,
-  requestForIdToken,
+  requestForIdTokenViaPCKE,
   saveIdToken,
   validateJWT,
 } from '../utils/auth';
@@ -31,11 +31,16 @@ export const builder: { [key: string]: Options } = {
  * @param force - the user can force re-authentication, even if their token is valid
  */
 export const handler = async ({ force }: HandlerInput) => {
-  const { isAuthenticated } = await checkAuthentication();
+  // check if the user is already authenticated (includes an expiry check and a refresh - if necessary)
+  const auth = await checkAuthentication();
+
+  // debug for development
+  if (auth.status === 'authenticated') logDebug(JSON.stringify(auth, null, 2));
 
   // if the user is already authenticated, bail early
-  if (isAuthenticated && !force) {
+  if (auth.status === 'authenticated' && !force) {
     logInfo('Already authenticated 🎉\n\n💡 Use the `--force` flag to re-authenticate');
+
     return;
   }
 
@@ -56,7 +61,7 @@ export const handler = async ({ force }: HandlerInput) => {
 
     // take the authorization code and exchange it for an id token
     //  https://auth0.com/docs/secure/tokens/id-tokens
-    const idToken = await requestForIdToken(codeVerifier, authorizationCode);
+    const idToken = await requestForIdTokenViaPCKE(codeVerifier, authorizationCode);
 
     // validate the attached access token is valid
     await validateJWT(idToken.access_token);

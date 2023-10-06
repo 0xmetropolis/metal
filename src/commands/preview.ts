@@ -121,9 +121,10 @@ export const sendDataToPreviewService = async (
 ): Promise<string> => {
   try {
     const authenticationStatus = await checkAuthentication();
-    const authToken = authenticationStatus.isAuthenticated
-      ? authenticationStatus.access_token
-      : undefined;
+    const authToken =
+      authenticationStatus.status === 'authenticated'
+        ? authenticationStatus.access_token
+        : undefined;
 
     let headers: HeadersInit = {
       'Content-Type': 'application/json',

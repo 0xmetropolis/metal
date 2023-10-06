@@ -159,7 +159,7 @@ export const handler = async (yargs: HandlerInput) => {
     contractMetadata,
   };
 
-  const authToken = authenticationStatus.isAuthenticated
+  const authToken = authenticationStatus.status === 'authenticated'
     ? authenticationStatus.access_token
     : undefined;
 
