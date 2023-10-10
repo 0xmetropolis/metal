@@ -1,13 +1,16 @@
 import { JWTPayload, decodeJwt, importJWK, jwtVerify } from 'jose';
 import fetch from 'node-fetch';
-import { BinaryLike, createHash, randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import assert from 'node:assert';
+import { BinaryLike, UUID, createHash, randomBytes } from 'node:crypto';
 import { Server, createServer } from 'node:http';
-import { join } from 'node:path';
 import { parse } from 'url';
-import { logDebug, logError, openInBrowser } from '.';
+import { logDebug, logError, logInfo, openInBrowser } from '.';
 import { ID_TOKEN_FILE } from '../constants';
 import { AccessToken, IdTokenWithProfileScope, Pretty } from '../types';
+import { isInFilestore, loadFromFilestore, saveIdToken } from './filestore';
+import { addDeploymentToAccount } from './preview-service';
+import { upsertUser } from './user';
+import inquirer = require('inquirer');
 
 type Base64String = string;
 export type CachedTokenSet = {
@@ -130,7 +133,7 @@ export const listenForAuthorizationCode = async ({
 
       const authorizationSuccessful = !!code && state == expectedCSRFToken;
 
-      // create a self-closing window to close the browser tab
+      // create a redirect to the metal.build to close the browser tab
       res.writeHead(302, {
         Location: `https://metal.build/auth/${authorizationSuccessful ? 'success' : 'failure'}`,
       });
@@ -166,6 +169,10 @@ export const listenForAuthorizationCode = async ({
     authCodeListeningServer.then(code => {
       // clean up the server
       server.close();
+      setImmediate(() => {
+        server.emit('close');
+      });
+      // and return the auth code
       return code;
     }),
     authorizationTimeout,
@@ -301,19 +308,13 @@ export const decodeIdToken = (idToken: string): IdTokenWithProfileScope => {
   }
 };
 
-export const saveIdToken = (idToken: CachedTokenSet) => {
-  // save the id token to the local filesystem (in dist/)
-  const idTokenPath = join(__dirname, '..', ID_TOKEN_FILE);
-  writeFileSync(idTokenPath, JSON.stringify(idToken, null, 2));
-};
-
 /**
  * @dev loads in the cached token set, and refreshes it if it's expired
  */
-async function getOrRefreshCachedTokenSet(idTokenPath: string): Promise<CachedTokenSet> {
+async function getOrRefreshCachedTokenSet(): Promise<CachedTokenSet> {
   // load the token, expecting `accessToken`, `refresh_token`, and `idToken` members
-  const tokenCache_raw = readFileSync(idTokenPath);
-  const cachedToken: CachedTokenSet = JSON.parse(tokenCache_raw.toString());
+  const tokenCache_raw = loadFromFilestore(ID_TOKEN_FILE);
+  const cachedToken: CachedTokenSet = JSON.parse(tokenCache_raw);
 
   const { access_token, id_token, refresh_token } = cachedToken;
 
@@ -348,13 +349,12 @@ async function getOrRefreshCachedTokenSet(idTokenPath: string): Promise<CachedTo
 export const checkAuthentication = async (): Promise<AuthenticationStatus> => {
   // if the user has never authenticated (or we update the location between versions)
   // they will not have an ID token cached
-  const idTokenPath = join(__dirname, '..', ID_TOKEN_FILE);
-  const idTokenIsCached = existsSync(idTokenPath);
+  const idTokenIsCached = isInFilestore(ID_TOKEN_FILE);
   if (!idTokenIsCached) return { status: 'unregistered' };
 
   try {
     // load the cache and refresh it if any of the tokens are expired
-    const cachedTokens: CachedTokenSet = await getOrRefreshCachedTokenSet(idTokenPath);
+    const cachedTokens: CachedTokenSet = await getOrRefreshCachedTokenSet();
 
     const [parsedAccessToken, parsedIdToken] = await Promise.all([
       validateJWT(cachedTokens.access_token),
@@ -372,4 +372,67 @@ export const checkAuthentication = async (): Promise<AuthenticationStatus> => {
 
     return { status: 'unauthenticated' };
   }
+};
+
+/**
+ * @dev auehtnticates via the PCKE flow, validates the returned token, saves it locally, creates the user in the backend, and returns the id token payload
+ */
+export const authenticateViaPCKEFlow = async () => {
+  // generate a code challenge and verifier as base64 strings
+  const { codeChallenge, codeVerifier, state } = generateHashChallenges();
+
+  // open a new window for the user to authorize a login...
+  openLoginWindow(codeChallenge, state);
+
+  // ... and listen for up to AUTHORIZATION_TIMEOUT seconds for an auth0 to reply with an authorization code
+  const authorizationCode = await listenForAuthorizationCode({ expectedCSRFToken: state });
+
+  // take the authorization code and exchange it for an id token
+  //  https://auth0.com/docs/secure/tokens/id-tokens
+  const idToken = await requestForIdTokenViaPCKE(codeVerifier, authorizationCode);
+
+  // validate the attached access token is valid
+  await validateJWT(idToken.access_token);
+
+  // save the id token to the local filesystem
+  saveIdToken(idToken);
+
+  // decode the id token to get the user's nickname
+  const idTokenPayload = decodeIdToken(idToken.id_token);
+
+  await upsertUser(idToken);
+
+  return idTokenPayload;
+};
+
+export const authenticateAndAssociateDeployment = async (
+  deploymentId: UUID,
+  promptLabel: 'preview' | 'deployment',
+) => {
+  logInfo('\n');
+  logInfo(`You are not authenticated with Metal!\n`, 'yellow');
+
+  const { confirm } = await inquirer.prompt({
+    type: 'confirm',
+    name: 'confirm',
+    message: `Would you like to login and save this ${promptLabel} to your account?`,
+  });
+
+  // allow the user to opt out of authentication
+  if (!confirm) return;
+
+  // authenticate via the PCKE flow
+  const idToken = await authenticateViaPCKEFlow();
+
+  logInfo(`\nAuthenticated as ${idToken.nickname}!`);
+
+  const authStatus = await checkAuthentication();
+
+  assert(
+    authStatus.status === 'authenticated',
+    'Fatal authentication error: Please reach out to support',
+  );
+
+  // associate the deployment with the user
+  await addDeploymentToAccount(deploymentId, authStatus.access_token);
 };

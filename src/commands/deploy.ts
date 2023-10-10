@@ -28,6 +28,7 @@ import { getCLIVersion } from '../utils/version';
 import inquirer = require('inquirer');
 import { checkAuthentication } from '../utils/auth';
 import { checkRepoForUncommittedChanges } from '../utils/import';
+import { authenticateAndAssociateDeployment } from '../utils/auth';
 
 export const command = 'deploy';
 export const description = `Run your deployments against a live network and generate a Metal preview`;
@@ -159,9 +160,8 @@ export const handler = async (yargs: HandlerInput) => {
     contractMetadata,
   };
 
-  const authToken = authenticationStatus.status === 'authenticated'
-    ? authenticationStatus.access_token
-    : undefined;
+  const authToken =
+    authenticationStatus.status === 'authenticated' ? authenticationStatus.access_token : undefined;
 
   const deploymentId = doNotCommunicateWithPreviewService
     ? undefined
@@ -169,6 +169,10 @@ export const handler = async (yargs: HandlerInput) => {
 
   logInfo(`Deployment successful! 🎉\n\n`);
   const metalWebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
+  // if the user is not authenticated, ask them if they wish to add the deployment to their account
+  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithPreviewService)
+    await authenticateAndAssociateDeployment(deploymentId, 'deployment');
+
   printPreviewLinkWithASCIIArt(metalWebUrl);
 
   openInBrowser(metalWebUrl);
