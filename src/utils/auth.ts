@@ -424,14 +424,14 @@ export const authenticateAndAssociateDeployment = async (
   // authenticate via the PCKE flow
   const idToken = await authenticateViaPCKEFlow();
 
-  logInfo(`\nAuthenticated as ${idToken.nickname}!`);
-
   const authStatus = await checkAuthentication();
 
   assert(
     authStatus.status === 'authenticated',
     'Fatal authentication error: Please reach out to support',
   );
+
+  logInfo(`\nAuthenticated as ${idToken.nickname}!`);
 
   // associate the deployment with the user
   await addDeploymentToAccount(deploymentId, authStatus.access_token);
