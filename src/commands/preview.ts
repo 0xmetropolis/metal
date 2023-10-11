@@ -22,19 +22,18 @@ import {
   printPreviewLinkWithASCIIArt,
   replaceFlagValues,
 } from '../utils';
+import { authenticateAndAssociateDeployment, checkAuthentication } from '../utils/auth';
 import {
   getContractMetadata,
   getScriptDependencies,
   getScriptMetadata,
   loadFoundryConfig,
   normalizeForgeScriptPath,
-  runForgeScript,
   runForgeScriptForPreviewCommand,
 } from '../utils/foundry';
 import { getRepoMetadata } from '../utils/git';
 import { createMetalFork } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
-import { checkAuthentication } from '../utils/auth';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -160,6 +159,8 @@ export const sendDataToPreviewService = async (
 export const handler = async (yargs: HandlerInput) => {
   validateInputs(yargs);
 
+  const authenticationStatus = await checkAuthentication();
+
   // @dev arg 0 is the command name: e.g: `preview`
   const {
     _: [, forgeScriptPath],
@@ -167,7 +168,7 @@ export const handler = async (yargs: HandlerInput) => {
     'UNSAFE-RPC-OVERRIDE': rpcOverride,
   } = yargs;
 
-  const { rpcUrl, id: forkId } = doNotCommunicateWithPreviewService
+  const { rpcUrl, id: previewId } = doNotCommunicateWithPreviewService
     ? { id: undefined, rpcUrl: undefined }
     : !!rpcOverride
     ? getConfigFromTenderlyRpc(rpcOverride)
@@ -213,10 +214,14 @@ export const handler = async (yargs: HandlerInput) => {
     contractMetadata,
   };
 
-  if (!doNotCommunicateWithPreviewService) await sendDataToPreviewService(payload, forkId);
-  const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${forkId}`;
+  if (!doNotCommunicateWithPreviewService) await sendDataToPreviewService(payload, previewId);
+  const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${previewId}`;
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
+  // if the user is not authenticated, ask them if they wish to add the deployment to their account
+  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithPreviewService)
+    await authenticateAndAssociateDeployment(previewId, 'preview');
+
   printPreviewLinkWithASCIIArt(previewServiceUrl);
 
   openInBrowser(previewServiceUrl);

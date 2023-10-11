@@ -7,6 +7,7 @@ import {
   openInBrowser,
   printPreviewLinkWithASCIIArt,
 } from '../utils';
+import { authenticateAndAssociateDeployment, checkAuthentication } from '../utils/auth';
 import {
   getContractMetadata,
   getScriptDependencies,
@@ -25,7 +26,6 @@ import {
 } from '../utils/import';
 import { fetchChainConfig, uploadDeploymentData } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
-import { checkAuthentication } from '../utils/auth';
 
 export const command = 'import';
 export const description = `Import past deployments into a Metal preview`;
@@ -118,9 +118,8 @@ export const handler = async (yargs: HandlerInput) => {
 
   logInfo(`Uploading repo metadata...`);
 
-  const authToken = authenticationStatus.status === 'authenticated'
-    ? authenticationStatus.access_token
-    : undefined;
+  const authToken =
+    authenticationStatus.status === 'authenticated' ? authenticationStatus.access_token : undefined;
 
   const deploymentId = doNotCommunicateWithPreviewService
     ? undefined
@@ -128,6 +127,10 @@ export const handler = async (yargs: HandlerInput) => {
   const metalWebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
 
   logInfo(`Upload Successful! 🎉\n\n`);
+  // if the user is not authenticated, ask them if they wish to add the deployment to their account
+  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithPreviewService)
+    await authenticateAndAssociateDeployment(deploymentId, 'deployment');
+
   printPreviewLinkWithASCIIArt(metalWebUrl);
 
   openInBrowser(metalWebUrl);

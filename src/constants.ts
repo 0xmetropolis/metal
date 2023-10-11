@@ -19,7 +19,11 @@ export const PREVIEW_WEB_URL = process.env.PREVIEW_WEB_URL
   ? 'http://localhost:3000'
   : 'https://metal.build';
 
+export const FILESTORE_DIR = '__metal_data';
+
 export const ID_TOKEN_FILE = 'id_token.json';
+export const FILESTORE_NAMES = [ID_TOKEN_FILE] as const;
+export type CachedFile = (typeof FILESTORE_NAMES)[number];
 
 export const doNotCommunicateWithPreviewService = !!process.env.NO_PREVIEW_SERVICE;
 

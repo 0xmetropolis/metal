@@ -88,7 +88,7 @@ export const uploadDeploymentData = async (
       logDebug(res);
 
       exit(
-        `Error received from Metal! (status ${response.status})`,
+        `Error received from Metal servers! (status ${response.status})`,
         '===========================',
         res.message ?? response.statusText,
       );
@@ -98,6 +98,40 @@ export const uploadDeploymentData = async (
     return res.id;
   } catch (e: any) {
     logDebug(e);
-    exit('Error connecting to preview service', e.message);
+    exit('Error connecting to Metal servers', e.message);
+  }
+};
+
+/**
+ * @dev allows to associate a deployment to a user's account
+ */
+export const addDeploymentToAccount = async (
+  deploymentId: UUID,
+  authToken: string,
+): Promise<void> => {
+  try {
+    let headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+    const response = await fetch(`${PREVIEW_SERVICE_URL}/add-deployment/${deploymentId}`, {
+      headers,
+      method: 'PUT',
+    });
+
+    if (response.status !== 200) {
+      const res = await response.json();
+      logDebug(res);
+
+      exit(
+        `Error received from Metal servers! (status ${response.status})`,
+        '===========================',
+        res.message ?? response.statusText,
+      );
+    }
+  } catch (e: any) {
+    logDebug(e);
+    exit('Error connecting to Metal servers', e.message);
   }
 };

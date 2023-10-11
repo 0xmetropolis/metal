@@ -1,15 +1,36 @@
 import chalk from 'chalk';
-import { Abi, FoundryConfig, HexString } from '../types';
 import { emojify } from 'node-emoji';
+import fetch from 'node-fetch';
 import { exec, execSync } from 'node:child_process';
 import { UUID } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
+import { Abi, FoundryConfig, HexString } from '../types';
 import { getOutPath, isSparseModeEnabled } from './foundry';
-import fetch from 'node-fetch';
+
+type ChalkColor =
+  | 'black'
+  | 'red'
+  | 'green'
+  | 'yellow'
+  | 'blue'
+  | 'magenta'
+  | 'cyan'
+  | 'white'
+  | 'gray'
+  | 'grey'
+  | 'blackBright'
+  | 'redBright'
+  | 'greenBright'
+  | 'yellowBright'
+  | 'blueBright'
+  | 'magentaBright'
+  | 'cyanBright'
+  | 'whiteBright';
 
 export const logError = (...s: string[]) =>
   console.log('\n\n\n' + emojify(chalk.bold.red(s.join('\n'))));
-export const logInfo = (s: string) => console.log(emojify(chalk.bold(s)));
+export const logInfo = (s: string, color?: ChalkColor) =>
+  console.log(emojify(chalk[color ?? 'white'].bold(s)));
 export const logDebug = (s: string | any) =>
   !!process.env.DEBUG && console.log('\x1b[36m%s\x1b[0m', s);
 export const logWarn = (...s: string[]) =>
