@@ -375,7 +375,7 @@ export const checkAuthentication = async (): Promise<AuthenticationStatus> => {
 };
 
 /**
- * @dev auehtnticates via the PCKE flow, validates the returned token, saves it locally, creates the user in the backend, and returns the id token payload
+ * @dev authenticates via the PCKE flow, validates the returned token, saves it locally, creates the user in the backend, and returns the id token payload
  */
 export const authenticateViaPCKEFlow = async () => {
   // generate a code challenge and verifier as base64 strings
