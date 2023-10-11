@@ -1,6 +1,7 @@
 import { Arguments, Options } from 'yargs';
 import { logDebug, logError, logInfo } from '../utils';
 import { authenticateViaPCKEFlow, checkAuthentication } from '../utils/auth';
+import { sendCliCommandAnalytics } from '../utils/analytics';
 
 export const command = 'auth';
 export const description = `Authenticate with Metal`;
@@ -47,6 +48,8 @@ export const handler = async ({ force }: HandlerInput) => {
     logError(err);
     logError('Authentication failed');
   }
+
+  await sendCliCommandAnalytics('auth');
 
   // hard exit to clean up any open sockets
   process.exit(0);

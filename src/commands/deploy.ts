@@ -29,6 +29,7 @@ import inquirer = require('inquirer');
 import { checkAuthentication } from '../utils/auth';
 import { checkRepoForUncommittedChanges } from '../utils/import';
 import { authenticateAndAssociateDeployment } from '../utils/auth';
+import { sendCliCommandAnalytics } from '../utils/analytics';
 
 export const command = 'deploy';
 export const description = `Run your deployments against a live network and generate a Metal preview`;
@@ -176,4 +177,6 @@ export const handler = async (yargs: HandlerInput) => {
   printPreviewLinkWithASCIIArt(metalWebUrl);
 
   openInBrowser(metalWebUrl);
+
+  sendCliCommandAnalytics('deploy');
 };

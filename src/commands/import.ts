@@ -26,6 +26,7 @@ import {
 } from '../utils/import';
 import { fetchChainConfig, uploadDeploymentData } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
+import { sendCliCommandAnalytics } from '../utils/analytics';
 
 export const command = 'import';
 export const description = `Import past deployments into a Metal preview`;
@@ -136,4 +137,6 @@ export const handler = async (yargs: HandlerInput) => {
   openInBrowser(metalWebUrl);
 
   if (returnToCommitAfterImport) checkoutToCommit('-', { silent: true });
+
+  sendCliCommandAnalytics('import');
 };
