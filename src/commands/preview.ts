@@ -34,6 +34,7 @@ import {
 import { getRepoMetadata } from '../utils/git';
 import { createMetalFork } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
+import { sendCliCommandAnalytics } from '../utils/analytics';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -225,4 +226,6 @@ export const handler = async (yargs: HandlerInput) => {
   printPreviewLinkWithASCIIArt(previewServiceUrl);
 
   openInBrowser(previewServiceUrl);
+
+  sendCliCommandAnalytics('preview');
 };
