@@ -2,7 +2,7 @@ import { rm } from 'node:fs/promises';
 import { Arguments, Options } from 'yargs';
 import { ID_TOKEN_FILE } from '../constants';
 import { logInfo } from '../utils';
-import { deleteFromFilestore, getFilestoreDir, isInFilestore } from '../utils/filestore';
+import { deleteFromFilestore, getFilestoreDir, isInFilestore } from '../utils/filesystem/filestore';
 
 export const command = 'reset';
 // this command is hidden from the help menu
