@@ -1,10 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { join } from 'node:path';
-import { CachedFile, FILESTORE_DIR, ID_TOKEN_FILE } from '../constants';
-import { CachedTokenSet } from './auth';
+import { CachedFile, FILESTORE_DIR, ID_TOKEN_FILE } from '../../constants';
+import { CachedTokenSet } from '../auth';
 
 /**
  * @dev a set of functions to interact with the __metal_data cache system
+ * @note ! these live wherever the cli is _globally_ installed. eg: ~/.config/yarn/global/node_modules/@0xmetropolis/metal/dist
  */
 
 const getRootDir = () => join(__dirname, '..');

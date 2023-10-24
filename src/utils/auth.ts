@@ -7,7 +7,7 @@ import { parse } from 'url';
 import { logDebug, logError, logInfo, openInBrowser } from '.';
 import { ID_TOKEN_FILE } from '../constants';
 import { AccessToken, IdTokenWithProfileScope, Pretty } from '../types';
-import { isInFilestore, loadFromFilestore, saveIdToken } from './filestore';
+import { isInFilestore, loadFromFilestore, saveIdToken } from './filesystem/filestore';
 import { addDeploymentToAccount } from './preview-service';
 import { upsertUser } from './user';
 import inquirer = require('inquirer');

@@ -253,3 +253,26 @@ export type DeploymentRequestParams = {
   scriptMetadata: ScriptMetadata;
   contractMetadata: ContractMetadata[];
 };
+
+export type ArtifactBundle = {
+  abis: { [contractName: string]: Abi };
+  addresses: {
+    [chainId: number]: {
+      deployedOnBlock: number;
+      contracts: { [contractName: string]: EthAddress };
+    };
+  };
+};
+
+/**
+ * @dev the structure of the addressConfig.ts file
+ */
+export type AddressConfig = {
+  deployments: {
+    [chainId: number]: {
+      deployedOnBlock: number;
+      contracts: { [contractName: string]: EthAddress };
+    };
+  };
+  getAddress: (chainId: number, contractName: string) => EthAddress;
+};
