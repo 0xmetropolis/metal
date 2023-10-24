@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import assert from 'node:assert';
 import { exit, logDebug, logError } from '.';
 import { PREVIEW_SERVICE_URL } from '../constants';
-import { DeploymentRequestParams, Network } from '../types';
+import { ArtifactBundle, DeploymentRequestParams, Network } from '../types';
 
 export type ForkConfig = {
   __type: 'tenderly' | 'anvil';
@@ -130,6 +130,41 @@ export const addDeploymentToAccount = async (
         res.message ?? response.statusText,
       );
     }
+  } catch (e: any) {
+    logDebug(e);
+    exit('Error connecting to Metal servers', e.message);
+  }
+};
+
+/**
+ * @dev fetches a zipped artifact bundle for a deploymentId
+ * @returns the zip file as a Buffer
+ */
+export const getDeploymentArtifacts = async (
+  deploymentId: string,
+  previousAddresses?: ArtifactBundle['addresses'] | undefined,
+): Promise<Buffer> => {
+  try {
+    const response = await fetch(`${PREVIEW_SERVICE_URL}/artifacts/deployment/${deploymentId}`, {
+      method: 'POST',
+      body: previousAddresses ? JSON.stringify({ previousAddresses }) : undefined,
+    });
+
+    // handle errors
+    if (response.status !== 200) {
+      const res = await response.json();
+      logDebug(res);
+
+      exit(
+        `Could not fetch artifacts! (status ${res.status})`,
+        '===========================',
+        res.message ?? res.statusText,
+      );
+    }
+
+    const zip = await response.buffer();
+
+    return zip;
   } catch (e: any) {
     logDebug(e);
     exit('Error connecting to Metal servers', e.message);

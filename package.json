@@ -22,6 +22,7 @@
     "install:global": "yarn global add file:$PWD"
   },
   "dependencies": {
+    "adm-zip": "^0.5.10",
     "chalk": "^2.0.1",
     "inquirer": "^8.0.0",
     "inquirer-file-tree-selection-prompt": "^1",
@@ -32,6 +33,7 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.3",
     "@types/chalk": "^0.4.31",
     "@types/cors": "^2.8.13",
     "@types/inquirer": "^8.0.0",
