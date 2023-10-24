@@ -112,8 +112,8 @@ export const addDeploymentToAccount = async (
   try {
     let headers: HeadersInit = {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
     };
-    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
     const response = await fetch(`${PREVIEW_SERVICE_URL}/add-deployment/${deploymentId}`, {
       headers,
@@ -147,6 +147,7 @@ export const getDeploymentArtifacts = async (
   try {
     const response = await fetch(`${PREVIEW_SERVICE_URL}/artifacts/deployment/${deploymentId}`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: previousAddresses ? JSON.stringify({ previousAddresses }) : undefined,
     });
 
