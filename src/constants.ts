@@ -19,7 +19,7 @@ export const PREVIEW_WEB_URL = process.env.PREVIEW_WEB_URL
   ? 'http://localhost:3000'
   : 'https://metal.build';
 
-// @dev the directory name of the cli's global cache. @NOTE! is installed whereever the global node_modules lives.
+// @dev the directory name of the cli's global cache. @NOTE! is installed wherever the global node_modules lives.
 //  eg: ~/.config/yarn/global/node_modules/@0xmetropolis/metal/dist
 export const FILESTORE_DIR = '__metal_data';
 // @dev the directory name of the metal directory of a certain _project_.
