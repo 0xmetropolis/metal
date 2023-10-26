@@ -32,7 +32,7 @@ export const logError = (...s: string[]) =>
 export const logInfo = (s: string, color?: ChalkColor) =>
   console.log(emojify(chalk[color ?? 'white'].bold(s)));
 export const logDebug = (s: string | any) =>
-  !!process.env.DEBUG && console.log('\x1b[36m%s\x1b[0m', s);
+  process.env.YARG_DEBUG === '1' && console.log('\x1b[36m%s\x1b[0m', s);
 export const logWarn = (...s: string[]) =>
   console.warn(emojify(chalk.bold.yellow(s.map(str => '⚠️ ' + str + ' ⚠️').join('\n'))));
 export const logDetail = (s: string) => console.log(emojify(chalk.dim(s)));
