@@ -62,7 +62,10 @@ const codegenAddressConfig = (addresses: AddressConfig['deployments']) => {
  */
 export const getMetalCodegenFromArtifactBundle = (artifactBundle: ArtifactBundle) => {
   const abis = Object.entries(artifactBundle.abis)
-    .map(([contractName, abi]) => ({ contractName, abi: constifyObject(contractName, abi) }))
+    .map(([contractName, abi]) => ({
+      contractName,
+      abi: constifyObject(`${contractName}Abi`, abi),
+    }))
     // filter out any undefined abis
     .filter(({ abi }) => Boolean(abi));
 
