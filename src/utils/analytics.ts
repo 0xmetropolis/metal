@@ -1,7 +1,8 @@
 import { logDebug } from '.';
-import { version } from '../../package.json';
 import { PREVIEW_SERVICE_URL } from '../constants';
 import { checkAuthentication } from './auth';
+
+const { version } = require('../../package.json');
 
 export const sendCliCommandAnalytics = async (
   cliCommand: 'import' | 'deploy' | 'preview' | 'auth' | 'pull',
