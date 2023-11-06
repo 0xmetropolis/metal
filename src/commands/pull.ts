@@ -5,6 +5,7 @@ import { getMetalCodegenFromArtifactBundle, logMetalDirStructure } from '../util
 import { getDeploymentArtifacts } from '../utils/preview-service';
 import { decompressArtifactZip, tryLoadPreviousAddresses } from '../utils/pull';
 import { writeCodegenToDisk } from '../utils/pull';
+import { sendCliCommandAnalytics } from '../utils/analytics';
 
 export const command = 'pull';
 export const description = `Pull artifacts from `;
@@ -58,4 +59,5 @@ export const handler = async (yargs: HandlerInput) => {
 
   logInfo('Wrote deployment artifacts to the `metal/` directory 🎉\n');
   logMetalDirStructure();
+  sendCliCommandAnalytics('pull');
 };

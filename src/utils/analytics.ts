@@ -1,9 +1,10 @@
 import { logDebug } from '.';
+import { version } from '../../package.json';
 import { PREVIEW_SERVICE_URL } from '../constants';
 import { checkAuthentication } from './auth';
 
 export const sendCliCommandAnalytics = async (
-  cliCommand: 'import' | 'deploy' | 'preview' | 'auth',
+  cliCommand: 'import' | 'deploy' | 'preview' | 'auth' | 'pull',
 ) => {
   const auth = await checkAuthentication();
   const authHeaders =
@@ -17,7 +18,7 @@ export const sendCliCommandAnalytics = async (
         'Content-Type': 'application/json',
         ...authHeaders,
       },
-      body: JSON.stringify({ cliCommand }),
+      body: JSON.stringify({ cliCommand, version }),
     });
 
     logDebug(request.status);
