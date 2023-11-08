@@ -436,3 +436,13 @@ export const authenticateAndAssociateDeployment = async (
   // associate the deployment with the user
   await addDeploymentToAccount(deploymentId, authStatus.access_token);
 };
+
+export const authenticateAndAssociateDeployment_safe = async (
+  deploymentId: UUID,
+  promptLabel: 'preview' | 'deployment',
+) =>
+  await authenticateAndAssociateDeployment(deploymentId, promptLabel).catch(e => {
+    logDebug(e);
+
+    logError('Authentication Error!\nPlease run `metal auth` and try again.');
+  });
