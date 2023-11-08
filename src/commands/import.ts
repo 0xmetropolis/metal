@@ -3,8 +3,6 @@ import { PREVIEW_WEB_URL, doNotCommunicateWithPreviewService } from '../constant
 import { DeploymentRequestParams, ScriptMetadata } from '../types';
 import {
   getFlagValueFromArgv,
-  logDebug,
-  logError,
   logInfo,
   openInBrowser,
   printPreviewLinkWithASCIIArt,
