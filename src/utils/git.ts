@@ -150,6 +150,6 @@ export const checkoutToCommit = (commitSha: string, { silent } = { silent: false
   try {
     execSync(`git checkout ${commitSha}`, { stdio: silent ? 'ignore' : 'inherit' });
   } catch (e: any) {
-    exit(`Unable to checkout to commit ${commitSha}!\n ${e.message}`);
+    throw new Error(`Unable to checkout to commit ${commitSha}!\n ${e.message}`);
   }
 };

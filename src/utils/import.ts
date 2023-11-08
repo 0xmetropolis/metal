@@ -230,6 +230,77 @@ export const ensureBroadcastArtifactValidityAndContinue = async (
     .then(({ confirm }: { confirm: boolean }) => confirm);
 };
 
+const tryRecoverFromMissingCommit = async (
+  commitSHAOfBroadcast: string,
+  commitSHAOfRepo: string,
+) => {
+  logError(
+    `❗️ Failed to checkout to commit listed in broadcast artifact (${
+      commitSHAOfBroadcast ?? 'Commit SHA not found ❗️'
+    })\n\nWe cannot guarantee deployed contracts will match a local forge build.\nHow would you like to proceed?`,
+  );
+
+  const manualGitSelectionPrompt = async () =>
+    await inquirer
+      .prompt({
+        type: 'list',
+        name: 'choice',
+        message: '',
+        choices: [
+          {
+            name: `📍 Compile with current commit (${commitSHAOfRepo.slice(0, 7)})`,
+            value: commitSHAOfRepo,
+          },
+          { name: `🔖 Compile at version tag`, value: 'tag' },
+          { name: `#️⃣ Enter commit hash`, value: 'hash' },
+          { name: `❌ Abort import`, value: 'exit' },
+        ],
+      })
+      .then(({ choice }) => choice as string);
+
+  const choice = await manualGitSelectionPrompt();
+
+  if (choice === 'exit') exit('Aborting import');
+  if (choice === commitSHAOfRepo) return commitSHAOfRepo;
+  if (choice === 'tag') {
+    const tagPrompt = await inquirer
+      .prompt({
+        type: 'list',
+        name: 'tag',
+        message: `Enter a version tag to checkout to`,
+        choices: [
+          ...execSync('git tag')
+            .toString()
+            .trim()
+            .split('\n')
+            .reverse()
+            .map(tag => ({ name: tag, value: tag })),
+          { name: '⬅️ Back', value: 'back' },
+        ],
+      })
+      .then(({ tag }) => (tag === 'back' ? manualGitSelectionPrompt() : tag));
+
+    logInfo(`Checking out to tag ${tagPrompt}...`);
+    checkoutToCommit(tagPrompt, { silent: true });
+
+    return tagPrompt;
+  }
+  if (choice === 'hash') {
+    const hash = await inquirer
+      .prompt({
+        type: 'input',
+        name: 'hash',
+        message: `Enter a commit hash:`,
+      })
+      .then(({ hash }) => hash);
+
+    logInfo(`Checking out to ${hash}...`);
+    checkoutToCommit(hash, { silent: true });
+
+    return hash;
+  }
+};
+
 export const ensureRepoIsOnCorrectCommit = async (
   broadcastArtifact: BroadcastArtifacts_Partial,
 ): Promise<string | null> => {
@@ -237,8 +308,8 @@ export const ensureRepoIsOnCorrectCommit = async (
   const commitSHAOfRepo = getLatestCommitSHA_repo();
 
   const broadcastAndRepoInParity = commitSHAOfRepo
-    .toLowerCase()
-    .startsWith(commitSHAOfBroadcast.toLowerCase());
+    ?.toLowerCase()
+    .startsWith(commitSHAOfBroadcast?.toLowerCase());
 
   // if their repo is on the correct commit and we can continue without returning a commit to revert to
   if (broadcastAndRepoInParity) return null;
@@ -246,25 +317,17 @@ export const ensureRepoIsOnCorrectCommit = async (
   // otherwise, prompt the user to checkout to the commit of the broadcast - or exit
   if (!broadcastAndRepoInParity) {
     logInfo('\n');
-    await inquirer
-      .prompt({
-        type: 'confirm',
-        name: 'confirm',
-        message: `❗️ The selected script was executed at commit: (${chalk.bgYellow(
-          commitSHAOfBroadcast,
-        )}). The current commit is: (${chalk.bgYellow(
-          commitSHAOfRepo.slice(0, 7),
-        )}).\nWe will attempt to checkout to the commit of the broadcast.\n\nCheckout to commit ${chalk.blue(
-          commitSHAOfBroadcast,
-        )}?`,
-      })
-      .then(({ confirm }) => !confirm && exit('Aborting import'));
 
     logInfo(`Checking out to commit ${commitSHAOfBroadcast}...`);
-    checkoutToCommit(commitSHAOfBroadcast, { silent: true });
 
-    return commitSHAOfRepo;
+    try {
+      checkoutToCommit(commitSHAOfBroadcast, { silent: true });
+    } catch (e: any) {
+      const commitSha = tryRecoverFromMissingCommit(commitSHAOfBroadcast, commitSHAOfRepo);
+      return commitSha;
+    }
   }
+  return commitSHAOfRepo;
 };
 
 export const findScriptPath = async (foundryConfig: FoundryConfig, scriptFileName: string) => {
