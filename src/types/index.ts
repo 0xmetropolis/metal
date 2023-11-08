@@ -222,7 +222,7 @@ export type BroadcastArtifacts_Partial = {
   timestamp: number;
   chain: number;
   multi: boolean;
-  commit: HexString;
+  commit?: HexString;
 };
 
 export type ContractMetadata = Pretty<
