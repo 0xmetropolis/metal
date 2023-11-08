@@ -14,6 +14,8 @@ import {
   openInBrowser,
   printPreviewLinkWithASCIIArt,
 } from '../utils';
+import { sendCliCommandAnalytics } from '../utils/analytics';
+import { authenticateAndAssociateDeployment_safe, checkAuthentication } from '../utils/auth';
 import {
   getContractMetadata,
   getScriptDependencies,
@@ -23,13 +25,10 @@ import {
   runForgeScript,
 } from '../utils/foundry';
 import { getRepoMetadata } from '../utils/git';
+import { checkRepoForUncommittedChanges } from '../utils/import';
 import { ChainConfig, fetchChainConfig, uploadDeploymentData } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
 import inquirer = require('inquirer');
-import { checkAuthentication } from '../utils/auth';
-import { checkRepoForUncommittedChanges } from '../utils/import';
-import { authenticateAndAssociateDeployment } from '../utils/auth';
-import { sendCliCommandAnalytics } from '../utils/analytics';
 
 export const command = 'deploy';
 export const description = `Run your deployments against a live network and generate a Metal preview`;
@@ -172,7 +171,7 @@ export const handler = async (yargs: HandlerInput) => {
   const metalWebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
   if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithPreviewService)
-    await authenticateAndAssociateDeployment(deploymentId, 'deployment');
+    await authenticateAndAssociateDeployment_safe(deploymentId, 'deployment');
 
   printPreviewLinkWithASCIIArt(metalWebUrl);
 

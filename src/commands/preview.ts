@@ -22,7 +22,8 @@ import {
   printPreviewLinkWithASCIIArt,
   replaceFlagValues,
 } from '../utils';
-import { authenticateAndAssociateDeployment, checkAuthentication } from '../utils/auth';
+import { sendCliCommandAnalytics } from '../utils/analytics';
+import { authenticateAndAssociateDeployment_safe, checkAuthentication } from '../utils/auth';
 import {
   getContractMetadata,
   getScriptDependencies,
@@ -34,7 +35,6 @@ import {
 import { getRepoMetadata } from '../utils/git';
 import { createMetalFork } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
-import { sendCliCommandAnalytics } from '../utils/analytics';
 
 export const command = 'preview';
 export const description = `Generate preview of transactions from your Forge script`;
@@ -221,7 +221,7 @@ export const handler = async (yargs: HandlerInput) => {
   logInfo(`Preview simulation successful! 🎉\n\n`);
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
   if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithPreviewService)
-    await authenticateAndAssociateDeployment(previewId, 'preview');
+    await authenticateAndAssociateDeployment_safe(previewId, 'preview');
 
   printPreviewLinkWithASCIIArt(previewServiceUrl);
 
