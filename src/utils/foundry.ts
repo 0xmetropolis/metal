@@ -20,22 +20,7 @@ import {
   logWarn,
 } from '.';
 import { getGitMetadata } from './git';
-
-const FILTERED_FORGE_MESSAGES = [
-  // @dev this message makes it look like previews are being run against a live chain
-  // so we filter them for peace-of-mind
-  'ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.\n',
-];
-
-const filterForgeMessages = (msg: string | number | bigint | boolean | object): string => {
-  let msgAsString = msg.toString();
-  // search the output for messages that should be filtered
-  for (const filteredMsg of FILTERED_FORGE_MESSAGES) {
-    if (msgAsString.includes(filteredMsg)) msgAsString = msgAsString.replace(filteredMsg, '');
-  }
-
-  return msgAsString;
-};
+import { Readable } from 'stream';
 
 export const processForgeError = ({ message }: ExecException) => {
   if (message.includes('connect error'))
@@ -228,22 +213,59 @@ export const runForgeScript = async (scriptArgs: string[]) => {
   });
 };
 
+const mutateForgeMessages = (msg: string | number | bigint | boolean | object): string => {
+  let msgAsString = msg.toString();
+  // search the output for messages that should be filtered
+
+  if (msgAsString.includes('Sending transactions')) return '';
+  if (msgAsString.includes('txes (') && msgAsString.includes('[00:0')) return '';
+  else if (msgAsString.includes('ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.'))
+    return msgAsString.replace('ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.\n', '');
+
+  return msgAsString;
+};
+
+const watchForgeOutput = (
+  { stdout, stderr }: { stdout: Readable; stderr: Readable },
+  state: { transactionCounter: number },
+) => {
+  // tx progress bars are sent through stderr
+  stderr.on('data', (chunk: any) => {
+    const msg = mutateForgeMessages(chunk);
+    if (msg) logError(msg);
+  });
+
+  stdout.on('data', (chunk: any) => {
+    // if the chunk contains the succes label, then it's related to a transaction
+    if (chunk.toString().includes('[Success]Hash')) {
+      // increment the transaction counter
+      state.transactionCounter++;
+      // hide the original message and show a simulation message
+      logInfo('Simulating transaction ' + state.transactionCounter + '...');
+    } else {
+      // otherwise, use the normal filter flow
+      const msg = mutateForgeMessages(chunk);
+      if (msg) logInfo(msg);
+    }
+  });
+};
+
 export const runForgeScriptForPreviewCommand = async (scriptArgs: string[]) => {
-  return await new Promise<number>((resolve, reject) => {
+  const state = {
+    transactionCounter: 0,
+  };
+
+  await new Promise<number>((resolve, reject) => {
     const clonedEnv = { ...process.env };
 
     const forge_script = spawn(`forge script ${scriptArgs.join(' ')}`, {
       shell: true,
-      stdio: ['inherit', 'pipe', 'inherit'],
+      stdio: ['inherit', 'pipe', 'pipe'],
       env: clonedEnv,
     });
 
-    // filter std out messages
-    forge_script.stdout.on('data', msg => {
-      const message = filterForgeMessages(msg);
-
-      if (message) logInfo(message);
-    });
+    // watch and override tx execution messages in the context of simulations
+    watchForgeOutput(forge_script, state);
 
     // log any errors
     forge_script.on('error', err => {
@@ -260,6 +282,12 @@ export const runForgeScriptForPreviewCommand = async (scriptArgs: string[]) => {
       }
     });
   });
+
+  if (state.transactionCounter === 0)
+    exit(
+      'Your forge script does not contain any transactions to simulate!',
+      'Please add a transaction to your forge script and try again.',
+    );
 };
 
 export const runForgeBuild = async (buildOpts: string[]) => {
