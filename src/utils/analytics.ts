@@ -28,3 +28,26 @@ export const sendCliCommandAnalytics = async (
     logDebug(e);
   }
 };
+
+export const logFailure = async (error: any) => {
+  const auth = await checkAuthentication();
+  const authHeaders =
+    auth.status === 'authenticated' ? { Authorization: `Bearer ${auth.access_token}` } : {};
+
+  try {
+    logDebug(`sending failure analytics`);
+    const request = await fetch(`${PREVIEW_SERVICE_URL}/analytics/failure`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+      },
+      body: JSON.stringify({ version, error }),
+    });
+
+    logDebug(request.status);
+  } catch (e: any) {
+    logDebug('Could not send failure analytics');
+    logDebug(e);
+  }
+};

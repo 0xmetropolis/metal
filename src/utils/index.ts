@@ -6,6 +6,7 @@ import { UUID } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { Abi, FoundryConfig, HexString } from '../types';
 import { getOutPath, isSparseModeEnabled } from './foundry';
+import { logFailure } from './analytics';
 
 type ChalkColor =
   | 'black'
@@ -56,8 +57,11 @@ export const printPreviewLinkWithASCIIArt = (previewUrl: string) => {
     `);
 };
 
-export const exit = (...message: string[]) => {
-  logError.call(this, message.join('\n'));
+export const exit = async (...message: string[]) => {
+  const errors = message.join('\n');
+  logError.call(this, errors);
+  await logFailure(errors);
+
   process.exit(1);
 };
 
