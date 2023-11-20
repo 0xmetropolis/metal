@@ -167,11 +167,15 @@ export const promptForBroadcastArtifact = async (foundryConfig: FoundryConfig) =
   };
 };
 
-export const buildProject = async () => {
+export const buildProject = async (pathToScript: string) => {
   const buildOptionsIdx = process.argv.findIndex(arg => arg === '--build-options');
   const userSpecifiedBuildOpts = buildOptionsIdx !== -1;
   // interpret anything after `--build-options` as options to pass to `forge build`
   const buildOptions = userSpecifiedBuildOpts ? process.argv.slice(buildOptionsIdx + 1) : [];
+
+  // @dev we want the script file to be the entrypoint for the build command,
+  //   in the case where the script lives outside the contracts directory
+  const buildOptionsIncludingScript = [...buildOptions, '--contracts', pathToScript];
 
   if (userSpecifiedBuildOpts)
     logInfo(
@@ -180,7 +184,7 @@ export const buildProject = async () => {
       )})...`,
     );
 
-  await runForgeBuild(buildOptions).catch(() => {
+  await runForgeBuild(buildOptionsIncludingScript).catch(() => {
     logError(`Forge build failed. Aborting import.`);
 
     exit(

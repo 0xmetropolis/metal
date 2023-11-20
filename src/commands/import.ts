@@ -81,11 +81,12 @@ export const handler = async (yargs: HandlerInput) => {
     broadcastArtifacts,
   );
 
-  // run forge build now that we're on the correct commit sha
-  await buildProject();
-
   // search for the script file in the current directory (if necessary, prompt the user to select one)
   const pathToScript = await findScriptPath(foundryConfig, selectedScript);
+
+  // run forge build now that we're on the correct commit sha
+  await buildProject(pathToScript);
+
   // get an array of all the solidity files that need to be uploaded
   const solidityFilePaths = [pathToScript, ...getScriptDependencies(foundryConfig, pathToScript)];
   const repoMetadata = getRepoMetadata(solidityFilePaths);
