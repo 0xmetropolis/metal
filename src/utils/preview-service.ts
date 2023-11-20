@@ -36,13 +36,12 @@ export const createMetalFork = async (chainId: Network) => {
     return data;
   } catch (e) {
     logDebug(e);
-    logError(`
+    exit(`
     Error creating fork with chainId ${chainId}
     ==BEGIN ERROR==
     ${createUrl}
     ${e.message}
     `);
-    exit();
   }
 };
 
@@ -57,13 +56,12 @@ export const fetchChainConfig = async (chainId: Network) => {
     return data;
   } catch (e) {
     logDebug(e);
-    logError(`
+    exit(`
     Error fetching chain config at chain-id: ${chainId}
     ==BEGIN ERROR==
     ${configUrl}
     ${e.message}
     `);
-    exit();
   }
 };
 
