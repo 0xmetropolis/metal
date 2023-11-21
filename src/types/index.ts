@@ -38,6 +38,7 @@ export enum Network {
   POLYGON_MUMBAI = 80001,
   ARBITRUM_GOERLI = 421613,
   SEPOLIA = 11155111,
+  HOLESKY = 17000,
 }
 
 export type EthAddress = `0x${string}`;
