@@ -1,8 +1,8 @@
 import { UUID } from 'crypto';
 import fetch from 'node-fetch';
 import assert from 'node:assert';
-import { exit, logDebug, logError } from '.';
-import { PREVIEW_SERVICE_URL } from '../constants';
+import { exit, logDebug } from '.';
+import { MODE, METAL_SERVICE_URL } from '../constants';
 import { ArtifactBundle, DeploymentRequestParams, Network } from '../types';
 
 export type ForkConfig = {
@@ -19,8 +19,21 @@ export type ChainConfig = {
   etherscanUrl: string;
 };
 
+/**
+ * @dev pings the metal service to ensure it is running
+ */
+export const pingMetalService = async () => {
+  await fetch(`${METAL_SERVICE_URL}`).catch(async e => {
+    logDebug(e);
+    await exit(
+      'Error! Cannot connect to Metal servers',
+      MODE === 'dev' ? 'Make sure metal-service is running on port 1234' : '',
+    );
+  });
+};
+
 export const createMetalFork = async (chainId: Network) => {
-  const createUrl = `${PREVIEW_SERVICE_URL}/create`;
+  const createUrl = `${METAL_SERVICE_URL}/create`;
   try {
     const response = await fetch(createUrl, {
       method: 'POST',
@@ -46,7 +59,7 @@ export const createMetalFork = async (chainId: Network) => {
 };
 
 export const fetchChainConfig = async (chainId: Network) => {
-  const configUrl = `${PREVIEW_SERVICE_URL}/chain-config/${chainId}`;
+  const configUrl = `${METAL_SERVICE_URL}/chain-config/${chainId}`;
   try {
     const response = await fetch(configUrl);
     assert(response.status === 200, `${response.status} ${response.statusText}`);
@@ -75,7 +88,7 @@ export const uploadDeploymentData = async (
     };
     if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
-    const response = await fetch(`${PREVIEW_SERVICE_URL}/deploy`, {
+    const response = await fetch(`${METAL_SERVICE_URL}/deploy`, {
       headers,
       method: 'POST',
       body: JSON.stringify(payload),
@@ -113,7 +126,7 @@ export const addDeploymentToAccount = async (
       Authorization: `Bearer ${authToken}`,
     };
 
-    const response = await fetch(`${PREVIEW_SERVICE_URL}/add-deployment/${deploymentId}`, {
+    const response = await fetch(`${METAL_SERVICE_URL}/add-deployment/${deploymentId}`, {
       headers,
       method: 'PUT',
     });
@@ -143,7 +156,7 @@ export const getDeploymentArtifacts = async (
   previousAddresses?: ArtifactBundle['addresses'] | undefined,
 ): Promise<Buffer> => {
   try {
-    const response = await fetch(`${PREVIEW_SERVICE_URL}/artifacts/deployment/${deploymentId}`, {
+    const response = await fetch(`${METAL_SERVICE_URL}/artifacts/deployment/${deploymentId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: previousAddresses ? JSON.stringify({ previousAddresses }) : undefined,

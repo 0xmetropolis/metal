@@ -5,7 +5,7 @@ import { BinaryLike, UUID, createHash, randomBytes } from 'node:crypto';
 import { Server, createServer } from 'node:http';
 import { parse } from 'url';
 import { logDebug, logError, logInfo, openInBrowser } from '.';
-import { ID_TOKEN_FILE } from '../constants';
+import { AUTH0_AUDIENCE, AUTH0_CLI_CLIENT_ID, AUTH0ֹֹֹֹֹ_ISSUER, ID_TOKEN_FILE } from '../constants';
 import { AccessToken, IdTokenWithProfileScope, Pretty } from '../types';
 import { isInFilestore, loadFromFilestore, saveIdToken } from './filesystem/filestore';
 import { addDeploymentToAccount } from './preview-service';
@@ -52,9 +52,6 @@ export type AuthenticationStatus =
 
 const PORT = 42224;
 const AUTHORIZATION_TIMEOUT = 60_000;
-const AUTH0ֹֹֹֹֹ_VANITY_URI = 'auth.metal.build';
-const AUTH0_CLI_CLIENT_ID = '9TFnIsSYlxiSKIs5bvwhfxu9yQFvhT0R';
-const AUTH0_AUDIENCE = 'metro-api';
 const AUTH0_SCOPES = ['profile', 'offline_access'] as const;
 
 export const sha256 = (buffer: BinaryLike) => createHash('sha256').update(buffer).digest();
@@ -92,7 +89,7 @@ export const generateHashChallenges = (): {
  */
 export const openLoginWindow = (codeChallenge: string, state: string) => {
   const auth0Url = [
-    `https://${AUTH0ֹֹֹֹֹ_VANITY_URI}/authorize?`,
+    `${AUTH0ֹֹֹֹֹ_ISSUER}/authorize?`,
     `audience=${AUTH0_AUDIENCE}`,
     `&response_type=code`,
     `&code_challenge=${codeChallenge}`,
@@ -189,7 +186,7 @@ export const listenForAuthorizationCode = async ({
  * @throws if the token request fails
  */
 export const requestForIdToken = async (body: URLSearchParams) => {
-  const url = `https://${AUTH0ֹֹֹֹֹ_VANITY_URI}/oauth/token`;
+  const url = `${AUTH0ֹֹֹֹֹ_ISSUER}/oauth/token`;
 
   const req = await fetch(url, {
     method: 'POST',
@@ -238,7 +235,7 @@ export const requestForIdTokenViaRefreshToken = async (refreshToken: string) =>
 const fetchJWKSFromAuth0Domain = async () => {
   // every openid provider publishes a JWKS (JSON Web Key Set) this `well-known` endpoint
   //   this comes off the JSON Web Key spec: https://openid.net/specs/draft-jones-json-web-key-03.html
-  const res = await fetch(`https://${AUTH0ֹֹֹֹֹ_VANITY_URI}/.well-known/jwks.json`);
+  const res = await fetch(`${AUTH0ֹֹֹֹֹ_ISSUER}/.well-known/jwks.json`);
 
   // hitting this public endpoint returns a JSON object with a set of public keys
   const jwks: {
@@ -282,7 +279,7 @@ export const validateJWT = async <T extends AccessToken>(
   // verify the id token with the public key
   const decodedToken = await jwtVerify(accessToken, publicKey, {
     audience,
-    issuer: `https://${AUTH0ֹֹֹֹֹ_VANITY_URI}/`,
+    issuer: `${AUTH0ֹֹֹֹֹ_ISSUER}/`,
   }).catch(err => {
     logDebug(err);
     throw Error('Failed to verify IDToken!');

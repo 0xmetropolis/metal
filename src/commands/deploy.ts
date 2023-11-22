@@ -1,9 +1,9 @@
 import { type Arguments, type Options } from 'yargs';
 import {
   FORGE_FORK_ALIASES,
-  PREVIEW_WEB_URL,
+  METAL_WEB_URL,
   SUPPORTED_CHAINS,
-  doNotCommunicateWithPreviewService,
+  doNotCommunicateWithMetalService,
 } from '../constants';
 import { DeploymentRequestParams, Network } from '../types/index';
 import {
@@ -88,7 +88,7 @@ const getChainConfig = async (chainId: Network): Promise<Partial<ChainConfig>> =
     etherscanUrl: undefined,
   };
 
-  return doNotCommunicateWithPreviewService
+  return doNotCommunicateWithMetalService
     ? emptyConfig
     : !!userHasSpecifiedRPC
     ? { ...emptyConfig, rpcUrl: getFlagValueFromArgv(process.argv[rpcOverrideFlagIdx + 1]) }
@@ -163,14 +163,14 @@ export const handler = async (yargs: HandlerInput) => {
   const authToken =
     authenticationStatus.status === 'authenticated' ? authenticationStatus.access_token : undefined;
 
-  const deploymentId = doNotCommunicateWithPreviewService
+  const deploymentId = doNotCommunicateWithMetalService
     ? undefined
     : await uploadDeploymentData(payload, authToken);
 
   logInfo(`Deployment successful! 🎉\n\n`);
-  const metalWebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
+  const metalWebUrl = `${METAL_WEB_URL}/preview/${deploymentId}`;
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
-  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithPreviewService)
+  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithMetalService)
     await authenticateAndAssociateDeployment_safe(deploymentId, 'deployment');
 
   printPreviewLinkWithASCIIArt(metalWebUrl);

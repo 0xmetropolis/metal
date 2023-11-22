@@ -5,11 +5,11 @@ import {
   DEFAULT_PRIVATE_KEY,
   FORGE_FORK_ALIASES,
   FORGE_WALLET_OPTIONS,
-  PREVIEW_SERVICE_URL,
-  PREVIEW_WEB_URL,
+  METAL_SERVICE_URL,
+  METAL_WEB_URL,
   RPC_OVERRIDE_FLAG,
   SUPPORTED_CHAINS,
-  doNotCommunicateWithPreviewService,
+  doNotCommunicateWithMetalService,
 } from '../constants';
 import { DeploymentRequestParams } from '../types';
 import {
@@ -115,7 +115,7 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
   return forgeArguments;
 };
 
-export const sendDataToPreviewService = async (
+export const sendDataToMetalService = async (
   payload: DeploymentRequestParams,
   forkId: UUID,
 ): Promise<string> => {
@@ -131,7 +131,7 @@ export const sendDataToPreviewService = async (
     };
     if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
-    const response = await fetch(`${PREVIEW_SERVICE_URL}/preview/${forkId}`, {
+    const response = await fetch(`${METAL_SERVICE_URL}/preview/${forkId}`, {
       headers,
       method: 'POST',
       body: JSON.stringify(payload),
@@ -169,7 +169,7 @@ export const handler = async (yargs: HandlerInput) => {
     'UNSAFE-RPC-OVERRIDE': rpcOverride,
   } = yargs;
 
-  const { rpcUrl, id: previewId } = doNotCommunicateWithPreviewService
+  const { rpcUrl, id: previewId } = doNotCommunicateWithMetalService
     ? { id: undefined, rpcUrl: undefined }
     : !!rpcOverride
     ? getConfigFromTenderlyRpc(rpcOverride)
@@ -215,17 +215,17 @@ export const handler = async (yargs: HandlerInput) => {
     contractMetadata,
   };
 
-  if (!doNotCommunicateWithPreviewService) await sendDataToPreviewService(payload, previewId);
-  const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${previewId}`;
+  if (!doNotCommunicateWithMetalService) await sendDataToMetalService(payload, previewId);
+  const metalServiceUrl = `${METAL_WEB_URL}/preview/${previewId}`;
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
-  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithPreviewService)
+  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithMetalService)
     await authenticateAndAssociateDeployment_safe(previewId, 'preview');
 
-  printPreviewLinkWithASCIIArt(previewServiceUrl);
+  printPreviewLinkWithASCIIArt(metalServiceUrl);
 
-  openInBrowser(previewServiceUrl);
+  openInBrowser(metalServiceUrl);
 
   sendCliCommandAnalytics('preview');
 };

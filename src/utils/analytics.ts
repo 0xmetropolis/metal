@@ -1,5 +1,5 @@
 import { logDebug } from '.';
-import { PREVIEW_SERVICE_URL } from '../constants';
+import { METAL_SERVICE_URL } from '../constants';
 import { checkAuthentication } from './auth';
 
 const { version } = require('../../package.json');
@@ -13,7 +13,7 @@ export const sendCliCommandAnalytics = async (
 
   try {
     logDebug(`sending analytics for ${cliCommand}`);
-    const request = await fetch(`${PREVIEW_SERVICE_URL}/analytics/cli-command`, {
+    const request = await fetch(`${METAL_SERVICE_URL}/analytics/cli-command`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ export const logFailure = async (error: any) => {
 
   try {
     logDebug(`sending failure analytics`);
-    const request = await fetch(`${PREVIEW_SERVICE_URL}/analytics/failure`, {
+    const request = await fetch(`${METAL_SERVICE_URL}/analytics/failure`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

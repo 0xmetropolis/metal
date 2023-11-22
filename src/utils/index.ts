@@ -7,6 +7,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { Abi, FoundryConfig, HexString } from '../types';
 import { getOutPath, isSparseModeEnabled } from './foundry';
 import { logFailure } from './analytics';
+import { YARG_DEBUG } from '../constants';
 
 type ChalkColor =
   | 'black'
@@ -32,8 +33,7 @@ export const logError = (...s: string[]) =>
   console.log('\n\n\n' + emojify(chalk.bold.red(s.join('\n'))));
 export const logInfo = (s: string, color?: ChalkColor) =>
   console.log(emojify(chalk[color ?? 'white'].bold(s)));
-export const logDebug = (s: string | any) =>
-  process.env.YARG_DEBUG === '1' && console.log('\x1b[36m%s\x1b[0m', s);
+export const logDebug = (s: string | any) => YARG_DEBUG && console.log('\x1b[36m%s\x1b[0m', s);
 export const logWarn = (...s: string[]) =>
   console.warn(emojify(chalk.bold.yellow(s.map(str => '⚠️ ' + str + ' ⚠️').join('\n'))));
 export const logDetail = (s: string) => console.log(emojify(chalk.dim(s)));
@@ -70,6 +70,8 @@ export const getFlagValueFromArgv = (flag: string): string | undefined => {
   if (flagIndex === -1) return undefined;
   else return process.argv[flagIndex + 1];
 };
+
+export const flagIsPresent = (flag: string): boolean => process.argv.some(arg => arg === flag);
 
 export const openInBrowser = (url: string) => {
   const startScript =
