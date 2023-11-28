@@ -5,11 +5,11 @@ import {
   DEFAULT_PRIVATE_KEY,
   FORGE_FORK_ALIASES,
   FORGE_WALLET_OPTIONS,
-  PREVIEW_SERVICE_URL,
-  PREVIEW_WEB_URL,
+  METAL_SERVICE_URL,
+  METAL_WEB_URL,
   RPC_OVERRIDE_FLAG,
   SUPPORTED_CHAINS,
-  doNotCommunicateWithPreviewService,
+  doNotCommunicateWithMetalService,
 } from '../constants';
 import { DeploymentRequestParams } from '../types';
 import {
@@ -54,7 +54,7 @@ export const builder: { [key: string]: Options } = {
   },
 };
 
-function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput) {
+async function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput) {
   const cliInput = process.argv.slice(3);
   const rpcIndex = cliInput.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
 
@@ -65,9 +65,9 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
     );
 
   if (!scriptPath || !scriptPath.includes('.sol'))
-    exit('You must specify a solidity script to preview');
+    await exit('You must specify a solidity script to preview');
 
-  if (!SUPPORTED_CHAINS.includes(chainId)) exit(`Chain Id ${chainId} is not supported`);
+  if (!SUPPORTED_CHAINS.includes(chainId)) await exit(`Chain Id ${chainId} is not supported`);
 }
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
@@ -115,7 +115,7 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
   return forgeArguments;
 };
 
-export const sendDataToPreviewService = async (
+export const sendDataToMetalService = async (
   payload: DeploymentRequestParams,
   forkId: UUID,
 ): Promise<string> => {
@@ -131,7 +131,7 @@ export const sendDataToPreviewService = async (
     };
     if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
-    const response = await fetch(`${PREVIEW_SERVICE_URL}/preview/${forkId}`, {
+    const response = await fetch(`${METAL_SERVICE_URL}/preview/${forkId}`, {
       headers,
       method: 'POST',
       body: JSON.stringify(payload),
@@ -141,7 +141,7 @@ export const sendDataToPreviewService = async (
       const res = await response.json();
       logDebug(res);
 
-      exit(
+      await exit(
         `Error received from Metal! (status ${response.status})`,
         '===========================',
         res.message ?? response.statusText,
@@ -152,13 +152,13 @@ export const sendDataToPreviewService = async (
     return res.id;
   } catch (e: any) {
     logDebug(e);
-    exit('Error connecting to preview service', e.message);
+    await exit('Error connecting to preview service', e.message);
   }
 };
 
 // @dev entry point for the preview command
 export const handler = async (yargs: HandlerInput) => {
-  validateInputs(yargs);
+  await validateInputs(yargs);
 
   const authenticationStatus = await checkAuthentication();
 
@@ -169,7 +169,7 @@ export const handler = async (yargs: HandlerInput) => {
     'UNSAFE-RPC-OVERRIDE': rpcOverride,
   } = yargs;
 
-  const { rpcUrl, id: previewId } = doNotCommunicateWithPreviewService
+  const { rpcUrl, id: previewId } = doNotCommunicateWithMetalService
     ? { id: undefined, rpcUrl: undefined }
     : !!rpcOverride
     ? getConfigFromTenderlyRpc(rpcOverride)
@@ -215,17 +215,17 @@ export const handler = async (yargs: HandlerInput) => {
     contractMetadata,
   };
 
-  if (!doNotCommunicateWithPreviewService) await sendDataToPreviewService(payload, previewId);
-  const previewServiceUrl = `${PREVIEW_WEB_URL}/preview/${previewId}`;
+  if (!doNotCommunicateWithMetalService) await sendDataToMetalService(payload, previewId);
+  const metalServiceUrl = `${METAL_WEB_URL}/preview/${previewId}`;
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
-  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithPreviewService)
+  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithMetalService)
     await authenticateAndAssociateDeployment_safe(previewId, 'preview');
 
-  printPreviewLinkWithASCIIArt(previewServiceUrl);
+  printPreviewLinkWithASCIIArt(metalServiceUrl);
 
-  openInBrowser(previewServiceUrl);
+  openInBrowser(metalServiceUrl);
 
   sendCliCommandAnalytics('preview');
 };

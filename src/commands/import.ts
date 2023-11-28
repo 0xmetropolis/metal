@@ -1,5 +1,5 @@
 import { type Arguments, type Options } from 'yargs';
-import { PREVIEW_WEB_URL, doNotCommunicateWithPreviewService } from '../constants';
+import { METAL_WEB_URL, doNotCommunicateWithMetalService } from '../constants';
 import { DeploymentRequestParams, ScriptMetadata } from '../types';
 import {
   getFlagValueFromArgv,
@@ -24,7 +24,7 @@ import {
   findScriptPath,
   promptForBroadcastArtifact,
 } from '../utils/import';
-import { fetchChainConfig, uploadDeploymentData } from '../utils/preview-service';
+import { fetchChainConfig, pingMetalService, uploadDeploymentData } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
 import { sendCliCommandAnalytics } from '../utils/analytics';
 
@@ -48,12 +48,18 @@ export const builder: { [key: string]: Options } = {
  * @dev entry point for the import command
  */
 export const handler = async (yargs: HandlerInput) => {
+  // ensure the metal service is running
+  await pingMetalService();
+
+  // ensure the current git repo does not contain uncommitted foundry.toml / *.sol files
   checkRepoForUncommittedChanges();
 
+  // get the authentication status of the user
   const authenticationStatus = await checkAuthentication();
 
   const foundryConfig = loadFoundryConfig();
 
+  // prompt the user to select which deployment to import
   const { selectedScript, artifactPath, selectedChainId } = await promptForBroadcastArtifact(
     foundryConfig,
   );
@@ -123,14 +129,14 @@ export const handler = async (yargs: HandlerInput) => {
   const authToken =
     authenticationStatus.status === 'authenticated' ? authenticationStatus.access_token : undefined;
 
-  const deploymentId = doNotCommunicateWithPreviewService
+  const deploymentId = doNotCommunicateWithMetalService
     ? undefined
     : await uploadDeploymentData(payload, authToken);
-  const metalWebUrl = `${PREVIEW_WEB_URL}/preview/${deploymentId}`;
+  const metalWebUrl = `${METAL_WEB_URL}/preview/${deploymentId}`;
 
   logInfo(`Upload Successful! 🎉\n\n`);
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
-  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithPreviewService)
+  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithMetalService)
     await authenticateAndAssociateDeployment(deploymentId, 'deployment');
 
   printPreviewLinkWithASCIIArt(metalWebUrl);
