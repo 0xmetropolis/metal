@@ -49,32 +49,47 @@ const bootstrapConstants = () => {
     else return process.argv[flagIndex + 1];
   };
 
+  const MODE_FLAGS = ['--prod', '--staging', '--dev'] as const;
+  const METAL_FLAGS = ['--metal-service', '--metal-web'] as const;
+  const AUTH0_FLAGS = ['--auth0-issuer', '--auth0-client-id', '--auth0-audience'] as const;
+
+  const activeModeFlags = MODE_FLAGS.filter(flagIsPresent);
+  if (activeModeFlags.length > 1) {
+    console.error('Only one of --prod, --staging, or --dev flags should be present.');
+    process.exit(1);
+  }
+
   const env = process.env;
 
-  const MODE: 'dev' | 'staging' | 'prod' = flagIsPresent('--staging')
+  const MODE: 'dev' | 'staging' | 'prod' = flagIsPresent(MODE_FLAGS[1])
     ? 'staging'
-    : flagIsPresent('--dev') || (process.argv[1].endsWith('mdev') && !flagIsPresent('--prod'))
+    : flagIsPresent(MODE_FLAGS[2]) ||
+      (process.argv[1].endsWith('mdev') && !flagIsPresent(MODE_FLAGS[0]))
     ? 'dev'
     : 'prod';
 
   const METAL_SERVICE_URL =
-    getFlagValueFromArgv('--metal-service') ??
-    env['METAL_SERVICE'] ??
-    CONNECTIONS[MODE].metalService;
+    getFlagValueFromArgv(METAL_FLAGS[0]) ?? env['METAL_SERVICE'] ?? CONNECTIONS[MODE].metalService;
   const METAL_WEB_URL =
-    getFlagValueFromArgv('--metal-web') ?? env['METAL_WEB'] ?? CONNECTIONS[MODE].metalWeb;
+    getFlagValueFromArgv(AUTH0_FLAGS[1]) ?? env['METAL_WEB'] ?? CONNECTIONS[MODE].metalWeb;
   const AUTH0ֹֹֹֹֹ_ISSUER =
-    getFlagValueFromArgv('--auth0-issuer') ?? env['AUTH0_ISSUER'] ?? CONNECTIONS[MODE].auth0.issuer;
+    getFlagValueFromArgv(AUTH0_FLAGS[0]) ?? env['AUTH0_ISSUER'] ?? CONNECTIONS[MODE].auth0.issuer;
   const AUTH0_CLI_CLIENT_ID =
-    getFlagValueFromArgv('--auth0-client-id') ??
+    getFlagValueFromArgv(AUTH0_FLAGS[1]) ??
     env['AUTH0_CLIENT_ID'] ??
     CONNECTIONS[MODE].auth0.clientId;
   const AUTH0_AUDIENCE =
-    getFlagValueFromArgv('--auth0-audience') ??
+    getFlagValueFromArgv(AUTH0_FLAGS[2]) ??
     env['AUTH0_AUDIENCE'] ??
     CONNECTIONS[MODE].auth0.audience;
   const YARG_DEBUG = flagIsPresent('--debug');
 
+  // strip the above args from process.argv
+  const flagsToRemove: string[] = [...MODE_FLAGS, ...METAL_FLAGS, ...AUTH0_FLAGS, '--debug'];
+  const processArgvWithoutFlags = process.argv.filter(arg => !flagsToRemove.includes(arg));
+  process.argv = processArgvWithoutFlags;
+
+  // return the configuration values
   const config = {
     MODE,
     METAL_SERVICE_URL,

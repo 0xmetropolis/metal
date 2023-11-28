@@ -235,13 +235,19 @@ const watchForgeOutput = (
     if (msg) logError(msg);
   });
 
+  const magicEmojis = ['🧙', '🪄', '🧚', '✨'];
+
   stdout.on('data', (chunk: any) => {
     // if the chunk contains the succes label, then it's related to a transaction
     if (chunk.toString().includes('[Success]Hash')) {
       // increment the transaction counter
       state.transactionCounter++;
       // hide the original message and show a simulation message
-      logInfo('Simulating transaction ' + state.transactionCounter + '...');
+      logInfo(
+        `${magicEmojis[Math.floor(Math.random() * magicEmojis.length)]} Simulating transaction ` +
+          state.transactionCounter +
+          '...',
+      );
     } else {
       // otherwise, use the normal filter flow
       const msg = mutateForgeMessages(chunk);

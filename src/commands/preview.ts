@@ -54,7 +54,7 @@ export const builder: { [key: string]: Options } = {
   },
 };
 
-function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput) {
+async function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput) {
   const cliInput = process.argv.slice(3);
   const rpcIndex = cliInput.findIndex(arg => FORGE_FORK_ALIASES.some(alias => alias === arg));
 
@@ -65,9 +65,9 @@ function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput
     );
 
   if (!scriptPath || !scriptPath.includes('.sol'))
-    exit('You must specify a solidity script to preview');
+    await exit('You must specify a solidity script to preview');
 
-  if (!SUPPORTED_CHAINS.includes(chainId)) exit(`Chain Id ${chainId} is not supported`);
+  if (!SUPPORTED_CHAINS.includes(chainId)) await exit(`Chain Id ${chainId} is not supported`);
 }
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
@@ -141,7 +141,7 @@ export const sendDataToMetalService = async (
       const res = await response.json();
       logDebug(res);
 
-      exit(
+      await exit(
         `Error received from Metal! (status ${response.status})`,
         '===========================',
         res.message ?? response.statusText,
@@ -152,13 +152,13 @@ export const sendDataToMetalService = async (
     return res.id;
   } catch (e: any) {
     logDebug(e);
-    exit('Error connecting to preview service', e.message);
+    await exit('Error connecting to preview service', e.message);
   }
 };
 
 // @dev entry point for the preview command
 export const handler = async (yargs: HandlerInput) => {
-  validateInputs(yargs);
+  await validateInputs(yargs);
 
   const authenticationStatus = await checkAuthentication();
 

@@ -2,7 +2,7 @@ import { UUID } from 'crypto';
 import fetch from 'node-fetch';
 import assert from 'node:assert';
 import { exit, logDebug } from '.';
-import { MODE, METAL_SERVICE_URL } from '../constants';
+import { MODE, METAL_SERVICE_URL, doNotCommunicateWithMetalService } from '../constants';
 import { ArtifactBundle, DeploymentRequestParams, Network } from '../types';
 
 export type ForkConfig = {
@@ -23,6 +23,8 @@ export type ChainConfig = {
  * @dev pings the metal service to ensure it is running
  */
 export const pingMetalService = async () => {
+  if (doNotCommunicateWithMetalService) return;
+
   await fetch(`${METAL_SERVICE_URL}`).catch(async e => {
     logDebug(e);
     await exit(
