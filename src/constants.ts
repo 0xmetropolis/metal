@@ -71,7 +71,7 @@ const bootstrapConstants = () => {
   const METAL_SERVICE_URL =
     getFlagValueFromArgv(METAL_FLAGS[0]) ?? env['METAL_SERVICE'] ?? CONNECTIONS[MODE].metalService;
   const METAL_WEB_URL =
-    getFlagValueFromArgv(AUTH0_FLAGS[1]) ?? env['METAL_WEB'] ?? CONNECTIONS[MODE].metalWeb;
+    getFlagValueFromArgv(METAL_FLAGS[1]) ?? env['METAL_WEB'] ?? CONNECTIONS[MODE].metalWeb;
   const AUTH0ֹֹֹֹֹ_ISSUER =
     getFlagValueFromArgv(AUTH0_FLAGS[0]) ?? env['AUTH0_ISSUER'] ?? CONNECTIONS[MODE].auth0.issuer;
   const AUTH0_CLI_CLIENT_ID =
