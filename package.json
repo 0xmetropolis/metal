@@ -1,6 +1,6 @@
 {
   "name": "@0xmetropolis/metal",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "description": "Smart contract visualization tool.",
   "author": "Metropolis (@0xmetropolis)",
   "bin": {
