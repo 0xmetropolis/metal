@@ -23,9 +23,9 @@ const extractArguments = (yargs: Arguments) => {
   return { deploymentId };
 };
 
-const validateInputs = (yargs: Arguments) => {
+const validateInputs = async (yargs: Arguments) => {
   const { deploymentId } = extractArguments(yargs);
-  if (!deploymentId) throw exit('You must specify a deployment id to pull!');
+  if (!deploymentId) await exit('You must specify a deployment id to pull!');
 
   return { deploymentId };
 };
@@ -35,7 +35,7 @@ const validateInputs = (yargs: Arguments) => {
  */
 export const handler = async (yargs: HandlerInput) => {
   // validate there is an id
-  validateInputs(yargs);
+  await validateInputs(yargs);
 
   const { deploymentId } = extractArguments(yargs);
 
@@ -49,7 +49,7 @@ export const handler = async (yargs: HandlerInput) => {
   const zipInstance = new AdmZip(rawZip);
 
   // decompress to an in-memory object
-  const artifactBundle = decompressArtifactZip(zipInstance);
+  const artifactBundle = await decompressArtifactZip(zipInstance);
 
   // generate some nice type-safe codegen
   const metalCodegen = getMetalCodegenFromArtifactBundle(artifactBundle);

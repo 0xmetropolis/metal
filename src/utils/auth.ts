@@ -5,7 +5,12 @@ import { BinaryLike, UUID, createHash, randomBytes } from 'node:crypto';
 import { Server, createServer } from 'node:http';
 import { parse } from 'url';
 import { logDebug, logError, logInfo, openInBrowser } from '.';
-import { AUTH0_AUDIENCE, AUTH0_CLI_CLIENT_ID, AUTH0ֹֹֹֹֹ_ISSUER, ID_TOKEN_FILE } from '../constants';
+import {
+  AUTH0_AUDIENCE,
+  AUTH0_CLI_CLIENT_ID,
+  AUTH0ֹֹֹֹֹ_ISSUER,
+  ID_TOKEN_FILE,
+} from '../constants';
 import { AccessToken, IdTokenWithProfileScope, Pretty } from '../types';
 import { isInFilestore, loadFromFilestore, saveIdToken } from './filesystem/filestore';
 import { addDeploymentToAccount } from './preview-service';
@@ -434,7 +439,7 @@ export const authenticateAndAssociateDeployment = async (
   await addDeploymentToAccount(deploymentId, authStatus.access_token);
 };
 
-export const authenticateAndAssociateDeployment_safe = async (
+export const tryAuthenticateAndAssociateDeployment = async (
   deploymentId: UUID,
   promptLabel: 'preview' | 'deployment',
 ) =>

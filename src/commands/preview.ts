@@ -23,7 +23,7 @@ import {
   replaceFlagValues,
 } from '../utils';
 import { sendCliCommandAnalytics } from '../utils/analytics';
-import { authenticateAndAssociateDeployment_safe, checkAuthentication } from '../utils/auth';
+import { tryAuthenticateAndAssociateDeployment, checkAuthentication } from '../utils/auth';
 import {
   getContractMetadata,
   getScriptDependencies,
@@ -176,7 +176,7 @@ export const handler = async (yargs: HandlerInput) => {
     : await createMetalFork(chainId);
 
   logInfo(`Loading foundry.toml...`);
-  const foundryConfig = loadFoundryConfig();
+  const foundryConfig = await loadFoundryConfig();
 
   logInfo(`Running Forge Script at ${forgeScriptPath}...`);
   const foundryArguments = configureForgeScriptInputs({
@@ -189,18 +189,18 @@ export const handler = async (yargs: HandlerInput) => {
   const normalizedScriptPath = normalizeForgeScriptPath(forgeScriptPath);
   const solidityFilePaths = [
     normalizedScriptPath,
-    ...getScriptDependencies(foundryConfig, normalizedScriptPath),
+    ...(await getScriptDependencies(foundryConfig, normalizedScriptPath)),
   ];
 
   logInfo(`Getting repo metadata...`);
-  const repoMetadata = getRepoMetadata(solidityFilePaths);
+  const repoMetadata = await getRepoMetadata(solidityFilePaths);
   const cliVersion = getCLIVersion();
 
   logInfo(`Getting transaction data...`);
-  const scriptMetadata = getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
+  const scriptMetadata = await getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
 
   logInfo(`Getting contract metadata...`);
-  const contractMetadata = getContractMetadata(
+  const contractMetadata = await getContractMetadata(
     foundryConfig,
     scriptMetadata.broadcastArtifacts,
     solidityFilePaths,
@@ -221,7 +221,7 @@ export const handler = async (yargs: HandlerInput) => {
   logInfo(`Preview simulation successful! 🎉\n\n`);
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
   if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithMetalService)
-    await authenticateAndAssociateDeployment_safe(previewId, 'preview');
+    await tryAuthenticateAndAssociateDeployment(previewId, 'preview');
 
   printPreviewLinkWithASCIIArt(metalServiceUrl);
 

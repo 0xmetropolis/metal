@@ -94,7 +94,7 @@ export const getChainId = async (rpcUrl: string) => {
     return Number(response.result); // convert hex to number
   } catch (e: any) {
     logDebug(e);
-    exit('Error fetching chainId from RPC endpoint');
+    await exit('Error fetching chainId from RPC endpoint');
   }
 };
 
@@ -140,7 +140,7 @@ export const getTransactionByHash = async (rpcUrl: string, txHash: string) => {
     return response.result;
   } catch (e: any) {
     logDebug(e);
-    exit(`Error fetching transaction: ${txHash} from RPC endpoint`);
+    await exit(`Error fetching transaction: ${txHash} from RPC endpoint`);
   }
 };
 
@@ -171,32 +171,17 @@ export const replaceFlagValues = ({
   else return args.map((arg, index) => (index === flagIndex + 1 ? replaceWith : arg));
 };
 
-// @dev returns kv pairs of file path and source code
-export const loadSolidityFiles = (pathToSolc: string[]): { [filePath: string]: string } => {
-  const sourceCode = pathToSolc.reduce<{ [contractFilePath: string]: string }>(
-    (sourceCodeAcc, path) => {
-      try {
-        const code = readFileSync(path, { encoding: 'utf-8' });
-        return { ...sourceCodeAcc, [path]: code };
-      } catch (e: any) {
-        logDebug(e);
-        exit(`Could not find Solidity source file: ${path}`);
-      }
-    },
-    {},
-  );
-
-  return sourceCode;
-};
-
 /**
  * @dev based on the absolute path to the solidity files in `src/`, load the metadata abi files in `out/`
  * @notice a `fullyQualifiedContractName` is the path to the solidity file concatenated with ":CONTRACT_NAME" (e.g: `contracts/MyScript.s.sol:MyCoolScript`)
  * @param pathsToSolidityFiles paths to all solidity files
  */
-export const loadSolidityABIs = (foundryConfig: FoundryConfig, pathsToSolidityFiles: string[]) => {
+export const loadSolidityABIs = async (
+  foundryConfig: FoundryConfig,
+  pathsToSolidityFiles: string[],
+) => {
   if (isSparseModeEnabled(foundryConfig))
-    exit(
+    await exit(
       'sparse_mode is enabled in foundry.toml, preventing artifact generation.',
       'Please disable sparse_mode and try again.',
     );
@@ -211,7 +196,7 @@ export const loadSolidityABIs = (foundryConfig: FoundryConfig, pathsToSolidityFi
     allABIPaths = execSync(`find ${outPath} -type d -name "**.sol"`).toString().split('\n');
   } catch (e) {
     logDebug(e);
-    exit(`Error finding build metadata in the ${outPath} directory`);
+    await exit(`Error finding build metadata in the ${outPath} directory`);
   }
 
   // collect all abis from the metadata files

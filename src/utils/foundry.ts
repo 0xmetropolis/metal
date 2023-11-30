@@ -44,13 +44,15 @@ export const normalizeForgeScriptPath = (forgeScriptPath: string) => {
     : forgeScriptPath;
 };
 
-export const loadFoundryConfig = () => {
+export const loadFoundryConfig = async () => {
   let foundryToml_raw: string;
   try {
     foundryToml_raw = readFileSync('foundry.toml', { encoding: 'utf-8' });
   } catch (e: any) {
     logDebug(e);
-    exit('Could not find foundry.toml, ensure you in the root directory of a Foundry project');
+    await exit(
+      'Could not find foundry.toml, ensure you in the root directory of a Foundry project',
+    );
   }
 
   let foundryConfig: FoundryConfig;
@@ -59,7 +61,7 @@ export const loadFoundryConfig = () => {
     foundryConfig = toml.parse(foundryToml_raw);
   } catch (e: any) {
     logDebug(e);
-    exit(
+    await exit(
       'Could not parse foundry.toml, ensure it is valid TOML',
       'see https://github.com/foundry-rs/foundry/tree/master/config for more information.',
     );
@@ -93,7 +95,9 @@ export const getOutPath = (foundryConfig: FoundryConfig): string =>
 export const isSparseModeEnabled = (foundryConfig: FoundryConfig): boolean =>
   getFoundryConfigValue(foundryConfig, 'sparse_mode') ?? false;
 
-export const loadBroadcastArtifacts = (pathToArtifact: string): BroadcastArtifacts_Partial => {
+export const loadBroadcastArtifacts = async (
+  pathToArtifact: string,
+): Promise<BroadcastArtifacts_Partial> => {
   let runLatest_raw: string;
   try {
     runLatest_raw = readFileSync(pathToArtifact, {
@@ -101,7 +105,7 @@ export const loadBroadcastArtifacts = (pathToArtifact: string): BroadcastArtifac
     });
   } catch (e: any) {
     logDebug(e);
-    exit(`Could not load ${pathToArtifact}`);
+    await exit(`Could not load ${pathToArtifact}`);
   }
 
   let broadcastArtifacts: BroadcastArtifacts_Partial;
@@ -109,46 +113,47 @@ export const loadBroadcastArtifacts = (pathToArtifact: string): BroadcastArtifac
     broadcastArtifacts = JSON.parse(runLatest_raw);
   } catch (e: any) {
     logDebug(e);
-    exit(`${pathToArtifact} is corrupt / invalid JSON`);
+    await exit(`${pathToArtifact} is corrupt / invalid JSON`);
   }
 
   return broadcastArtifacts;
 };
 
-export const getRunLatestJSON = (
+export const getRunLatestJSON = async (
   foundryConfig: FoundryConfig,
   chainId: Network,
   forgeScriptPath: string,
-): BroadcastArtifacts_Partial => {
+): Promise<BroadcastArtifacts_Partial> => {
   const scriptName = forgeScriptPath.split('/').at(-1);
   const broadcastPath = getBroadcastPath(foundryConfig);
-  const broadcastArtifacts = loadBroadcastArtifacts(
+  const broadcastArtifacts = await loadBroadcastArtifacts(
     `${broadcastPath}/${scriptName}/${chainId}/run-latest.json`,
   );
 
   if (broadcastArtifacts.transactions.length === 0)
-    exit(`Cannot preview ${scriptName} as it generated 0 transactions`);
+    await exit(`Cannot preview ${scriptName} as it generated 0 transactions`);
 
   return broadcastArtifacts;
 };
 
 // @dev given the foundry config and the current env vars, returns the path to the cache/ dir
-export const getCachePath = ({ profile }: FoundryConfig): string => {
+export const getCachePath = async ({ profile }: FoundryConfig): Promise<string> => {
   const profileENV: string | undefined = process.env.FOUNDRY_PROFILE;
   const profileName = profileENV || 'default';
   const isCacheDisabled =
     profile[profileName]?.cache === false || profile['default']?.cache === false;
 
-  if (isCacheDisabled) exit('Caching is disabled, please set `cache = true` in your foundry.toml');
+  if (isCacheDisabled)
+    await exit('Caching is disabled, please set `cache = true` in your foundry.toml');
 
   const cachePath = profile[profileName]?.cache_path ?? profile['default'].cache_path ?? 'cache';
   return cachePath;
 };
 
-export const loadSolidityFilesCache = (
+export const loadSolidityFilesCache = async (
   foundryConfig: FoundryConfig,
-): SolidityFilesCache_Partial => {
-  const cachePath = getCachePath(foundryConfig);
+): Promise<SolidityFilesCache_Partial> => {
+  const cachePath = await getCachePath(foundryConfig);
   let filesCache_raw: string;
   try {
     filesCache_raw = readFileSync(`${cachePath}/solidity-files-cache.json`, {
@@ -156,7 +161,7 @@ export const loadSolidityFilesCache = (
     });
   } catch (e: any) {
     logDebug(e);
-    exit('Could not find solidity-files-cache.json', e.message);
+    await exit('Could not find solidity-files-cache.json', e.message);
   }
 
   let filesCache: SolidityFilesCache_Partial;
@@ -164,17 +169,20 @@ export const loadSolidityFilesCache = (
     filesCache = JSON.parse(filesCache_raw);
   } catch (e: any) {
     logDebug(e);
-    exit('Could not parse solidity-files-cache.json, ensure it is valid JSON');
+    await exit('Could not parse solidity-files-cache.json, ensure it is valid JSON');
   }
 
   return filesCache;
 };
 
 // @dev loads the solidity-files-cache.json and finds the relative paths to the dependencies
-export const getScriptDependencies = (foundryConfig: FoundryConfig, forgeScriptPath: string) => {
-  const filesCache = loadSolidityFilesCache(foundryConfig);
+export const getScriptDependencies = async (
+  foundryConfig: FoundryConfig,
+  forgeScriptPath: string,
+) => {
+  const filesCache = await loadSolidityFilesCache(foundryConfig);
   if (filesCache.files[forgeScriptPath] === undefined) {
-    exit(
+    await exit(
       `Could not find ${forgeScriptPath} in solidity-files-cache.json, ensure it is a valid forge script`,
     );
   }
@@ -290,7 +298,7 @@ export const runForgeScriptForPreviewCommand = async (scriptArgs: string[]) => {
   });
 
   if (state.transactionCounter === 0)
-    exit(
+    await exit(
       'Your forge script does not contain any transactions to simulate!',
       'Please add a transaction to your forge script and try again.',
     );
@@ -323,12 +331,12 @@ export const runForgeBuild = async (buildOpts: string[]) => {
   });
 };
 
-export const getContractMetadata = (
+export const getContractMetadata = async (
   foundryConfig: FoundryConfig,
   broadcastArtifacts: BroadcastArtifacts_Partial,
   solidityFilePaths: string[],
-): ContractMetadata[] => {
-  const abis = loadSolidityABIs(foundryConfig, solidityFilePaths);
+): Promise<ContractMetadata[]> => {
+  const abis = await loadSolidityABIs(foundryConfig, solidityFilePaths);
   const deployedAddressesByName = broadcastArtifacts.transactions.reduce<
     Record<string, EthAddress>
   >(
@@ -375,17 +383,17 @@ export const resolveTargetContract = (forgeScriptPath: string): string => {
   return scriptPath.split('/').at(-1).split('.')[0];
 };
 
-export const getScriptMetadata = (
+export const getScriptMetadata = async (
   foundryConfig: FoundryConfig,
   chainId: number,
   forgeScriptPath: string,
-): ScriptMetadata => {
+): Promise<ScriptMetadata> => {
   const [scriptPath] = forgeScriptPath.split(':');
   const targetContract = resolveTargetContract(forgeScriptPath);
   const functionName = getFlagValueFromArgv('-s') || getFlagValueFromArgv('--sig') || 'run()';
   const scriptGitMetadata = getGitMetadata(scriptPath);
 
-  const broadcastArtifacts = getRunLatestJSON(foundryConfig, chainId, scriptPath);
+  const broadcastArtifacts = await getRunLatestJSON(foundryConfig, chainId, scriptPath);
 
   return {
     scriptName: targetContract,
