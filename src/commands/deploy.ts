@@ -72,7 +72,7 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
 
   forgeArguments.push('--rpc-url', rpcUrl);
 
-  if (!forgeArguments.includes('--slow')) forgeArguments.push('--slow');
+  // if (!forgeArguments.includes('--slow')) forgeArguments.push('--slow');
 
   return forgeArguments;
 };

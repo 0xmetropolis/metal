@@ -110,7 +110,7 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
 
   // include the broadcast flag for previews
   if (!forgeArguments.includes('--broadcast')) forgeArguments.push('--broadcast');
-  if (!forgeArguments.includes('--slow')) forgeArguments.push('--slow');
+  // if (!forgeArguments.includes('--slow')) forgeArguments.push('--slow');
 
   return forgeArguments;
 };
