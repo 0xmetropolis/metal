@@ -29,7 +29,7 @@ export async function validateInputs({ _: [, scriptPath], 'chain-id': chainId }:
 
   // if the rpc is specified, we don't need to validate the chain id
   if (!rpcSpecified) {
-    const isSupported = await isChainSupported(chainId);
+    const isSupported = doNotCommunicateWithMetalService ? true : await isChainSupported(chainId);
     if (!isSupported) await exit(`Chain Id ${chainId} is not supported`);
   }
 }

@@ -66,7 +66,7 @@ async function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: Handle
   if (!scriptPath || !scriptPath.includes('.sol'))
     await exit('You must specify a solidity script to preview');
 
-  const chainSupported = await isChainSupported(chainId);
+  const chainSupported = doNotCommunicateWithMetalService ? true : await isChainSupported(chainId);
   if (!chainSupported) await exit(`Chain Id ${chainId} is not supported`);
 }
 
