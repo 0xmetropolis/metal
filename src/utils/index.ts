@@ -30,7 +30,7 @@ type ChalkColor =
   | 'whiteBright';
 
 export const logError = (...s: string[]) =>
-  console.log('\n\n\n' + emojify(chalk.bold.red(s.join('\n'))));
+  console.log('\n\n' + emojify(chalk.bold.red(s.join('\n'))));
 export const logInfo = (s: string, color?: ChalkColor) =>
   console.log(emojify(chalk[color ?? 'white'].bold(s)));
 export const logDebug = (s: string | any) => YARG_DEBUG && console.log('\x1b[36m%s\x1b[0m', s);
