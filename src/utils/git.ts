@@ -122,10 +122,10 @@ export const getGitMetadata = (filePath: string): GitMetadata => {
 // @dev returns a tuple of file path and commit sha
 export const getFilesMetadata = (paths: string[]) => paths.map(getGitMetadata);
 
-export const getRepoMetadata = (solidityFiles: string[]): RepoMetadata => {
+export const getRepoMetadata = async (solidityFiles: string[]): Promise<RepoMetadata> => {
   const repositoryName = getRepoName();
   if (!isGitInstalled() || !isGitRepo())
-    exit('metal commands must be run in a git repo', 'please run `git init` and try again');
+    await exit('metal commands must be run in a git repo', 'please run `git init` and try again');
 
   const remoteUrl = getGitRemote();
   const contractsPath = getContractsPath();

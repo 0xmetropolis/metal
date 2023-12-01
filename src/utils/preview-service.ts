@@ -51,7 +51,7 @@ export const createMetalFork = async (chainId: Network) => {
     return data;
   } catch (e) {
     logDebug(e);
-    exit(`
+    await exit(`
     Error creating fork with chainId ${chainId}
     ==BEGIN ERROR==
     ${createUrl}
@@ -71,7 +71,7 @@ export const fetchChainConfig = async (chainId: Network) => {
     return data;
   } catch (e) {
     logDebug(e);
-    exit(`
+    await exit(`
     Error fetching chain config at chain-id: ${chainId}
     ==BEGIN ERROR==
     ${configUrl}
@@ -100,7 +100,7 @@ export const uploadDeploymentData = async (
       const res = await response.json();
       logDebug(res);
 
-      exit(
+      await exit(
         `Error received from Metal servers! (status ${response.status})`,
         '===========================',
         res.message ?? response.statusText,
@@ -111,7 +111,7 @@ export const uploadDeploymentData = async (
     return res.id;
   } catch (e: any) {
     logDebug(e);
-    exit('Error connecting to Metal servers', e.message);
+    await exit('Error connecting to Metal servers', e.message);
   }
 };
 
@@ -137,7 +137,7 @@ export const addDeploymentToAccount = async (
       const res = await response.json();
       logDebug(res);
 
-      exit(
+      await exit(
         `Error received from Metal servers! (status ${response.status})`,
         '===========================',
         res.message ?? response.statusText,
@@ -145,7 +145,7 @@ export const addDeploymentToAccount = async (
     }
   } catch (e: any) {
     logDebug(e);
-    exit('Error connecting to Metal servers', e.message);
+    await exit('Error connecting to Metal servers', e.message);
   }
 };
 
@@ -169,7 +169,7 @@ export const getDeploymentArtifacts = async (
       const res = await response.json();
       logDebug(res);
 
-      exit(
+      await exit(
         `Could not fetch artifacts! (status ${res.status})`,
         '===========================',
         res.message ?? res.statusText,
@@ -181,6 +181,6 @@ export const getDeploymentArtifacts = async (
     return zip;
   } catch (e: any) {
     logDebug(e);
-    exit('Error connecting to Metal servers', e.message);
+    await exit('Error connecting to Metal servers', e.message);
   }
 };

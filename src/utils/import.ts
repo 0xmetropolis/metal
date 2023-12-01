@@ -15,7 +15,7 @@ import { ChainConfig } from './preview-service';
 import inquirerFileTreeSelection = require('inquirer-file-tree-selection-prompt');
 import inquirer = require('inquirer');
 
-export const checkRepoForUncommittedChanges = () => {
+export const checkRepoForUncommittedChanges = async () => {
   logDebug(`Checking Repo for uncommitted changes...`);
 
   const userHasPotentiallyDangerousUncommittedChanges = getGitStatus()
@@ -24,7 +24,9 @@ export const checkRepoForUncommittedChanges = () => {
 
   if (userHasPotentiallyDangerousUncommittedChanges) {
     logInfo('');
-    exit(`You have uncommitted Solidity or foundry.toml changes. Please commit or stash them.`);
+    await exit(
+      `You have uncommitted Solidity or foundry.toml changes. Please commit or stash them.`,
+    );
   }
 };
 
@@ -57,7 +59,9 @@ const selectChainId = async (chainIds: string[]): Promise<Network> => {
     .map(([name, chainId]) => ({ name: `${chainId} (${name.toLowerCase()})`, value: chainId }));
 
   if (options.length === 0)
-    exit(`None the following networks you've broadcast to are supported ${chainIds.join(', ')}`);
+    await exit(
+      `None the following networks you've broadcast to are supported ${chainIds.join(', ')}`,
+    );
 
   // auto-select a default if there is only one option
   if (options.length === 1) {
@@ -83,30 +87,32 @@ const selectBroadcastArtifact = async (
   pathToArtifacts: string,
   broadcastArtifacts: string[],
 ): Promise<string> => {
-  const options = broadcastArtifacts
-    // filter out any non-json files
-    .filter(fileName => fileName.endsWith('.json'))
-    // create a list of options for the user to select from with nice, readable timestamps
-    .map<inquirer.ChoiceOptions>(fileName => {
-      // if the file is the run-latest.json, then open the file to see when the run timestamp was
-      if (fileName === 'run-latest.json') {
-        let runLatest = loadBroadcastArtifacts(`${pathToArtifacts}/${fileName}`);
+  const options = await Promise.all(
+    broadcastArtifacts
+      // filter out any non-json files
+      .filter(fileName => fileName.endsWith('.json'))
+      // create a list of options for the user to select from with nice, readable timestamps
+      .map<Promise<inquirer.ChoiceOptions>>(async fileName => {
+        // if the file is the run-latest.json, then open the file to see when the run timestamp was
+        if (fileName === 'run-latest.json') {
+          let runLatest = await loadBroadcastArtifacts(`${pathToArtifacts}/${fileName}`);
 
+          return {
+            name: `${fileName} (${new Date(runLatest.timestamp * 1000).toLocaleString()})`,
+            value: fileName,
+          };
+        }
+
+        // other files are named with the timestamp in the filename
+        const [, epochTimestamp] = fileName.split('-');
         return {
-          name: `${fileName} (${new Date(runLatest.timestamp * 1000).toLocaleString()})`,
+          name: `${fileName} (${new Date(parseInt(epochTimestamp) * 1000).toLocaleString()})`,
           value: fileName,
         };
-      }
+      }),
+  );
 
-      // other files are named with the timestamp in the filename
-      const [, epochTimestamp] = fileName.split('-');
-      return {
-        name: `${fileName} (${new Date(parseInt(epochTimestamp) * 1000).toLocaleString()})`,
-        value: fileName,
-      };
-    });
-
-  if (options.length === 0) exit(`No valid broadcast files found in ${pathToArtifacts}`);
+  if (options.length === 0) await exit(`No valid broadcast files found in ${pathToArtifacts}`);
 
   return (
     await inquirer.prompt([
@@ -128,7 +134,7 @@ export const promptForBroadcastArtifact = async (foundryConfig: FoundryConfig) =
 
   // sanity check that the broadcast dir exists
   const dirExists = existsSync(broadcastDirPath);
-  if (!dirExists) exit(`No broadcasts found in ${cwd()}/${broadcastDirPath}`);
+  if (!dirExists) await exit(`No broadcasts found in ${cwd()}/${broadcastDirPath}`);
 
   // will return an array of directories named by the script file: (ie: [Deployment.s.sol, Upgrade.s.sol])
   const previouslyRanScriptNames = readdirSync(broadcastDirPath, { withFileTypes: true })
@@ -137,7 +143,7 @@ export const promptForBroadcastArtifact = async (foundryConfig: FoundryConfig) =
 
   // bail if the user hasn't run any scripts
   if (previouslyRanScriptNames.length === 0)
-    exit(`No broadcasts found in ${broadcastDirPath}\n💡 Run a forge script to get started.`);
+    await exit(`No broadcasts found in ${broadcastDirPath}\n💡 Run a forge script to get started.`);
 
   // prompt select the deploy script (any that appear in the broadcast folder)
   const selectedScript: string = await selectScriptName(previouslyRanScriptNames);
@@ -145,7 +151,8 @@ export const promptForBroadcastArtifact = async (foundryConfig: FoundryConfig) =
   // will return an array of chainIds the user has run broadcasts on (ie: [1, 4, 100])
   const chainIds = readdirSync(`${broadcastDirPath}/${selectedScript}`);
 
-  if (chainIds.length === 0) exit(`No broadcasts found in ${broadcastDirPath}/${selectedScript}`);
+  if (chainIds.length === 0)
+    await exit(`No broadcasts found in ${broadcastDirPath}/${selectedScript}`);
 
   // prompt select the chain id - or bail if unsupported
   const selectedChainId = await selectChainId(chainIds);
@@ -153,7 +160,7 @@ export const promptForBroadcastArtifact = async (foundryConfig: FoundryConfig) =
   const broadcastFilePath = `${broadcastDirPath}/${selectedScript}/${selectedChainId}`;
 
   const broadcastArtifacts = readdirSync(broadcastFilePath);
-  if (broadcastArtifacts.length === 0) exit(`No broadcasts found in ${broadcastFilePath}`);
+  if (broadcastArtifacts.length === 0) await exit(`No broadcasts found in ${broadcastFilePath}`);
 
   const selectedBroadcastArtifact = await selectBroadcastArtifact(
     broadcastFilePath,
@@ -184,10 +191,10 @@ export const buildProject = async (pathToScript: string) => {
       )})...`,
     );
 
-  await runForgeBuild(buildOptionsIncludingScript).catch(() => {
+  await runForgeBuild(buildOptionsIncludingScript).catch(async () => {
     logError(`Forge build failed. Aborting import.`);
 
-    exit(
+    await exit(
       'If the error is related to inline `$ forge build` options (i.e: `--optimizer-runs`), try passing them with the `--build-options` flag.',
     );
   });
@@ -216,7 +223,7 @@ export const ensureBroadcastArtifactValidityAndContinue = async (
     if (!isConfirmed) return invalidate();
   } catch (e: any) {
     logDebug(e);
-    exit('Error fetching transaction data from RPC endpoint');
+    await exit('Error fetching transaction data from RPC endpoint');
   }
 
   logInfo(
@@ -382,7 +389,7 @@ export const findScriptPath = async (foundryConfig: FoundryConfig, scriptFileNam
         validate: (input: string) => input.endsWith('.sol'),
       })
       // return the path relative to the current working directory
-      .then(({ script }) => script.replace(`${cwd()}/`, ''));
+      .then(({ script }) => script.replace(`${cwd()}/`, '') as string);
   }
 
   // otherwise, it's an array of matches (maybe there are multiple scripts called "Deploy.s.sol"), so we need to prompt the user to select one
@@ -396,5 +403,5 @@ export const findScriptPath = async (foundryConfig: FoundryConfig, scriptFileNam
       message: 'Select a script file',
       choices: searchResult,
     })
-    .then(({ script }) => script);
+    .then(({ script }) => script as string);
 };

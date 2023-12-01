@@ -9,7 +9,7 @@ import {
   writeTSAbiToMetalDir,
 } from './filesystem/metalDirectory';
 
-export const decompressArtifactZip = (zipInstance: AdmZip): ArtifactBundle => {
+export const decompressArtifactZip = async (zipInstance: AdmZip): Promise<ArtifactBundle> => {
   const ABI_DIRNAME = 'abis/';
   // find all the abi files in the zip by looking in the abis/* directory
   const abiEntries = zipInstance
@@ -35,7 +35,7 @@ export const decompressArtifactZip = (zipInstance: AdmZip): ArtifactBundle => {
   } catch (e: any) {
     logDebug(e);
 
-    exit('Failed to parse ABI files from artifact bundle!');
+    await exit('Failed to parse ABI files from artifact bundle!');
   }
 
   // unzip the addresses.json
@@ -46,7 +46,7 @@ export const decompressArtifactZip = (zipInstance: AdmZip): ArtifactBundle => {
   } catch (e: any) {
     logDebug(e);
 
-    exit('Failed to parse addresses.json from artifact bundle!');
+    await exit('Failed to parse addresses.json from artifact bundle!');
   }
 
   return { abis, addresses: addressesJson };

@@ -1,21 +1,10 @@
 import { type Arguments, type Options } from 'yargs';
-import {
-  FORGE_FORK_ALIASES,
-  METAL_WEB_URL,
-  SUPPORTED_CHAINS,
-  doNotCommunicateWithMetalService,
-} from '../constants';
-import { DeploymentRequestParams, Network } from '../types/index';
-import {
-  exit,
-  getFlagValueFromArgv,
-  logDebug,
-  logInfo,
-  openInBrowser,
-  printPreviewLinkWithASCIIArt,
-} from '../utils';
+import { METAL_WEB_URL, doNotCommunicateWithMetalService } from '../constants';
+import { DeploymentRequestParams } from '../types/index';
+import { exit, logDebug, logInfo, openInBrowser, printPreviewLinkWithASCIIArt } from '../utils';
 import { sendCliCommandAnalytics } from '../utils/analytics';
-import { authenticateAndAssociateDeployment_safe, checkAuthentication } from '../utils/auth';
+import { tryAuthenticateAndAssociateDeployment, checkAuthentication } from '../utils/auth';
+import { configureForgeScriptInputs, getChainConfig, validateInputs } from '../utils/deploy';
 import {
   getContractMetadata,
   getScriptDependencies,
@@ -26,7 +15,7 @@ import {
 } from '../utils/foundry';
 import { getRepoMetadata } from '../utils/git';
 import { checkRepoForUncommittedChanges } from '../utils/import';
-import { ChainConfig, fetchChainConfig, uploadDeploymentData } from '../utils/preview-service';
+import { uploadDeploymentData } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
 import inquirer = require('inquirer');
 
@@ -49,56 +38,10 @@ export const builder: { [key: string]: Options } = {
   },
 };
 
-function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: HandlerInput) {
-  if (!scriptPath || !scriptPath.includes('.sol'))
-    exit('You must specify a solidity script to preview');
-
-  const rpcSpecified = FORGE_FORK_ALIASES.some(alias => process.argv.includes(alias));
-
-  // if the rpc is specified, we don't need to validate the chain id
-  if (!SUPPORTED_CHAINS.includes(chainId) && !rpcSpecified)
-    exit(`Chain Id ${chainId} is not supported`);
-}
-
-// @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
-export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): string[] => {
-  // pull anything after `metal preview <path>` as forge arguments
-  let forgeArguments = process.argv.slice(3);
-
-  // rewrap function signatures in quotes, ex: --sig "run()"
-  forgeArguments = forgeArguments.map(arg =>
-    arg.includes('(') && arg.includes(')') ? `"${arg}"` : arg,
-  );
-
-  forgeArguments.push('--rpc-url', rpcUrl);
-
-  if (!forgeArguments.includes('--slow')) forgeArguments.push('--slow');
-
-  return forgeArguments;
-};
-
-const getChainConfig = async (chainId: Network): Promise<Partial<ChainConfig>> => {
-  const rpcOverrideFlagIdx = process.argv.findIndex(arg => FORGE_FORK_ALIASES.includes(arg));
-  const userHasSpecifiedRPC = rpcOverrideFlagIdx !== -1;
-
-  const emptyConfig: Partial<ChainConfig> = {
-    rpcUrl: undefined,
-    label: undefined,
-    chainId,
-    etherscanUrl: undefined,
-  };
-
-  return doNotCommunicateWithMetalService
-    ? emptyConfig
-    : !!userHasSpecifiedRPC
-    ? { ...emptyConfig, rpcUrl: getFlagValueFromArgv(process.argv[rpcOverrideFlagIdx + 1]) }
-    : await fetchChainConfig(chainId);
-};
-
 // @dev entry point for the preview command
 export const handler = async (yargs: HandlerInput) => {
-  validateInputs(yargs);
-  checkRepoForUncommittedChanges();
+  await validateInputs(yargs);
+  await checkRepoForUncommittedChanges();
 
   const authenticationStatus = await checkAuthentication();
 
@@ -111,7 +54,7 @@ export const handler = async (yargs: HandlerInput) => {
   const { rpcUrl, label } = await getChainConfig(chainId);
 
   logDebug(`Loading foundry.toml...`);
-  const foundryConfig = loadFoundryConfig();
+  const foundryConfig = await loadFoundryConfig();
 
   const foundryArguments = configureForgeScriptInputs({
     rpcUrl,
@@ -125,7 +68,9 @@ export const handler = async (yargs: HandlerInput) => {
         label ? label : 'chain with id: ' + chainId
       }❗️\n\nAre you sure you want to continue?`,
     })
-    .then(({ confirm }) => !confirm && exit('Aborting deployment'));
+    .then(async ({ confirm }) => {
+      if (!confirm) await exit('Aborting deployment');
+    });
 
   logInfo(`Running Forge Script at ${forgeScriptPath}...`);
   await runForgeScript(foundryArguments);
@@ -134,18 +79,18 @@ export const handler = async (yargs: HandlerInput) => {
   const normalizedScriptPath = normalizeForgeScriptPath(forgeScriptPath);
   const solidityFilePaths = [
     normalizedScriptPath,
-    ...getScriptDependencies(foundryConfig, normalizedScriptPath),
+    ...(await getScriptDependencies(foundryConfig, normalizedScriptPath)),
   ];
 
   logDebug(`Getting repo metadata...`);
-  const repoMetadata = getRepoMetadata(solidityFilePaths);
+  const repoMetadata = await getRepoMetadata(solidityFilePaths);
   const cliVersion = getCLIVersion();
 
   logInfo(`Getting transaction data...`);
-  const scriptMetadata = getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
+  const scriptMetadata = await getScriptMetadata(foundryConfig, chainId, forgeScriptPath);
 
   logDebug(`Getting contract metadata...`);
-  const contractMetadata = getContractMetadata(
+  const contractMetadata = await getContractMetadata(
     foundryConfig,
     scriptMetadata.broadcastArtifacts,
     solidityFilePaths,
@@ -171,7 +116,7 @@ export const handler = async (yargs: HandlerInput) => {
   const metalWebUrl = `${METAL_WEB_URL}/preview/${deploymentId}`;
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
   if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithMetalService)
-    await authenticateAndAssociateDeployment_safe(deploymentId, 'deployment');
+    await tryAuthenticateAndAssociateDeployment(deploymentId, 'deployment');
 
   printPreviewLinkWithASCIIArt(metalWebUrl);
 

@@ -49,7 +49,7 @@ export const handler = async ({ force }: HandlerInput) => {
     logError('Authentication failed');
   }
 
-  await sendCliCommandAnalytics('auth');
+  sendCliCommandAnalytics('auth');
 
   // hard exit to clean up any open sockets
   process.exit(0);

@@ -7,7 +7,8 @@ import {
   openInBrowser,
   printPreviewLinkWithASCIIArt,
 } from '../utils';
-import { authenticateAndAssociateDeployment, checkAuthentication } from '../utils/auth';
+import { sendCliCommandAnalytics } from '../utils/analytics';
+import { checkAuthentication, tryAuthenticateAndAssociateDeployment } from '../utils/auth';
 import {
   getContractMetadata,
   getScriptDependencies,
@@ -26,7 +27,6 @@ import {
 } from '../utils/import';
 import { fetchChainConfig, pingMetalService, uploadDeploymentData } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
-import { sendCliCommandAnalytics } from '../utils/analytics';
 
 export const command = 'import';
 export const description = `Import past deployments into a Metal preview`;
@@ -52,19 +52,19 @@ export const handler = async (yargs: HandlerInput) => {
   await pingMetalService();
 
   // ensure the current git repo does not contain uncommitted foundry.toml / *.sol files
-  checkRepoForUncommittedChanges();
+  await checkRepoForUncommittedChanges();
 
   // get the authentication status of the user
   const authenticationStatus = await checkAuthentication();
 
-  const foundryConfig = loadFoundryConfig();
+  const foundryConfig = await loadFoundryConfig();
 
   // prompt the user to select which deployment to import
   const { selectedScript, artifactPath, selectedChainId } = await promptForBroadcastArtifact(
     foundryConfig,
   );
 
-  const broadcastArtifacts = loadBroadcastArtifacts(artifactPath);
+  const broadcastArtifacts = await loadBroadcastArtifacts(artifactPath);
 
   const chainConfig = await fetchChainConfig(selectedChainId);
 
@@ -78,7 +78,9 @@ export const handler = async (yargs: HandlerInput) => {
   // @alert, I am unsure if yargs injects runtime vars that could break a recursive call to `handler`
   //  let's watch for bugs around retries.
   if (!continueWithBroadcastFile) {
+    // is not async
     handler(yargs);
+    // ends the execution of _this_ handler
     return;
   }
 
@@ -94,8 +96,11 @@ export const handler = async (yargs: HandlerInput) => {
   await buildProject(pathToScript);
 
   // get an array of all the solidity files that need to be uploaded
-  const solidityFilePaths = [pathToScript, ...getScriptDependencies(foundryConfig, pathToScript)];
-  const repoMetadata = getRepoMetadata(solidityFilePaths);
+  const solidityFilePaths = [
+    pathToScript,
+    ...(await getScriptDependencies(foundryConfig, pathToScript)),
+  ];
+  const repoMetadata = await getRepoMetadata(solidityFilePaths);
 
   const targetContract = resolveTargetContract(selectedScript);
   const functionName = getFlagValueFromArgv('-s') || getFlagValueFromArgv('--sig') || 'run()';
@@ -109,7 +114,7 @@ export const handler = async (yargs: HandlerInput) => {
     ...scriptGitMetadata,
   };
 
-  const contractMetadata = getContractMetadata(
+  const contractMetadata = await getContractMetadata(
     foundryConfig,
     scriptMetadata.broadcastArtifacts,
     solidityFilePaths,
@@ -137,7 +142,7 @@ export const handler = async (yargs: HandlerInput) => {
   logInfo(`Upload Successful! 🎉\n\n`);
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
   if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithMetalService)
-    await authenticateAndAssociateDeployment(deploymentId, 'deployment');
+    await tryAuthenticateAndAssociateDeployment(deploymentId, 'deployment');
 
   printPreviewLinkWithASCIIArt(metalWebUrl);
 
