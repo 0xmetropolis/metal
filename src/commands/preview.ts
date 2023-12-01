@@ -8,7 +8,6 @@ import {
   METAL_SERVICE_URL,
   METAL_WEB_URL,
   RPC_OVERRIDE_FLAG,
-  SUPPORTED_CHAINS,
   doNotCommunicateWithMetalService,
 } from '../constants';
 import { DeploymentRequestParams } from '../types';
@@ -33,7 +32,7 @@ import {
   runForgeScriptForPreviewCommand,
 } from '../utils/foundry';
 import { getRepoMetadata } from '../utils/git';
-import { createMetalFork } from '../utils/preview-service';
+import { createMetalFork, isChainSupported } from '../utils/preview-service';
 import { getCLIVersion } from '../utils/version';
 
 export const command = 'preview';
@@ -67,7 +66,8 @@ async function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: Handle
   if (!scriptPath || !scriptPath.includes('.sol'))
     await exit('You must specify a solidity script to preview');
 
-  if (!SUPPORTED_CHAINS.includes(chainId)) await exit(`Chain Id ${chainId} is not supported`);
+  const chainSupported = doNotCommunicateWithMetalService ? true : await isChainSupported(chainId);
+  if (!chainSupported) await exit(`Chain Id ${chainId} is not supported`);
 }
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url

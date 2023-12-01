@@ -80,6 +80,30 @@ export const fetchChainConfig = async (chainId: Network) => {
   }
 };
 
+export const isChainSupported = async (chainId: Network) =>
+  fetch(`${METAL_SERVICE_URL}/chain-config/${chainId}`)
+    .then(async response => {
+      if (response.status === 400) return false;
+      if (response.status === 200) return true;
+
+      const res = await response.json();
+      logDebug(res);
+
+      await exit(
+        `Error received from Metal servers! (status ${response.status})`,
+        '===========================',
+        res.message ?? response.statusText,
+      );
+    })
+    .catch(async e => {
+      logDebug(e);
+
+      await exit(
+        'Error! Cannot connect to Metal servers',
+        MODE === 'dev' ? 'Make sure metal-service is running on port 1234' : '',
+      );
+    });
+
 export const uploadDeploymentData = async (
   payload: DeploymentRequestParams,
   authToken?: string,

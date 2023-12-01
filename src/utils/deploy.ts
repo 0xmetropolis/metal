@@ -1,12 +1,8 @@
 import { exit, getFlagValueFromArgv } from '.';
 import { HandlerInput } from '../commands/deploy';
-import {
-  FORGE_FORK_ALIASES,
-  SUPPORTED_CHAINS,
-  doNotCommunicateWithMetalService,
-} from '../constants';
+import { FORGE_FORK_ALIASES, doNotCommunicateWithMetalService } from '../constants';
 import { Network } from '../types/index';
-import { ChainConfig, fetchChainConfig } from './preview-service';
+import { ChainConfig, fetchChainConfig, isChainSupported } from './preview-service';
 
 export const getChainConfig = async (chainId: Network): Promise<Partial<ChainConfig>> => {
   const rpcOverrideFlagIdx = process.argv.findIndex(arg => FORGE_FORK_ALIASES.includes(arg));
@@ -32,8 +28,10 @@ export async function validateInputs({ _: [, scriptPath], 'chain-id': chainId }:
   const rpcSpecified = FORGE_FORK_ALIASES.some(alias => process.argv.includes(alias));
 
   // if the rpc is specified, we don't need to validate the chain id
-  if (!SUPPORTED_CHAINS.includes(chainId) && !rpcSpecified)
-    await exit(`Chain Id ${chainId} is not supported`);
+  if (!rpcSpecified) {
+    const isSupported = doNotCommunicateWithMetalService ? true : await isChainSupported(chainId);
+    if (!isSupported) await exit(`Chain Id ${chainId} is not supported`);
+  }
 }
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the metal-service's fork url
