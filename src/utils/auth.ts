@@ -57,7 +57,7 @@ export type AuthenticationStatus =
 
 const PORT = 42224;
 const AUTHORIZATION_TIMEOUT = 60_000;
-const AUTH0_SCOPES = ['profile', 'offline_access'] as const;
+const AUTH0_SCOPES = ['profile', 'offline_access', 'email'] as const;
 
 export const sha256 = (buffer: BinaryLike) => createHash('sha256').update(buffer).digest();
 
