@@ -1,5 +1,5 @@
 import { Arguments, Options } from 'yargs';
-import { logDebug, logError, logInfo } from '../utils';
+import { exit, logDebug, logError, logInfo } from '../utils';
 import { authenticateViaPCKEFlow, checkAuthentication } from '../utils/auth';
 import { sendCliCommandAnalytics } from '../utils/analytics';
 
@@ -25,8 +25,7 @@ export const handler = async ({ force }: HandlerInput) => {
   // check if the user is already authenticated (includes an expiry check and a refresh - if necessary)
   const auth = await checkAuthentication();
 
-  // debug for development
-  if (auth.status === 'authenticated') logDebug(JSON.stringify(auth, null, 2));
+  logDebug(auth);
 
   // if the user is already authenticated, bail early
   if (auth.status === 'authenticated' && !force) {
@@ -40,16 +39,16 @@ export const handler = async ({ force }: HandlerInput) => {
    *   See this diagram for a visual representation of the flow:
    *   https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-proof-key-for-code-exchange-pkce#how-it-works
    */
-  try {
-    const { nickname } = await authenticateViaPCKEFlow();
+  await authenticateViaPCKEFlow({ forceReauth: force })
+    .then(({ nickname }) => logInfo(`Successfully authenticated as ${nickname} 🎉`))
+    .catch(async err => {
+      logDebug(err);
 
-    logInfo(`Successfully authenticated as ${nickname} 🎉`);
-  } catch (err) {
-    logError(err);
-    logError('Authentication failed');
-  }
+      await exit(err.message);
+    });
 
-  sendCliCommandAnalytics('auth');
+  // awaiting analytics because the subsequent `process.exit(0)` call will kill the request
+  await sendCliCommandAnalytics('auth');
 
   // hard exit to clean up any open sockets
   process.exit(0);

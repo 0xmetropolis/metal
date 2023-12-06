@@ -92,7 +92,7 @@ export const generateHashChallenges = (): {
 /**
  * @dev API SPEC: https://auth0.com/docs/api/authentication?http#authorization-code-flow
  */
-export const openLoginWindow = (codeChallenge: string, state: string) => {
+export const openLoginWindow = (codeChallenge: string, state: string, force?: boolean) => {
   const auth0Url = [
     `${AUTH0ֹֹֹֹֹ_ISSUER}/authorize?`,
     `audience=${AUTH0_AUDIENCE}`,
@@ -102,6 +102,7 @@ export const openLoginWindow = (codeChallenge: string, state: string) => {
     `&client_id=${AUTH0_CLI_CLIENT_ID}`,
     `&scope=${encodeURIComponent(['openid', ...AUTH0_SCOPES].join(' '))}`,
     `&state=${state}`,
+    force ? `&prompt=login` : '',
     `&redirect_uri=http://localhost:${PORT}`,
   ].join('');
 
@@ -378,13 +379,14 @@ export const checkAuthentication = async (): Promise<AuthenticationStatus> => {
 
 /**
  * @dev authenticates via the PCKE flow, validates the returned token, saves it locally, creates the user in the backend, and returns the id token payload
+ * @param forceReauth - if true, the user will be forced to re-authenticate, even if their cookie on the AUTH0_ISSUER is still valid
  */
-export const authenticateViaPCKEFlow = async () => {
+export const authenticateViaPCKEFlow = async ({ forceReauth }: { forceReauth?: boolean } = {}) => {
   // generate a code challenge and verifier as base64 strings
   const { codeChallenge, codeVerifier, state } = generateHashChallenges();
 
   // open a new window for the user to authorize a login...
-  openLoginWindow(codeChallenge, state);
+  openLoginWindow(codeChallenge, state, forceReauth);
 
   // ... and listen for up to AUTHORIZATION_TIMEOUT seconds for an auth0 to reply with an authorization code
   const authorizationCode = await listenForAuthorizationCode({ expectedCSRFToken: state });
