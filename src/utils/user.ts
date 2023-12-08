@@ -27,8 +27,6 @@ export const upsertUser = async ({
     }
   } catch (e: any) {
     logDebug(e.message);
-    logError('Could not verify user status. Please reach out for support');
-
-    process.exit(0);
+    throw Error('Could not authenticate user with Metal server!');
   }
 };
