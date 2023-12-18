@@ -95,7 +95,7 @@ const selectBroadcastArtifact = async (
       .map<Promise<inquirer.ChoiceOptions>>(async fileName => {
         // if the file is the run-latest.json, then open the file to see when the run timestamp was
         if (fileName === 'run-latest.json') {
-          let runLatest = await loadBroadcastArtifacts(`${pathToArtifacts}/${fileName}`);
+          const runLatest = await loadBroadcastArtifacts(`${pathToArtifacts}/${fileName}`);
 
           return {
             name: `${fileName} (${new Date(runLatest.timestamp * 1000).toLocaleString()})`,
@@ -112,19 +112,23 @@ const selectBroadcastArtifact = async (
       }),
   );
 
-  if (options.length === 0) await exit(`No valid broadcast files found in ${pathToArtifacts}`);
-
-  return (
-    await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'broadcast',
-        message: 'Select a broadcast artifact',
-        // reverse the list so the most recent broadcasts are at the top
-        choices: options.reverse(),
-      },
-    ])
-  ).broadcast;
+  if (options.length === 0) {
+    const error = `No valid broadcast files found in ${pathToArtifacts}`;
+    await exit(error);
+    return error;
+  } else {
+    return (
+      await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'broadcast',
+          message: 'Select a broadcast artifact',
+          // reverse the list so the most recent broadcasts are at the top
+          choices: options.reverse(),
+        },
+      ])
+    ).broadcast;
+  }
 };
 
 // gets the broadcast artifact the user wants to upload
