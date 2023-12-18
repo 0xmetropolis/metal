@@ -63,8 +63,18 @@ async function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: Handle
       'This will be ignored and transactions will be sent to the Metal RPC',
     );
 
+  if (process.argv.includes('--broadcast'))
+    await exit(
+      'You have passed the `--broadcast` flag',
+      '`metal preview` only simulates transactions against a forked blockchain',
+      '\nUse `metal deploy` to sign and send these transactions to a live chain',
+    );
+
   if (!scriptPath || !scriptPath.includes('.sol'))
-    await exit('You must specify a solidity script to preview');
+    await exit(
+      `Please specify the path to your solidity script as the first argument.`,
+      `\ne.g: \`metal ${command}\` path/to/Script.s.sol`,
+    );
 
   const chainSupported = doNotCommunicateWithMetalService ? true : await isChainSupported(chainId);
   if (!chainSupported) await exit(`Chain Id ${chainId} is not supported`);
