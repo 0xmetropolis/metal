@@ -95,7 +95,7 @@ const selectBroadcastArtifact = async (
       .map<Promise<inquirer.ChoiceOptions>>(async fileName => {
         // if the file is the run-latest.json, then open the file to see when the run timestamp was
         if (fileName === 'run-latest.json') {
-          let runLatest = await loadBroadcastArtifacts(`${pathToArtifacts}/${fileName}`);
+          const runLatest = await loadBroadcastArtifacts(`${pathToArtifacts}/${fileName}`);
 
           return {
             name: `${fileName} (${new Date(runLatest.timestamp * 1000).toLocaleString()})`,
