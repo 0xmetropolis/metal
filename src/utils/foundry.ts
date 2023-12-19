@@ -222,7 +222,7 @@ export const runForgeScript = async (scriptArgs: string[]) => {
 };
 
 const mutateForgeMessages = (msg: string | number | bigint | boolean | object): string => {
-  let msgAsString = msg.toString();
+  const msgAsString = msg.toString();
   // search the output for messages that should be filtered
 
   if (msgAsString.includes('Sending transactions')) return '';

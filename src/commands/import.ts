@@ -85,7 +85,7 @@ export const handler = async (yargs: HandlerInput) => {
   }
 
   // ensure the directory is on the correct commit - this may return the current commit to revert to after the import
-  let returnToCommitAfterImport: string | null = await ensureRepoIsOnCorrectCommit(
+  const returnToCommitAfterImport: string | null = await ensureRepoIsOnCorrectCommit(
     broadcastArtifacts,
   );
 
