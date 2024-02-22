@@ -13,7 +13,7 @@ import * as toml from 'toml';
 import {
   exit,
   getFlagValueFromArgv,
-  loadSolidityABIs,
+  loadMetaDataAttributes,
   logDebug,
   logError,
   logInfo,
@@ -336,29 +336,36 @@ export const getContractMetadata = async (
   broadcastArtifacts: BroadcastArtifacts_Partial,
   solidityFilePaths: string[],
 ): Promise<ContractMetadata[]> => {
-  const abis = await loadSolidityABIs(foundryConfig, solidityFilePaths);
+  const abis = await loadMetaDataAttributes(foundryConfig, solidityFilePaths, [
+    'abi',
+    'bytecode',
+    'deployedBytecode',
+  ]);
+
   const deployedAddressesByName = broadcastArtifacts.transactions.reduce<
     Record<string, EthAddress>
   >(
-    (acc, { contractName, contractAddress, transactionType }) =>
-      contractName && (transactionType === 'CREATE' || transactionType === 'CREATE2')
-        ? { ...acc, [contractName]: contractAddress }
-        : acc,
+    (acc, { contractName, contractAddress }) =>
+      contractName ? { ...acc, [contractName]: contractAddress } : acc,
     {},
   );
 
   const contractMetadata = Object.entries(abis).reduce<ContractMetadata[]>(
-    (acc, [fullyQualifiedName, abi]) => {
+    (acc, [fullyQualifiedName, { abi, bytecode, deployedBytecode }]) => {
       const [filePath, name] = fullyQualifiedName.split(':');
       const gitMetadata = getGitMetadata(filePath);
       // optionally include the deployed address if the contract is being created
-      const deployedAddress: EthAddress | undefined = deployedAddressesByName[name];
+      const address: EthAddress | undefined =
+        deployedAddressesByName[name] || deployedAddressesByName[fullyQualifiedName];
+
       const metadata: ContractMetadata = {
         name,
         filePath,
         fullyQualifiedName,
         abi,
-        deployedAddress,
+        bytecode,
+        deployedBytecode,
+        address,
         ...gitMetadata,
       };
 

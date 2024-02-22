@@ -172,14 +172,21 @@ export const replaceFlagValues = ({
 };
 
 /**
- * @dev based on the absolute path to the solidity files in `src/`, load the metadata abi files in `out/`
+ * @dev based on the absolute path to the solidity files in `src/`, load the metadata files in `out/`
  * @notice a `fullyQualifiedContractName` is the path to the solidity file concatenated with ":CONTRACT_NAME" (e.g: `contracts/MyScript.s.sol:MyCoolScript`)
  * @param pathsToSolidityFiles paths to all solidity files
  */
-export const loadSolidityABIs = async (
+export const loadMetaDataAttributes = async <T extends 'abi' | 'bytecode' | 'deployedBytecode'>(
   foundryConfig: FoundryConfig,
   pathsToSolidityFiles: string[],
-) => {
+  attributes: T[],
+): Promise<{
+  [fullyQualifiedName: string]: Record<T, any>;
+}> => {
+  type MetadataObject = {
+    [metadataKey in T]: Abi | HexString;
+  };
+
   if (isSparseModeEnabled(foundryConfig))
     await exit(
       'sparse_mode is enabled in foundry.toml, preventing artifact generation.',
@@ -200,57 +207,90 @@ export const loadSolidityABIs = async (
   }
 
   // collect all abis from the metadata files
-  const abis = pathsToSolidityFiles.reduce<{ [fullyQualifiedContractName: string]: string }>(
-    (abiAcc, pathToSolidityFile) => {
-      // get the file name by grabbing the last item in the path
-      const fileName = pathToSolidityFile.split('/').at(-1); // e.g: /Users/.../contracts/MyContract.sol -> MyContract.sol
+  const abis = pathsToSolidityFiles.reduce<{
+    [fullyQualifiedContractName: string]: MetadataObject;
+  }>((abiAcc, pathToSolidityFile) => {
+    // get the file name by grabbing the last item in the path
+    const fileName = pathToSolidityFile.split('/').at(-1); // e.g: /Users/.../contracts/MyContract.sol -> MyContract.sol
 
-      // the path to all the contract ABIs for a given solidity file
-      const fullMetadataFilDirPath = allABIPaths.find((path: string) => {
-        // the directory name is the same as the solidity file name
-        const fileMetadataDir = path.split('/').at(-1).toLowerCase();
+    // the path to all the contract ABIs for a given solidity file
+    const fullMetadataFilDirPath = allABIPaths.find((path: string) => {
+      // the directory name is the same as the solidity file name
+      const fileMetadataDir = path.split('/').at(-1).toLowerCase();
 
-        return fileMetadataDir === fileName.toLowerCase();
-      });
+      return fileMetadataDir === fileName.toLowerCase();
+    });
 
-      if (!fullMetadataFilDirPath) {
-        logError(`Could not find metadata for ${fileName}`);
-        // do not try and load metadata if the metadata dir
-        return abiAcc;
-      }
+    if (!fullMetadataFilDirPath) {
+      logError(`Could not find metadata for ${fileName}`);
+      // do not try and load metadata if the metadata dir
+      return abiAcc;
+    }
 
-      let files: string[] = [];
+    let files: string[] = [];
+    try {
+      // all the child files in a sol metadata dir are contract ABIs: e.g: ['MyContract.json', 'MyContract2.json']
+      files = readdirSync(fullMetadataFilDirPath, { encoding: 'utf-8' });
+    } catch (e: any) {
+      logDebug(e);
+      logError(`Could not find metadata for ${fullMetadataFilDirPath}`);
+    }
+
+    // for each pathToSolc, load all child files in the `out/MyContract.sol/` directory.
+    const abis = files.reduce<[string, MetadataObject][]>((abiAcc, file) => {
       try {
-        // all the child files in a sol metadata dir are contract ABIs: e.g: ['MyContract.json', 'MyContract2.json']
-        files = readdirSync(fullMetadataFilDirPath, { encoding: 'utf-8' });
+        const metadataPath = `${fullMetadataFilDirPath}/${file}`;
+
+        const metadataFile = JSON.parse(readFileSync(metadataPath, 'utf-8'));
+        if (!metadataFile) throw new Error(`ABI not found for ${fullMetadataFilDirPath}/${file}`);
+
+        const metadata = attributes.reduce<MetadataObject>((acc, attr) => {
+          let metadataObject: Abi | HexString;
+
+          if (attr === 'abi') metadataObject = metadataFile[attr];
+          if (attr === 'bytecode') metadataObject = metadataFile['bytecode']['object'];
+          if (attr === 'deployedBytecode')
+            metadataObject = metadataFile['deployedBytecode']['object'];
+
+          if (!metadataObject) throw new Error(`@dev attribute type not implemented for ${attr}`);
+
+          return { ...acc, [attr]: metadataObject };
+        }, {} as MetadataObject);
+
+        const contractName = file.replace('.json', '');
+        const fullyQualifiedContractName = `${pathToSolidityFile}:${contractName}`;
+        return [...abiAcc, [fullyQualifiedContractName, metadata]];
       } catch (e: any) {
         logDebug(e);
-        logError(`Could not find metadata for ${fullMetadataFilDirPath}`);
+
+        logError(`Could not find metadata for ${file}`);
       }
+    }, []);
 
-      // for each pathToSolc, load all child files in the `out/MyContract.sol/` directory.
-      const abis = files.reduce<[string, Abi][]>((abiAcc, file) => {
-        try {
-          const metadataPath = `${fullMetadataFilDirPath}/${file}`;
-          // JSON.parse each file and return only the .abi member.
-          const abi = JSON.parse(readFileSync(metadataPath, 'utf-8')).abi;
-          if (!abi) throw new Error(`ABI not found for ${fullMetadataFilDirPath}/${file}`);
+    // return the abiAcc with the new abis
+    return { ...abiAcc, ...Object.fromEntries(abis) };
+  }, {});
 
-          const contractName = file.replace('.json', '');
-          const fullyQualifiedContractName = `${pathToSolidityFile}:${contractName}`;
-          return [...abiAcc, [fullyQualifiedContractName, abi]];
-        } catch (e: any) {
-          logDebug(e);
-          // handle error if any of the json is invalid / missing .abi
-          logError(`Could not find ABI for ${file}`);
-        }
-      }, []);
+  return abis;
+};
 
-      // return the abiAcc with the new abis
-      return { ...abiAcc, ...Object.fromEntries(abis) };
+/**
+ * @dev given an array of solidity file paths, load the source code for each file
+ * @param pathsToSolidityFiles a dictionary of the pathname to the stringified source code
+ */
+export const loadSolidityFiles = (pathsToSolidityFiles: string[]) => {
+  const sourceCode = pathsToSolidityFiles.reduce<{ [pathName: string]: string }>(
+    (acc, pathToSolidityFile) => {
+      try {
+        const source = readFileSync(pathToSolidityFile, 'utf-8');
+        return { ...acc, [pathToSolidityFile]: source };
+      } catch (e: any) {
+        logDebug(e);
+        logError(`Could not find source code for ${pathToSolidityFile}`);
+      }
     },
     {},
   );
 
-  return abis;
+  return sourceCode;
 };
