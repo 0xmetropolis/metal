@@ -218,7 +218,9 @@ export type ContractMetadata = Pretty<
     filePath: string;
     fullyQualifiedName: string; // fully qualified name of the contract path (e.g: src/ERC20.sol:ERC20)
     abi: Abi;
-    deployedAddress?: EthAddress;
+    bytecode: HexString;
+    deployedBytecode: HexString;
+    address?: EthAddress;
   } & GitMetadata
 >;
 

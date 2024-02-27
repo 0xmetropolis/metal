@@ -45,46 +45,46 @@ jobs:
           anvil --chain-id 1 &
           ../bin/run preview script/Deploy.s.sol --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
 
-  bulla-contracts-v2:
-    name: Bulla Contracts V2
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: install node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.13.0
+  # bulla-contracts-v2:
+  #   name: Bulla Contracts V2
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: install node
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18.13.0
 
-      - name: Install Foundry
-        uses: onbjerg/foundry-toolchain@v1
-        with:
-          version: nightly
+  #     - name: Install Foundry
+  #       uses: onbjerg/foundry-toolchain@v1
+  #       with:
+  #         version: nightly
 
-      - name: Install Metal CLI
-        run: |
-          yarn
-          yarn build
-          yarn install:global
+  #     - name: Install Metal CLI
+  #       run: |
+  #         yarn
+  #         yarn build
+  #         yarn install:global
 
-      - name: Clone Bulla Contracts V2
-        run: |
-          git clone https://github.com/bulla-network/bulla-contracts-v2.git
-          cd bulla-contracts-v2
-          git checkout edfeb6a356fe48b3806da5d8fb1a7ab4d9a9258b
-          yarn
-          forge install
+  #     - name: Clone Bulla Contracts V2
+  #       run: |
+  #         git clone https://github.com/bulla-network/bulla-contracts-v2.git
+  #         cd bulla-contracts-v2
+  #         git checkout edfeb6a356fe48b3806da5d8fb1a7ab4d9a9258b
+  #         yarn
+  #         forge install
 
-      - name: Run Metal CLI
-        working-directory: bulla-contracts-v2
-        env:
-          FEE_RECEIVER: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
-          LOCK_STATE: 0
-          RPC_URL: http://127.0.0.1:8545
-          PK: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-          NO_METAL_SERVICE: true
-        run: |
-          anvil --chain-id 1 &
-          ../bin/run preview script/Deployment.s.sol --private-key $PK --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
+  #     - name: Run Metal CLI
+  #       working-directory: bulla-contracts-v2
+  #       env:
+  #         FEE_RECEIVER: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
+  #         LOCK_STATE: 0
+  #         RPC_URL: http://127.0.0.1:8545
+  #         PK: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+  #         NO_METAL_SERVICE: true
+  #       run: |
+  #         anvil --chain-id 1 &
+  #         ../bin/run preview script/Deployment.s.sol --private-key $PK --UNSAFE-RPC-OVERRIDE $RPC_URL --chain-id 1
 
   frax-governance:
     name: Frax Governance 👩‍⚖️
