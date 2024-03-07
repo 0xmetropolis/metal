@@ -8,6 +8,7 @@ import {
   METAL_SERVICE_URL,
   METAL_WEB_URL,
   RPC_OVERRIDE_FLAG,
+  doNotAuth,
   doNotCommunicateWithMetalService,
 } from '../constants';
 import { DeploymentRequestParams } from '../types';
@@ -230,7 +231,11 @@ export const handler = async (yargs: HandlerInput) => {
 
   logInfo(`Preview simulation successful! 🎉\n\n`);
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
-  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithMetalService)
+  if (
+    authenticationStatus.status !== 'authenticated' &&
+    !doNotCommunicateWithMetalService &&
+    !doNotAuth
+  )
     await tryAuthenticateAndAssociateDeployment(previewId, 'preview');
 
   printPreviewLinkWithASCIIArt(metalServiceUrl);
