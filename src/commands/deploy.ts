@@ -1,5 +1,5 @@
 import { type Arguments, type Options } from 'yargs';
-import { METAL_WEB_URL, doNotCommunicateWithMetalService } from '../constants';
+import { METAL_WEB_URL, doNotAuth, doNotCommunicateWithMetalService } from '../constants';
 import { DeploymentRequestParams } from '../types/index';
 import { exit, logDebug, logInfo, openInBrowser, printPreviewLinkWithASCIIArt } from '../utils';
 import { sendCliCommandAnalytics } from '../utils/analytics';
@@ -115,7 +115,11 @@ export const handler = async (yargs: HandlerInput) => {
   logInfo(`Deployment successful! 🎉\n\n`);
   const metalWebUrl = `${METAL_WEB_URL}/preview/${deploymentId}`;
   // if the user is not authenticated, ask them if they wish to add the deployment to their account
-  if (authenticationStatus.status !== 'authenticated' && !doNotCommunicateWithMetalService)
+  if (
+    authenticationStatus.status !== 'authenticated' &&
+    !doNotCommunicateWithMetalService &&
+    !doNotAuth
+  )
     await tryAuthenticateAndAssociateDeployment(deploymentId, 'deployment');
 
   printPreviewLinkWithASCIIArt(metalWebUrl);

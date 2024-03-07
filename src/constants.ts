@@ -135,6 +135,7 @@ export const FILESTORE_NAMES = [ID_TOKEN_FILE] as const;
 export type CachedFile = (typeof FILESTORE_NAMES)[number];
 
 export const doNotCommunicateWithMetalService = !!process.env.NO_METAL_SERVICE;
+export const doNotAuth = !!process.env.NO_AUTH;
 
 export const FORGE_FORK_ALIASES = ['--fork-url', '-f', '--rpc-url'];
 export const FORGE_WALLET_OPTIONS = [
