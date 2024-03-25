@@ -80,9 +80,16 @@ const bootstrapConstants = () => {
     env['AUTH0_AUDIENCE'] ??
     CONNECTIONS[MODE].auth0.audience;
   const YARG_DEBUG = flagIsPresent('--debug');
+  const NO_AUTH = flagIsPresent('--no-auth');
 
   // strip the above args from process.argv
-  const flagsToRemove: string[] = [...MODE_FLAGS, ...METAL_FLAGS, ...AUTH0_FLAGS, '--debug'];
+  const flagsToRemove: string[] = [
+    ...MODE_FLAGS,
+    ...METAL_FLAGS,
+    ...AUTH0_FLAGS,
+    '--debug',
+    '--no-auth',
+  ];
   const processArgvWithoutFlags = process.argv.filter(arg => !flagsToRemove.includes(arg));
   process.argv = processArgvWithoutFlags;
 
@@ -95,6 +102,7 @@ const bootstrapConstants = () => {
     AUTH0_CLI_CLIENT_ID,
     AUTH0_AUDIENCE,
     YARG_DEBUG,
+    NO_AUTH,
   };
 
   const logDebug = (s: string | any) => YARG_DEBUG && console.log('\x1b[36m%s\x1b[0m', s);
@@ -120,6 +128,7 @@ export const {
   AUTH0_CLI_CLIENT_ID,
   AUTH0_AUDIENCE,
   YARG_DEBUG,
+  NO_AUTH,
 } = bootstrapConstants();
 
 // @dev the directory name of the cli's global cache. @NOTE! is installed wherever the global node_modules lives.
@@ -135,7 +144,7 @@ export const FILESTORE_NAMES = [ID_TOKEN_FILE] as const;
 export type CachedFile = (typeof FILESTORE_NAMES)[number];
 
 export const doNotCommunicateWithMetalService = !!process.env.NO_METAL_SERVICE;
-export const doNotAuth = !!process.env.NO_AUTH;
+export const doNotAuth = process.env.NO_AUTH === 'true' || NO_AUTH;
 
 export const FORGE_FORK_ALIASES = ['--fork-url', '-f', '--rpc-url'];
 export const FORGE_WALLET_OPTIONS = [
