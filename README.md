@@ -21,6 +21,26 @@ npm install -g @0xmetropolis/metal
 yarn global add @0xmetropolis/metal
 ```
 
+## Development
+
+The first time you set up metal for local development, you will need to run a setup script via:
+
+```bash
+yarn run dev
+```
+
+Whenever adding new features to metal, it can be helpful to auto-recompile the app:
+
+```bash
+yarn watch
+```
+
+In a new terminal, you can then issue commands to your local metal repo with the mdev command:
+
+```bash
+mdev help
+```
+
 # Usage
 
 ## Generate A Preview
