@@ -313,11 +313,11 @@ export const runForgeScriptForPreviewCommand = async (scriptArgs: string[]) => {
     });
   });
 
-  if (state.transactionCounter === 0)
-    await exit(
-      'Your forge script does not contain any transactions to simulate!',
-      'Please add a transaction to your forge script and try again.',
-    );
+  // if (state.transactionCounter === 0)
+  //   await exit(
+  //     'Your forge script does not contain any transactions to simulate!',
+  //     'Please add a transaction to your forge script and try again.',
+  //   );
 };
 
 export const runForgeBuild = async (buildOpts: string[]) => {
