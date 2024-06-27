@@ -226,6 +226,7 @@ const mutateForgeMessages = (msg: string | number | bigint | boolean | object): 
   // search the output for messages that should be filtered
 
   if (msgAsString.includes('Sending transactions')) return '';
+  if (msgAsString.includes('Total Paid')) return '';
   if (msgAsString.includes('txes (') && msgAsString.includes('[00:0')) return '';
   else if (msgAsString.includes('ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.'))
     return msgAsString.replace('ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.\n', '');
@@ -235,7 +236,7 @@ const mutateForgeMessages = (msg: string | number | bigint | boolean | object): 
 
 const watchForgeOutput = (
   { stdout, stderr }: { stdout: Readable; stderr: Readable },
-  state: { transactionCounter: number },
+  state: { transactionCounter: number; disableLogging: boolean },
 ) => {
   // tx progress bars are sent through stderr
   stderr.on('data', (chunk: any) => {
@@ -246,7 +247,20 @@ const watchForgeOutput = (
   const magicEmojis = ['🧙', '🪄', '🧚', '✨'];
 
   stdout.on('data', (chunk: any) => {
-    // if the chunk contains the succes label, then it's related to a transaction
+    if (state.disableLogging) {
+      if (!chunk.toString().includes('contracts were verified!')) return;
+      // resume logging
+      else state.disableLogging = false;
+    }
+
+    // if a verification run is starting, disable logging
+    if (chunk.toString().includes('Start verification for')) {
+      logInfo('Submitting contract verification to metal ⛓️...');
+      state.disableLogging = true;
+      return;
+    }
+
+    // if the chunk contains the success label, then it's related to a transaction
     if (chunk.toString().includes('[Success]Hash')) {
       // increment the transaction counter
       state.transactionCounter++;
@@ -256,16 +270,18 @@ const watchForgeOutput = (
           state.transactionCounter +
           '...',
       );
-    } else {
-      // otherwise, use the normal filter flow
-      const msg = mutateForgeMessages(chunk);
-      if (msg) logInfo(msg);
+      return;
     }
+
+    // otherwise, use the normal filter flow
+    const msg = mutateForgeMessages(chunk);
+    if (msg) logInfo(msg);
   });
 };
 
 export const runForgeScriptForPreviewCommand = async (scriptArgs: string[]) => {
   const state = {
+    disableLogging: false,
     transactionCounter: 0,
   };
 

@@ -82,7 +82,13 @@ async function validateInputs({ _: [, scriptPath], 'chain-id': chainId }: Handle
 }
 
 // @dev pulls any args from process.argv and replaces any fork-url aliases with the preview-service's fork url
-export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): string[] => {
+export const configureForgeScriptInputs = ({
+  rpcUrl,
+  previewId,
+}: {
+  rpcUrl: string;
+  previewId: string;
+}): string[] => {
   // pull anything after `metal preview <path>` as forge arguments
   let forgeArguments = process.argv.slice(3);
   // rewrap function signatures in quotes, ex: --sig "run()"
@@ -123,6 +129,14 @@ export const configureForgeScriptInputs = ({ rpcUrl }: { rpcUrl: string }): stri
   if (!forgeArguments.includes('--broadcast')) forgeArguments.push('--broadcast');
   if (!forgeArguments.includes('--slow')) forgeArguments.push('--slow');
 
+  if (forgeArguments.includes('--verify') || forgeArguments.includes('--verifier-url'))
+    throw Error(
+      'Must verify contracts against the metal backend, please do not include --verify or --verifier-url flags',
+    );
+  forgeArguments.push(
+    `--verify --verifier-url ${METAL_SERVICE_URL}/contracts/verification/${previewId} --etherscan-api-key null`,
+  );
+
   return forgeArguments;
 };
 
@@ -137,7 +151,7 @@ export const sendDataToMetalService = async (
         ? authenticationStatus.access_token
         : undefined;
 
-    let headers: HeadersInit = {
+    const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
     if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
@@ -192,6 +206,7 @@ export const handler = async (yargs: HandlerInput) => {
   logInfo(`Running Forge Script at ${forgeScriptPath}...`);
   const foundryArguments = configureForgeScriptInputs({
     rpcUrl: yargs['UNSAFE-RPC-OVERRIDE'] ?? rpcUrl,
+    previewId,
   });
 
   await runForgeScriptForPreviewCommand(foundryArguments);
