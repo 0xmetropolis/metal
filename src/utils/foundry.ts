@@ -226,6 +226,7 @@ const mutateForgeMessages = (msg: string | number | bigint | boolean | object): 
   // search the output for messages that should be filtered
 
   if (msgAsString.includes('Sending transactions')) return '';
+  if (msgAsString.includes('Total Paid')) return '';
   if (msgAsString.includes('txes (') && msgAsString.includes('[00:0')) return '';
   else if (msgAsString.includes('ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.'))
     return msgAsString.replace('ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.\n', '');
@@ -246,7 +247,12 @@ const watchForgeOutput = (
   const magicEmojis = ['🧙', '🪄', '🧚', '✨'];
 
   stdout.on('data', (chunk: any) => {
-    // if the chunk contains the succes label, then it's related to a transaction
+    if (chunk.toString().includes('Start verification for')) {
+      logInfo('Submitting contract verification to metal ⛓️...\n\n');
+      return;
+    }
+
+    // if the chunk contains the success label, then it's related to a transaction
     if (chunk.toString().includes('[Success]Hash')) {
       // increment the transaction counter
       state.transactionCounter++;
@@ -256,11 +262,12 @@ const watchForgeOutput = (
           state.transactionCounter +
           '...',
       );
-    } else {
-      // otherwise, use the normal filter flow
-      const msg = mutateForgeMessages(chunk);
-      if (msg) logInfo(msg);
+      return;
     }
+
+    // otherwise, use the normal filter flow
+    const msg = mutateForgeMessages(chunk);
+    if (msg) logInfo(msg);
   });
 };
 
