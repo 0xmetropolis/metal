@@ -1,7 +1,7 @@
 {
   "name": "@0xmetropolis/metal",
   "version": "0.9.0",
-  "description": "Smart contract visualization tool.",
+  "description": "Smart contract deployment tool.",
   "author": "Metropolis (@0xmetropolis)",
   "bin": {
     "metal": "./bin/run"
