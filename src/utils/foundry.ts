@@ -236,7 +236,7 @@ const mutateForgeMessages = (msg: string | number | bigint | boolean | object): 
 
 const watchForgeOutput = (
   { stdout, stderr }: { stdout: Readable; stderr: Readable },
-  state: { transactionCounter: number; disableLogging: boolean },
+  state: { transactionCounter: number },
 ) => {
   // tx progress bars are sent through stderr
   stderr.on('data', (chunk: any) => {
@@ -247,16 +247,9 @@ const watchForgeOutput = (
   const magicEmojis = ['🧙', '🪄', '🧚', '✨'];
 
   stdout.on('data', (chunk: any) => {
-    if (state.disableLogging) {
-      if (!chunk.toString().includes('contracts were verified!')) return;
-      // resume logging
-      else state.disableLogging = false;
-    }
-
     // if a verification run is starting, disable logging
     if (chunk.toString().includes('Start verification for')) {
-      logInfo('Submitting contract verification to metal ⛓️...');
-      state.disableLogging = true;
+      logInfo('Submitting contract verification to metal ⛓️...\n\n');
       return;
     }
 
@@ -281,7 +274,6 @@ const watchForgeOutput = (
 
 export const runForgeScriptForPreviewCommand = async (scriptArgs: string[]) => {
   const state = {
-    disableLogging: false,
     transactionCounter: 0,
   };
 
