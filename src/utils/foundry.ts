@@ -247,7 +247,6 @@ const watchForgeOutput = (
   const magicEmojis = ['🧙', '🪄', '🧚', '✨'];
 
   stdout.on('data', (chunk: any) => {
-    // if a verification run is starting, disable logging
     if (chunk.toString().includes('Start verification for')) {
       logInfo('Submitting contract verification to metal ⛓️...\n\n');
       return;
